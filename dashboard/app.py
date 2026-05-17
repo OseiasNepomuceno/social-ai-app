@@ -32,6 +32,8 @@ app = Flask(
     template_folder="templates"
 )
 
+app.secret_key = "social_ai_secret"
+
 # =========================
 # UPLOADS
 # =========================
@@ -54,6 +56,8 @@ app.config[
 @app.route("/")
 def home():
 
+    if "user" not in session:
+        return redirect("/login")
     with open(
         "scheduler/agendamentos.json",
         "r",
