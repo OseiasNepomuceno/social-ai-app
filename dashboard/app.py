@@ -1,0 +1,285 @@
+from flask import (
+    Flask,
+    render_template,
+    redirect,
+    request,
+    send_from_directory
+)
+
+from werkzeug.utils import secure_filename
+
+import json
+import os
+
+# =========================
+# FLASK
+# =========================
+
+app = Flask(
+    __name__,
+    static_folder="static",
+    template_folder="templates"
+)
+
+# =========================
+# UPLOADS
+# =========================
+
+UPLOAD_FOLDER = "uploads"
+
+app.config[
+    "UPLOAD_FOLDER"
+] = UPLOAD_FOLDER
+
+# =========================
+# HOME
+# =========================
+
+@app.route("/")
+def home():
+
+    with open(
+        "scheduler/agendamentos.json",
+        "r",
+        encoding="utf-8"
+    ) as file:
+
+        agendamentos = json.load(file)
+
+    posts_ordenados = sorted(
+        agendamentos,
+        key=lambda x: (
+            x["data"],
+            x["hora"]
+        )
+    )
+
+    return render_template(
+        "index.html",
+        posts=posts_ordenados
+    )
+
+# =========================
+# AGENDAMENTOS
+# =========================
+
+@app.route("/agendamentos")
+def agendamentos():
+
+    with open(
+        "scheduler/agendamentos.json",
+        "r",
+        encoding="utf-8"
+    ) as file:
+
+        posts = json.load(file)
+
+    return render_template(
+        "index.html",
+        posts=posts
+    )
+
+# =========================
+# PUBLICAÇÕES
+# =========================
+
+@app.route("/publicacoes")
+def publicacoes():
+
+    with open(
+        "scheduler/agendamentos.json",
+        "r",
+        encoding="utf-8"
+    ) as file:
+
+        posts = json.load(file)
+
+    posts_publicados = [
+        post
+        for post in posts
+        if post["status"] == "executado"
+    ]
+
+    return render_template(
+        "index.html",
+        posts=posts_publicados
+    )
+
+# =========================
+# IA
+# =========================
+
+@app.route("/ia")
+def ia():
+
+    return render_template(
+        "index.html",
+        posts=[]
+    )
+
+# =========================
+# CONFIGURAÇÕES
+# =========================
+
+@app.route("/configuracoes")
+def configuracoes():
+
+    return render_template(
+        "index.html",
+        posts=[]
+    )
+
+# =========================
+# PUBLICAR
+# =========================
+
+@app.route("/publicar/<int:post_id>")
+def publicar(post_id):
+
+    with open(
+        "scheduler/agendamentos.json",
+        "r",
+        encoding="utf-8"
+    ) as file:
+
+        posts = json.load(file)
+
+    post = posts[post_id]
+
+    # =========================
+    # LINKEDIN
+    # =========================
+
+    if post["rede"] == "linkedin":
+
+        os.system(
+            "python linkedin/postar.py"
+        )
+
+    # =========================
+    # INSTAGRAM
+    # =========================
+
+    if post["rede"] == "instagram":
+
+        print("Instagram futuramente")
+
+    # =========================
+    # ALTERAR STATUS
+    # =========================
+
+    posts[post_id]["status"] = "executado"
+
+    with open(
+        "scheduler/agendamentos.json",
+        "w",
+        encoding="utf-8"
+    ) as file:
+
+        json.dump(
+            posts,
+            file,
+            indent=4,
+            ensure_ascii=False
+        )
+
+    return redirect("/")
+
+# =========================
+# EXCLUIR
+# =========================
+
+@app.route("/excluir/<int:post_id>")
+def excluir(post_id):
+
+    with open(
+        "scheduler/agendamentos.json",
+        "r",
+        encoding="utf-8"
+    ) as file:
+
+        posts = json.load(file)
+
+    posts.pop(post_id)
+
+    with open(
+        "scheduler/agendamentos.json",
+        "w",
+        encoding="utf-8"
+    ) as file:
+
+        json.dump(
+            posts,
+            file,
+            indent=4,
+            ensure_ascii=False
+        )
+
+    return redirect("/")
+
+# =========================
+# UPLOAD
+# =========================
+
+@app.route("/uploads/<filename>")
+def uploads(filename):
+
+    return send_from_directory(
+        app.config["UPLOAD_FOLDER"],
+        filename
+    )
+
+@app.route("/upload/<int:post_id>", methods=["POST"])
+def upload(post_id):
+
+    if "imagem" not in request.files:
+        return "Nenhum arquivo enviado"
+
+    arquivo = request.files["imagem"]
+
+    if arquivo.filename == "":
+        return "Arquivo inválido"
+
+    nome_arquivo = secure_filename(
+        arquivo.filename
+    )
+
+    caminho = os.path.join(
+        app.config["UPLOAD_FOLDER"],
+        nome_arquivo
+    )
+
+    arquivo.save(caminho)
+
+    with open(
+        "scheduler/agendamentos.json",
+        "r",
+        encoding="utf-8"
+    ) as file:
+
+        posts = json.load(file)
+
+    posts[post_id]["imagem"] = nome_arquivo
+
+    with open(
+        "scheduler/agendamentos.json",
+        "w",
+        encoding="utf-8"
+    ) as file:
+
+        json.dump(
+            posts,
+            file,
+            indent=4,
+            ensure_ascii=False
+        )
+
+    return redirect("/")
+
+
+# =========================
+# START
+# =========================
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
