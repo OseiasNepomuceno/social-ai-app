@@ -6,6 +6,7 @@ from flask import (
     send_from_directory
 )
 
+from flask import session
 from werkzeug.utils import secure_filename
 
 import json
