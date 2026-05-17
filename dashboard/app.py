@@ -226,13 +226,26 @@ def excluir(post_id):
 # UPLOAD
 # =========================
 
-@app.route("/uploads/<filename>")
+UPLOAD_FOLDER = os.path.abspath("uploads")
+
+os.makedirs(
+    UPLOAD_FOLDER,
+    exist_ok=True
+)
+
+app.config[
+    "UPLOAD_FOLDER"
+] = UPLOAD_FOLDER
+
+
+@app.route("/uploads/<path:filename>")
 def uploads(filename):
 
     return send_from_directory(
         app.config["UPLOAD_FOLDER"],
         filename
     )
+
 
 @app.route("/upload/<int:post_id>", methods=["POST"])
 def upload(post_id):
@@ -280,7 +293,6 @@ def upload(post_id):
         )
 
     return redirect("/")
-
 
 # =========================
 # START
