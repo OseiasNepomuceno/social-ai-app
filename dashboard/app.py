@@ -12,6 +12,15 @@ import json
 import os
 from supabase import create_client
 
+
+SUPABASE_URL = "https://mztdxodzbwbgtwbelltc.supabase.co"
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16dGR4b2R6YndiZ3R3YmVsbHRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3NTcxMjEsImV4cCI6MjA5MzMzMzEyMX0.gEBgtPsjRxipjBCB_dTt05hFGZ2xGh4lJhJH5TkUVNA"
+
+supabase = create_client(
+    SUPABASE_URL,
+    SUPABASE_KEY
+)
+
 # =========================
 # FLASK
 # =========================
@@ -227,27 +236,6 @@ def excluir(post_id):
 # UPLOAD
 # =========================
 
-UPLOAD_FOLDER = os.path.abspath("uploads")
-
-os.makedirs(
-    UPLOAD_FOLDER,
-    exist_ok=True
-)
-
-app.config[
-    "UPLOAD_FOLDER"
-] = UPLOAD_FOLDER
-
-
-@app.route("/uploads/<path:filename>")
-def uploads(filename):
-
-    return send_from_directory(
-        app.config["UPLOAD_FOLDER"],
-        filename
-    )
-
-
 @app.route("/upload/<int:post_id>", methods=["POST"])
 def upload(post_id):
 
@@ -263,12 +251,17 @@ def upload(post_id):
         arquivo.filename
     )
 
-    caminho = os.path.join(
-        app.config["UPLOAD_FOLDER"],
-        nome_arquivo
+    conteudo = arquivo.read()
+
+    supabase.storage.from_("social-ai").upload(
+        nome_arquivo,
+        conteudo,
+        {
+            "content-type": arquivo.content_type
+        }
     )
 
-    arquivo.save(caminho)
+    imagem_url = f"{SUPABASE_URL}/storage/v1/object/public/social-ai/{nome_arquivo}"
 
     with open(
         "scheduler/agendamentos.json",
@@ -278,7 +271,7 @@ def upload(post_id):
 
         posts = json.load(file)
 
-    posts[post_id]["imagem"] = nome_arquivo
+    posts[post_id]["imagem"] = imagem_url
 
     with open(
         "scheduler/agendamentos.json",
