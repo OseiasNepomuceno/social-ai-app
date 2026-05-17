@@ -184,6 +184,53 @@ def login():
     )
 
 # =========================
+# REGISTER
+# =========================
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+
+    if request.method == "POST":
+
+        nome = request.form["nome"]
+        email = request.form["email"]
+        senha = request.form["senha"]
+
+        try:
+
+            supabase.auth.sign_up({
+                "email": email,
+                "password": senha
+            })
+
+            return render_template(
+                "register.html",
+                sucesso="Conta criada com sucesso"
+            )
+
+        except Exception:
+
+            return render_template(
+                "register.html",
+                erro="Erro ao criar conta"
+            )
+
+    return render_template(
+        "register.html"
+    )
+
+# =========================
+# LOGOUT
+# =========================
+
+@app.route("/logout")
+def logout():
+
+    session.clear()
+
+    return redirect("/login")
+
+# =========================
 # PUBLICAR
 # =========================
 
