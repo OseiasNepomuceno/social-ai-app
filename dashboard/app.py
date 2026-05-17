@@ -10,6 +10,7 @@ from werkzeug.utils import secure_filename
 
 import json
 import os
+from supabase import create_client
 
 # =========================
 # FLASK
