@@ -150,6 +150,40 @@ def configuracoes():
     )
 
 # =========================
+# LOGIN
+# =========================
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+
+    if request.method == "POST":
+
+        email = request.form["email"]
+        senha = request.form["senha"]
+
+        try:
+
+            resposta = supabase.auth.sign_in_with_password({
+                "email": email,
+                "password": senha
+            })
+
+            session["user"] = email
+
+            return redirect("/")
+
+        except Exception:
+
+            return render_template(
+                "login.html",
+                erro="E-mail ou senha inválidos"
+            )
+
+    return render_template(
+        "login.html"
+    )
+
+# =========================
 # PUBLICAR
 # =========================
 
