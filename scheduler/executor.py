@@ -87,10 +87,19 @@ def executar_post(post, user):
         print(conteudo)
 
         # =========================
+        # REDE SOCIAL
+        # =========================
+
+        rede = post.get(
+            "rede",
+            ""
+        ).lower()
+
+        # =========================
         # LINKEDIN
         # =========================
 
-        if post.get("rede") == "linkedin":
+        if rede == "linkedin":
 
             print("🚀 Publicando no LinkedIn...")
 
@@ -104,10 +113,10 @@ def executar_post(post, user):
                 print("❌ Falha publicação LinkedIn")
 
                 supabase.table("posts").update({
-                "status": "erro"
+                    "status": "erro"
                 }).eq(
-                "id",
-                post["id"]
+                    "id",
+                    post["id"]
                 ).execute()
 
                 return
@@ -116,13 +125,26 @@ def executar_post(post, user):
         # INSTAGRAM
         # =========================
 
-        elif post.get("rede") == "instagram":
+        elif rede == "instagram":
 
-            print("🚀 Instagram em integração")
+            print("🚀 Instagram futuramente")
+
+        # =========================
+        # REDE INVÁLIDA
+        # =========================
 
         else:
 
             print("❌ Rede social inválida")
+
+            supabase.table("posts").update({
+                "status": "erro"
+            }).eq(
+                "id",
+                post["id"]
+            ).execute()
+
+            return
 
         # =========================
         # ALTERAR STATUS
@@ -166,7 +188,6 @@ def executar_post(post, user):
 
         print("❌ ERRO EXECUTANDO POST:", str(e))
 
-        # salva erro no banco
         supabase.table("posts").update({
             "status": "erro"
         }).eq(
@@ -245,7 +266,10 @@ def loop_executor():
 
                     if not permitido:
 
-                        print("🚫 Limite atingido:", user.get("email"))
+                        print(
+                            "🚫 Limite atingido:",
+                            user.get("email")
+                        )
 
                         supabase.table("posts").update({
                             "status": "bloqueado"
@@ -278,11 +302,17 @@ def loop_executor():
 
                 except Exception as e:
 
-                    print("❌ Erro no loop do post:", str(e))
+                    print(
+                        "❌ Erro no loop do post:",
+                        str(e)
+                    )
 
         except Exception as e:
 
-            print("❌ ERRO GERAL:", str(e))
+            print(
+                "❌ ERRO GERAL:",
+                str(e)
+            )
 
         # =========================
         # INTERVALO
@@ -298,5 +328,3 @@ def loop_executor():
 if __name__ == "__main__":
 
     loop_executor()
-
-
