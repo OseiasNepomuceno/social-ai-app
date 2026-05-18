@@ -1,18 +1,48 @@
+import sys
 import os
 import time
+
+# =========================
+# PATH ROOT PROJETO
+# =========================
+
+sys.path.append(
+    os.path.abspath(
+        os.path.join(
+            os.path.dirname(__file__),
+            ".."
+        )
+    )
+)
+
 from supabase import create_client
 from linkedin.postar import publicar_linkedin
 
 print("🚀 EXECUTOR SAAS INICIANDO")
 
-SUPABASE_URL = os.getenv("SUPABASE_URL", "").strip()
-SUPABASE_KEY = os.getenv("SUPABASE_KEY", "").strip()
+# =========================
+# ENV
+# =========================
+
+SUPABASE_URL = os.getenv(
+    "SUPABASE_URL",
+    ""
+).strip()
+
+SUPABASE_KEY = os.getenv(
+    "SUPABASE_KEY",
+    ""
+).strip()
 
 print("SUPABASE_URL:", bool(SUPABASE_URL))
 print("SUPABASE_KEY:", bool(SUPABASE_KEY))
 
 if not SUPABASE_URL or not SUPABASE_KEY:
     raise Exception("Variáveis Supabase ausentes")
+
+# =========================
+# SUPABASE
+# =========================
 
 supabase = create_client(
     SUPABASE_URL,
