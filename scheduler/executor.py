@@ -1,6 +1,7 @@
 import os
 import time
 from supabase import create_client
+from linkedin.postar import publicar_linkedin
 
 print("🚀 EXECUTOR SAAS INICIANDO")
 
@@ -61,12 +62,25 @@ def executar_post(post, user):
 
         if post.get("rede") == "linkedin":
 
-            print("🚀 Publicando no LinkedIn...")
+    print("🚀 Publicando no LinkedIn...")
 
-            # FUTURO:
-            # usar token individual do usuário
+    sucesso = publicar_linkedin(
+        user["id"],
+        conteudo
+    )
 
-            os.system("python linkedin/postar.py")
+    if not sucesso:
+
+        print("❌ Falha publicação LinkedIn")
+
+        supabase.table("posts").update({
+            "status": "erro"
+        }).eq(
+            "id",
+            post["id"]
+        ).execute()
+
+        return
 
         # =========================
         # INSTAGRAM
