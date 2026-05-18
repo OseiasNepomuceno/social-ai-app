@@ -58,15 +58,15 @@ def home():
 
     if "user" not in session:
         return redirect("/login")
-        
-resposta = supabase.table(
-    "posts"
-).select("*").eq(
-    "email",
-    session["user"]
-).execute()
 
-agendamentos = resposta.data
+    resposta = supabase.table(
+        "posts"
+    ).select("*").eq(
+        "email",
+        session["user"]
+    ).execute()
+
+    agendamentos = resposta.data
 
     posts_ordenados = sorted(
         agendamentos,
