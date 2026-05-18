@@ -62,7 +62,7 @@ def executar_post(post, user):
 
         if post.get("rede") == "linkedin":
 
-    print("🚀 Publicando no LinkedIn...")
+            print("🚀 Publicando no LinkedIn...")
 
     sucesso = publicar_linkedin(
         user["id"],
