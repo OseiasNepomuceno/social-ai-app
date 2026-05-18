@@ -19,6 +19,28 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+def verificar_limite(user_id):
+
+    usuario = supabase.table("users").select("*").eq("id", user_id).execute()
+
+    if not usuario.data:
+        return False, "Usuário não encontrado"
+
+    user = usuario.data[0]
+
+    plano = user.get("plano", "gratuito")
+    limite = user.get("posts_limite", 10)
+    usados = user.get("posts_usados", 0)
+
+    if plano == "business":
+        return True, "ok"
+
+    if usados >= limite:
+        return False, "Limite do plano atingido"
+
+    return True, "ok"
+
 # =========================
 # FLASK
 # =========================
