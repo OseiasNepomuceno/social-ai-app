@@ -412,6 +412,30 @@ def register():
 
     return render_template("register.html")
 
+# =========================
+# EXCLUIR POST
+# =========================
+
+@app.route("/delete_post/<post_id>")
+def delete_post(post_id):
+
+    if "user" not in session:
+        return redirect("/login")
+
+    try:
+
+        supabase.table("posts") \
+            .delete() \
+            .eq("id", post_id) \
+            .eq("user_id", session["user"]) \
+            .execute()
+
+        return redirect("/agendamentos")
+
+    except Exception as e:
+
+        return str(e)
+
 
 # =========================
 # LOGOUT
