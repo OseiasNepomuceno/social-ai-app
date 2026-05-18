@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>IA Social AI</title>
+
+    <link rel="stylesheet" href="/static/style.css">
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>🤖 Gerador IA</h1>
+
+    {% if sucesso %}
+
+        <div class="success">
+
+            ✅ Conteúdo gerado e agendado com sucesso
+
+        </div>
+
+    {% endif %}
+
+    {% if erro %}
+
+        <div class="error">
+
+            {{ erro }}
+
+        </div>
+
+    {% endif %}
+
+    <form method="POST">
+
+        <label>Tema</label>
+
+        <input
+            type="text"
+            name="tema"
+            required
+        >
+
+        <label>Rede Social</label>
+
+        <select name="rede">
+
+            <option value="linkedin">
+                LinkedIn
+            </option>
+
+            <option value="instagram">
+                Instagram
+            </option>
+
+        </select>
+
+        <label>Modo</label>
+
+        <select name="modo">
+
+            <option value="1">
+                Viral
+            </option>
+
+            <option value="2">
+                Autoridade
+            </option>
+
+            <option value="3">
+                Vendas
+            </option>
+
+            <option value="4">
+                Storytelling
+            </option>
+
+        </select>
+
+        <label>Nicho</label>
+
+        <select name="nicho">
+
+            <option value="1">
+                Contabilidade
+            </option>
+
+            <option value="2">
+                Advocacia
+            </option>
+
+            <option value="3">
+                Saúde
+            </option>
+
+            <option value="4">
+                Marketing
+            </option>
+
+            <option value="5">
+                Imobiliária
+            </option>
+
+            <option value="6">
+                Política
+            </option>
+
+            <option value="7">
+                Gestão de Negócios
+            </option>
+
+        </select>
+
+        <label>Data da Postagem</label>
+
+        <input
+            type="date"
+            name="data"
+            required
+        >
+
+        <label>Horário</label>
+
+        <input
+            type="time"
+            name="hora"
+            required
+        >
+
+        <button type="submit">
+
+            🚀 Gerar Conteúdo
+
+        </button>
+
+    </form>
+
+    {% if conteudo %}
+
+        <h2>Conteúdo Gerado</h2>
+
+        <textarea rows="15">
+
+{{ conteudo }}
+
+        </textarea>
+
+    {% endif %}
+
+</div>
+
+</body>
+
+</html>
