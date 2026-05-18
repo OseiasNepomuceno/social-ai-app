@@ -3,19 +3,18 @@ from flask import (
     render_template,
     redirect,
     request,
-    send_from_directory
+    send_from_directory,
+    session
 )
 
-from flask import session
 from werkzeug.utils import secure_filename
-
 import json
 import os
 from supabase import create_client
 
 
 SUPABASE_URL = "https://mztdxodzbwbgtwbelltc.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16dGR4b2R6YndiZ3R3YmVsbHRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3NTcxMjEsImV4cCI6MjA5MzMzMzEyMX0.gEBgtPsjRxipjBCB_dTt05hFGZ2xGh4lJhJH5TkUVNA"
+SUPABASE_KEY = "SUA_ANON_KEY_AQUI"
 
 supabase = create_client(
     SUPABASE_URL,
@@ -45,9 +44,8 @@ os.makedirs(
     exist_ok=True
 )
 
-app.config[
-    "UPLOAD_FOLDER"
-] = UPLOAD_FOLDER
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+
 
 # =========================
 # HOME
@@ -70,16 +68,14 @@ def home():
 
     posts_ordenados = sorted(
         agendamentos,
-        key=lambda x: (
-            x["data"],
-            x["hora"]
-        )
+        key=lambda x: (x["data"], x["hora"])
     )
 
     return render_template(
         "index.html",
         posts=posts_ordenados
     )
+
 
 # =========================
 # AGENDAMENTOS
@@ -88,18 +84,23 @@ def home():
 @app.route("/agendamentos")
 def agendamentos():
 
-    with open(
-        "scheduler/agendamentos.json",
-        "r",
-        encoding="utf-8"
-    ) as file:
+    if "user" not in session:
+        return redirect("/login")
 
-        posts = json.load(file)
+    resposta = supabase.table(
+        "posts"
+    ).select("*").eq(
+        "email",
+        session["user"]
+    ).execute()
+
+    posts = resposta.data
 
     return render_template(
         "index.html",
         posts=posts
     )
+
 
 # =========================
 # PUBLICAÇÕES
@@ -108,25 +109,20 @@ def agendamentos():
 @app.route("/publicacoes")
 def publicacoes():
 
-    with open(
-        "scheduler/agendamentos.json",
-        "r",
-        encoding="utf-8"
-    ) as file:
+    if "user" not in session:
+        return redirect("/login")
 
-resposta = supabase.table(
-    "posts"
-).select("*").eq(
-    "email",
-    session["user"]
-).execute()
+    resposta = supabase.table(
+        "posts"
+    ).select("*").eq(
+        "email",
+        session["user"]
+    ).execute()
 
-posts = resposta.data
-
+    posts = resposta.data
 
     posts_publicados = [
-        post
-        for post in posts
+        post for post in posts
         if post["status"] == "executado"
     ]
 
@@ -135,17 +131,18 @@ posts = resposta.data
         posts=posts_publicados
     )
 
+
 # =========================
 # IA
 # =========================
 
 @app.route("/ia")
 def ia():
-
     return render_template(
         "index.html",
         posts=[]
     )
+
 
 # =========================
 # CONFIGURAÇÕES
@@ -153,11 +150,11 @@ def ia():
 
 @app.route("/configuracoes")
 def configuracoes():
-
     return render_template(
         "index.html",
         posts=[]
     )
+
 
 # =========================
 # LOGIN
@@ -189,9 +186,8 @@ def login():
                 erro="E-mail ou senha inválidos"
             )
 
-    return render_template(
-        "login.html"
-    )
+    return render_template("login.html")
+
 
 # =========================
 # REGISTER
@@ -202,7 +198,6 @@ def register():
 
     if request.method == "POST":
 
-        nome = request.form["nome"]
         email = request.form["email"]
         senha = request.form["senha"]
 
@@ -225,9 +220,8 @@ def register():
                 erro="Erro ao criar conta"
             )
 
-    return render_template(
-        "register.html"
-    )
+    return render_template("register.html")
+
 
 # =========================
 # LOGOUT
@@ -235,10 +229,9 @@ def register():
 
 @app.route("/logout")
 def logout():
-
     session.clear()
-
     return redirect("/login")
+
 
 # =========================
 # PUBLICAR
@@ -256,32 +249,16 @@ def publicar(post_id):
 
     post = resposta.data[0]
 
-    # =========================
-    # LINKEDIN
-    # =========================
-
     if post["rede"] == "linkedin":
-
-        os.system(
-            "python linkedin/postar.py"
-        )
-
-    # =========================
-    # INSTAGRAM
-    # =========================
+        os.system("python linkedin/postar.py")
 
     if post["rede"] == "instagram":
-
         print("Instagram futuramente")
-
-    # =========================
-    # ALTERAR STATUS
-    # =========================
 
     supabase.table(
         "posts"
     ).update({
-        "status":"executado"
+        "status": "executado"
     }).eq(
         "id",
         post_id
@@ -289,18 +266,23 @@ def publicar(post_id):
 
     return redirect("/")
 
+
 # =========================
 # EXCLUIR
 # =========================
 
-supabase.table(
-    "posts"
-).delete().eq(
-    "id",
-    post_id
-).execute()
+@app.route("/excluir/<int:post_id>")
+def excluir(post_id):
 
-return redirect("/")
+    supabase.table(
+        "posts"
+    ).delete().eq(
+        "id",
+        post_id
+    ).execute()
+
+    return redirect("/")
+
 
 # =========================
 # UPLOAD
@@ -317,46 +299,28 @@ def upload(post_id):
     if arquivo.filename == "":
         return "Arquivo inválido"
 
-    nome_arquivo = secure_filename(
-        arquivo.filename
-    )
-
+    nome_arquivo = secure_filename(arquivo.filename)
     conteudo = arquivo.read()
 
     supabase.storage.from_("social-ai").upload(
         nome_arquivo,
         conteudo,
-        {
-            "content-type": arquivo.content_type
-        }
+        {"content-type": arquivo.content_type}
     )
 
     imagem_url = f"{SUPABASE_URL}/storage/v1/object/public/social-ai/{nome_arquivo}"
 
-    with open(
-        "scheduler/agendamentos.json",
-        "r",
-        encoding="utf-8"
-    ) as file:
-
-        posts = json.load(file)
-
-    posts[post_id]["imagem"] = imagem_url
-
-    with open(
-        "scheduler/agendamentos.json",
-        "w",
-        encoding="utf-8"
-    ) as file:
-
-        json.dump(
-            posts,
-            file,
-            indent=4,
-            ensure_ascii=False
-        )
+    supabase.table(
+        "posts"
+    ).update({
+        "imagem": imagem_url
+    }).eq(
+        "id",
+        post_id
+    ).execute()
 
     return redirect("/")
+
 
 # =========================
 # START
