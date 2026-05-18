@@ -1,3 +1,5 @@
+raise Exception("TESTE EXECUTOR")
+
 import os
 import time
 from supabase import create_client
