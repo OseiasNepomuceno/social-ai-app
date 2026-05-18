@@ -1,0 +1,68 @@
+from flask import Flask, request
+import requests
+import os
+import json
+from dotenv import load_dotenv
+
+load_dotenv()
+
+app = Flask(__name__)
+
+CLIENT_ID = os.getenv(
+    "LINKEDIN_CLIENT_ID"
+)
+
+CLIENT_SECRET = os.getenv(
+    "LINKEDIN_CLIENT_SECRET"
+)
+
+REDIRECT_URI = os.getenv(
+    "LINKEDIN_REDIRECT_URI"
+)
+
+@app.route("/callback")
+def callback():
+
+    code = request.args.get("code")
+
+    token_url = (
+        "https://www.linkedin.com/oauth/v2/accessToken"
+    )
+
+    data = {
+        "grant_type": "authorization_code",
+        "code": code,
+        "redirect_uri": REDIRECT_URI,
+        "client_id": CLIENT_ID,
+        "client_secret": CLIENT_SECRET
+    }
+
+    response = requests.post(
+        token_url,
+        data=data
+    )
+
+    token_data = response.json()
+
+    with open(
+        "linkedin/token.json",
+        "w",
+        encoding="utf-8"
+    ) as file:
+
+        json.dump(
+            token_data,
+            file,
+            indent=4,
+            ensure_ascii=False
+        )
+
+    return "✅ LinkedIn conectado com sucesso!"
+
+if __name__ == "__main__":
+
+    app.run(
+        host="0.0.0.0",
+        port=8000,
+        debug=True
+    )
