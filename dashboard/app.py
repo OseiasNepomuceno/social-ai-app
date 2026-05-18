@@ -12,15 +12,13 @@ import json
 import os
 from supabase import create_client
 
+import os
+from supabase import create_client
 
-SUPABASE_URL = "https://mztdxodzbwbgtwbelltc.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16dGR4b2R6YndiZ3R3YmVsbHRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3NTcxMjEsImV4cCI6MjA5MzMzMzEyMX0.gEBgtPsjRxipjBCB_dTt05hFGZ2xGh4lJhJH5TkUVNA"
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
-supabase = create_client(
-    SUPABASE_URL,
-    SUPABASE_KEY
-)
-
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 # =========================
 # FLASK
 # =========================
