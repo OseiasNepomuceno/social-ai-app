@@ -37,6 +37,7 @@ def publicar_linkedin(user_id, conteudo):
         if not usuario.data:
 
             print("❌ Usuário não encontrado")
+
             return False
 
         user = usuario.data[0]
@@ -46,6 +47,7 @@ def publicar_linkedin(user_id, conteudo):
         if not access_token:
 
             print("❌ Usuário sem token LinkedIn")
+
             return False
 
         # =========================
@@ -67,14 +69,21 @@ def publicar_linkedin(user_id, conteudo):
 
         profile_data = profile_response.json()
 
+        # =========================
+        # VALIDAR TOKEN
+        # =========================
+
         if "sub" not in profile_data:
 
             print("❌ Token LinkedIn inválido")
 
+            print(profile_data)
+
             return False
 
-print("\n===== PERFIL =====")
-print(profile_data)
+        print("\n===== PERFIL =====")
+
+        print(profile_data)
 
         person_id = profile_data["sub"]
 
@@ -107,8 +116,6 @@ print(profile_data)
             "X-Restli-Protocol-Version": "2.0.0",
             "Content-Type": "application/json"
         }
-        
-    
 
         # =========================
         # POSTAGEM
@@ -121,8 +128,14 @@ print(profile_data)
         )
 
         print("\n===== RESPOSTA LINKEDIN =====")
+
         print(response.status_code)
+
         print(response.text)
+
+        # =========================
+        # SUCESSO
+        # =========================
 
         if response.status_code in [200, 201]:
 
@@ -130,12 +143,18 @@ print(profile_data)
 
             return True
 
+        # =========================
+        # ERRO API
+        # =========================
+
         print("❌ ERRO LINKEDIN")
 
         return False
 
     except Exception as e:
 
-        print("❌ ERRO POSTAR LINKEDIN:", str(e))
+        print("❌ ERRO POSTAR LINKEDIN:")
+
+        print(str(e))
 
         return False
