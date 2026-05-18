@@ -12,6 +12,7 @@ import json
 import mercadopago
 from supabase import create_client
 from linkedin.auth import linkedin_auth
+from linkedin.callback import linkedin_callback
 
 # =========================
 # ENV (SEGURAS)
