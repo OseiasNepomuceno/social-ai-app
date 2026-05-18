@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Agendamentos</title>
+
+    <link rel="stylesheet" href="/static/style.css">
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>📅 Agendamentos</h1>
+
+    {% if erro %}
+
+        <div class="error">
+
+            {{ erro }}
+
+        </div>
+
+    {% endif %}
+
+    {% if posts %}
+
+        {% for post in posts %}
+
+            <div class="card">
+
+                <h2>{{ post.tema }}</h2>
+
+                <p>
+                    <strong>Rede:</strong>
+                    {{ post.rede }}
+                </p>
+
+                <p>
+                    <strong>Status:</strong>
+                    {{ post.status }}
+                </p>
+
+                <p>
+                    <strong>Modo:</strong>
+                    {{ post.modo }}
+                </p>
+
+                <p>
+                    <strong>Nicho:</strong>
+                    {{ post.nicho }}
+                </p>
+
+                <p>
+                    <strong>Data:</strong>
+                    {{ post.data_postagem }}
+                </p>
+
+                <p>
+                    <strong>Hora:</strong>
+                    {{ post.hora_postagem }}
+                </p>
+
+                <textarea rows="8">
+
+{{ post.conteudo }}
+
+                </textarea>
+
+            </div>
+
+            <hr>
+
+        {% endfor %}
+
+    {% else %}
+
+        <p>
+            Nenhum agendamento encontrado
+        </p>
+
+    {% endif %}
+
+</div>
+
+</body>
+
+</html>
