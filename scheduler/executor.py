@@ -46,8 +46,7 @@ def executar_post(post, user):
     # =========================
 
     try:
-        with open(post["arquivo"], "r", encoding="utf-8") as file:
-            conteudo = file.read()
+        conteudo = post.get("conteudo", "Teste SaaS")
     except Exception as e:
         print("Erro ao ler arquivo:", e)
         return
