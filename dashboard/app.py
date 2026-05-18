@@ -11,7 +11,7 @@ from werkzeug.utils import secure_filename
 import json
 import os
 from supabase import create_client
-print(os.getenv("MERCADO_PAGO_TOKEN"))
+token = os.getenv("MERCADO_PAGO_TOKEN")
 
 
 # =========================
