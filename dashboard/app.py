@@ -142,6 +142,7 @@ def publicacoes():
 
 @app.route("/ia")
 def ia():
+
     return render_template(
         "index.html",
         posts=[]
@@ -154,12 +155,11 @@ def ia():
 
 @app.route("/configuracoes")
 def configuracoes():
+
     return render_template(
         "index.html",
         posts=[]
     )
-
-
 # =========================
 # LOGIN
 # =========================
