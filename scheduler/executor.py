@@ -64,23 +64,23 @@ def executar_post(post, user):
 
             print("🚀 Publicando no LinkedIn...")
 
-    sucesso = publicar_linkedin(
-        user["id"],
-        conteudo
-    )
+            sucesso = publicar_linkedin(
+                user["id"],
+                conteudo
+            )
 
-    if not sucesso:
+            if not sucesso:
 
-        print("❌ Falha publicação LinkedIn")
+                print("❌ Falha publicação LinkedIn")
 
-        supabase.table("posts").update({
-            "status": "erro"
-        }).eq(
-            "id",
-            post["id"]
-        ).execute()
+                supabase.table("posts").update({
+                "status": "erro"
+                }).eq(
+                "id",
+                post["id"]
+                ).execute()
 
-        return
+                return
 
         # =========================
         # INSTAGRAM
