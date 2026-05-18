@@ -30,8 +30,9 @@ if not MERCADO_PAGO_TOKEN:
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 mp = mercadopago.SDK(MERCADO_PAGO_TOKEN) if MERCADO_PAGO_TOKEN else None
 
-print("SUPABASE OK:", bool(SUPABASE_URL and SUPABASE_KEY))
-print("MERCADO PAGO OK:", bool(MERCADO_PAGO_TOKEN))
+if os.getenv("RENDER") != "true":
+    print("SUPABASE OK:", bool(SUPABASE_URL and SUPABASE_KEY))
+    print("MERCADO PAGO OK:", bool(MERCADO_PAGO_TOKEN))
 
 
 # =========================
