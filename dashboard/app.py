@@ -10,6 +10,7 @@ from werkzeug.utils import secure_filename
 import os
 import json
 import mercadopago
+from dashboard.ia_engine import gerar_conteudo
 from supabase import create_client
 from linkedin.auth import linkedin_auth
 from linkedin.callback import linkedin_callback
