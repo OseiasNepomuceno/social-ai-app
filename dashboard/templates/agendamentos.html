@@ -110,9 +110,36 @@
                 </p>
 
                 <p>
-                    <strong>Status:</strong>
-                    {{ post.status }}
-                </p>
+
+    <strong>Status:</strong>
+
+    {% if post.status == "executado" %}
+
+        <span class="badge-success">
+            🟢 Executado
+        </span>
+
+    {% elif post.status == "pendente" %}
+
+        <span class="badge-warning">
+            🟡 Pendente
+        </span>
+
+    {% elif post.status == "erro" %}
+
+        <span class="badge-error">
+            🔴 Erro
+        </span>
+
+    {% else %}
+
+        <span>
+            {{ post.status }}
+        </span>
+
+    {% endif %}
+
+</p>
 
                 <p>
                     <strong>Modo:</strong>
