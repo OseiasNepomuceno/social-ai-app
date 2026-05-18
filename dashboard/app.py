@@ -114,7 +114,15 @@ def publicacoes():
         encoding="utf-8"
     ) as file:
 
-        posts = json.load(file)
+resposta = supabase.table(
+    "posts"
+).select("*").eq(
+    "email",
+    session["user"]
+).execute()
+
+posts = resposta.data
+
 
     posts_publicados = [
         post
