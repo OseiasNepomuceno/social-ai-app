@@ -58,13 +58,15 @@ def home():
 
     if "user" not in session:
         return redirect("/login")
-    with open(
-        "scheduler/agendamentos.json",
-        "r",
-        encoding="utf-8"
-    ) as file:
+        
+resposta = supabase.table(
+    "posts"
+).select("*").eq(
+    "email",
+    session["user"]
+).execute()
 
-        agendamentos = json.load(file)
+agendamentos = resposta.data
 
     posts_ordenados = sorted(
         agendamentos,
