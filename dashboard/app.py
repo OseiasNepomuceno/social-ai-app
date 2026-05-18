@@ -184,9 +184,20 @@ def login():
 
             print("LOGIN OK:", user)
 
-            # 🔐 IMPORTANTE: usar ID do usuário (não email)
+            # sessão
             session["user"] = user.id
             session["email"] = user.email
+
+            # =========================
+            # CRIAR USUÁRIO NO BANCO (SAAS)
+            # =========================
+            supabase.table("users").upsert({
+                "id": user.id,
+                "email": user.email,
+                "plano": "gratuito",
+                "posts_limite": 10,
+                "posts_usados": 0
+            }).execute()
 
             return redirect("/")
 
