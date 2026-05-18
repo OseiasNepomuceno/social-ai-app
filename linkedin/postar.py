@@ -26,7 +26,7 @@ def publicar_linkedin(user_id, conteudo):
     try:
 
         # =========================
-        # BUSCAR TOKEN USER
+        # BUSCAR USUÁRIO
         # =========================
 
         usuario = supabase.table("users") \
@@ -41,6 +41,10 @@ def publicar_linkedin(user_id, conteudo):
             return False
 
         user = usuario.data[0]
+
+        # =========================
+        # TOKEN
+        # =========================
 
         access_token = user.get("linkedin_token")
 
@@ -85,29 +89,34 @@ def publicar_linkedin(user_id, conteudo):
 
         print(profile_data)
 
+        # =========================
+        # PERSON URN
+        # =========================
+
         person_id = profile_data["sub"]
 
         person_urn = f"urn:li:person:{person_id}"
 
         # =========================
-        # PAYLOAD
+        # PAYLOAD UGC POSTS
         # =========================
 
-       payload = {
-    "author": person_urn,
-    "lifecycleState": "PUBLISHED",
-    "specificContent": {
-        "com.linkedin.ugc.ShareContent": {
-            "shareCommentary": {
-                "text": conteudo
+        payload = {
+            "author": person_urn,
+            "lifecycleState": "PUBLISHED",
+            "specificContent": {
+                "com.linkedin.ugc.ShareContent": {
+                    "shareCommentary": {
+                        "text": conteudo
+                    },
+                    "shareMediaCategory": "NONE"
+                }
             },
-            "shareMediaCategory": "NONE"
+            "visibility": {
+                "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"
+            }
         }
-    },
-    "visibility": {
-        "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"
-    }
-}
+
         # =========================
         # HEADERS POSTAGEM
         # =========================
@@ -127,6 +136,10 @@ def publicar_linkedin(user_id, conteudo):
             headers=headers_post,
             json=payload
         )
+
+        # =========================
+        # LOGS
+        # =========================
 
         print("\n===== RESPOSTA LINKEDIN =====")
 
