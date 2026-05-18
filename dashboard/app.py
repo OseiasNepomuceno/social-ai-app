@@ -225,7 +225,7 @@ def ia():
 
                 return render_template(
                     "ia.html",
-                    erro="Erro ao gerar conteúdo"
+                    erro=resultado["erro"]
                 )
 
             conteudo = resultado["conteudo"]
