@@ -279,40 +279,31 @@ def logout():
     return redirect("/login")
 
 
-# =========================
-# PUBLICAR (MULTIUSUÁRIO)
-# =========================
-
 @app.route("/publicar/<int:post_id>")
 def publicar(post_id):
 
-    if "user" not in session:
-        return redirect("/login")
+    user_id = session["user"]
 
-    user_id = session["user"]  # 🔐 AQUI ENTRA O USER_ID
+    permitido, msg = verificar_limite(user_id)
 
-    resposta = supabase.table("posts") \
-        .select("*") \
-        .eq("id", post_id) \
-        .eq("user_id", user_id) \
-        .execute()
+    if not permitido:
+        return redirect("/planos")  # ou página de upgrade
 
-    if not resposta.data:
-        return "Acesso negado"
+    resposta = supabase.table("posts").select("*").eq("id", post_id).execute()
 
     post = resposta.data[0]
 
     if post["rede"] == "linkedin":
         os.system("python linkedin/postar.py")
 
-    if post["rede"] == "instagram":
-        print("Instagram futuramente")
+    supabase.table("posts").update({
+        "status": "executado"
+    }).eq("id", post_id).execute()
 
-    supabase.table("posts") \
-        .update({"status": "executado"}) \
-        .eq("id", post_id) \
-        .eq("user_id", user_id) \
-        .execute()
+    # 🔥 incrementa uso
+    supabase.table("users").update({
+        "posts_usados": supabase.rpc("increment", {"x": 1})
+    }).eq("id", user_id).execute()
 
     return redirect("/")
 
