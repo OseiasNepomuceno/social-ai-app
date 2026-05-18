@@ -1,94 +1,129 @@
+import os
 import requests
-import json
+from supabase import create_client
 
 # =========================
-# LER TOKEN
+# ENV
 # =========================
 
-with open(
-    "token.json",
-    "r",
-    encoding="utf-8"
-) as file:
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
-    token_data = json.load(file)
-
-ACCESS_TOKEN = token_data[
-    "access_token"
-]
-
-headers = {
-    "Authorization": f"Bearer {ACCESS_TOKEN}",
-    }
-
-# =========================
-# PEGAR USERINFO (OPENID)
-# =========================
-
-profile_response = requests.get(
-    "https://api.linkedin.com/v2/userinfo",
-    headers=headers
+supabase = create_client(
+    SUPABASE_URL,
+    SUPABASE_KEY
 )
 
-profile_data = profile_response.json()
+print("🚀 LinkedIn Poster iniciado")
 
-print("\n===== PERFIL =====")
-print(profile_data)
-
-person_id = profile_data["sub"]
-
-person_urn = f"urn:li:person:{person_id}"
 
 # =========================
-# CONTEÚDO POSTAGEM
+# FUNÇÃO PUBLICAR
 # =========================
 
-mensagem = """
-🚀 Teste de postagem automática via API LinkedIn
+def publicar_linkedin(user_id, conteudo):
 
-Sistema Social AI funcionando com:
-✅ IA
-✅ Scheduler
-✅ Automação
-✅ API oficial LinkedIn
+    try:
 
-#Python #LinkedInAPI #Automacao #IA
-"""
+        # =========================
+        # BUSCAR TOKEN USER
+        # =========================
 
-# =========================
-# PAYLOAD POSTAGEM
-# =========================
+        usuario = supabase.table("users") \
+            .select("*") \
+            .eq("id", user_id) \
+            .execute()
 
-payload = {
-    "author": person_urn,
-    "commentary": mensagem,
-    "visibility": "PUBLIC",
-    "distribution": {
-        "feedDistribution": "MAIN_FEED",
-        "targetEntities": [],
-        "thirdPartyDistributionChannels": []
-    },
-    "lifecycleState": "PUBLISHED",
-    "isReshareDisabledByAuthor": False
-}
+        if not usuario.data:
 
-headers_post = {
-    "Authorization": f"Bearer {ACCESS_TOKEN}",
-    "LinkedIn-Version": "202505",
-    "X-Restli-Protocol-Version": "2.0.0",
-    "Content-Type": "application/json"
-}
+            print("❌ Usuário não encontrado")
+            return False
 
-# =========================
-# PUBLICAR
-# =========================
+        user = usuario.data[0]
 
-response = requests.post(
-    "https://api.linkedin.com/rest/posts",
-    headers=headers_post,
-    json=payload
-)
+        access_token = user.get("linkedin_token")
 
-print("\n===== RESPOSTA LINKEDIN =====")
-print(response.status_code)
-print(response.text)
+        if not access_token:
+
+            print("❌ Usuário sem token LinkedIn")
+            return False
+
+        # =========================
+        # HEADERS
+        # =========================
+
+        headers = {
+            "Authorization": f"Bearer {access_token}"
+        }
+
+        # =========================
+        # USERINFO
+        # =========================
+
+        profile_response = requests.get(
+            "https://api.linkedin.com/v2/userinfo",
+            headers=headers
+        )
+
+        profile_data = profile_response.json()
+
+        print("\n===== PERFIL =====")
+        print(profile_data)
+
+        person_id = profile_data["sub"]
+
+        person_urn = f"urn:li:person:{person_id}"
+
+        # =========================
+        # PAYLOAD
+        # =========================
+
+        payload = {
+            "author": person_urn,
+            "commentary": conteudo,
+            "visibility": "PUBLIC",
+            "distribution": {
+                "feedDistribution": "MAIN_FEED",
+                "targetEntities": [],
+                "thirdPartyDistributionChannels": []
+            },
+            "lifecycleState": "PUBLISHED",
+            "isReshareDisabledByAuthor": False
+        }
+
+        headers_post = {
+            "Authorization": f"Bearer {access_token}",
+            "LinkedIn-Version": "202505",
+            "X-Restli-Protocol-Version": "2.0.0",
+            "Content-Type": "application/json"
+        }
+
+        # =========================
+        # POSTAGEM
+        # =========================
+
+        response = requests.post(
+            "https://api.linkedin.com/rest/posts",
+            headers=headers_post,
+            json=payload
+        )
+
+        print("\n===== RESPOSTA LINKEDIN =====")
+        print(response.status_code)
+        print(response.text)
+
+        if response.status_code in [200, 201]:
+
+            print("✅ PUBLICADO COM SUCESSO")
+
+            return True
+
+        print("❌ ERRO LINKEDIN")
+
+        return False
+
+    except Exception as e:
+
+        print("❌ ERRO POSTAR LINKEDIN:", str(e))
+
+        return False
