@@ -213,6 +213,15 @@ def linkedin_oauth():
 
     return linkedin_auth()
 
+# =========================
+# CALLBACK LINKEDIN
+# =========================
+
+@app.route("/linkedin/callback")
+def linkedin_callback_route():
+
+    return linkedin_callback()
+
 
 # =========================
 # LOGIN
