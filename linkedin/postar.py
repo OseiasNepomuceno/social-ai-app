@@ -93,7 +93,6 @@ def publicar_linkedin(user_id, conteudo):
 
         headers_post = {
             "Authorization": f"Bearer {access_token}",
-            "LinkedIn-Version": "202504",
             "X-Restli-Protocol-Version": "2.0.0",
             "Content-Type": "application/json"
         }
