@@ -52,7 +52,7 @@ def gerar_conteudo(
             "3": "saude",
             "4": "marketing",
             "5": "imobiliaria",
-            "6": "politica"
+            "6": "politica",
             "7": "gestao_negocios"
         }
 
