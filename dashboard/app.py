@@ -300,33 +300,14 @@ def publicar(post_id):
 # EXCLUIR
 # =========================
 
-@app.route("/excluir/<int:post_id>")
-def excluir(post_id):
+supabase.table(
+    "posts"
+).delete().eq(
+    "id",
+    post_id
+).execute()
 
-    with open(
-        "scheduler/agendamentos.json",
-        "r",
-        encoding="utf-8"
-    ) as file:
-
-        posts = json.load(file)
-
-    posts.pop(post_id)
-
-    with open(
-        "scheduler/agendamentos.json",
-        "w",
-        encoding="utf-8"
-    ) as file:
-
-        json.dump(
-            posts,
-            file,
-            indent=4,
-            ensure_ascii=False
-        )
-
-    return redirect("/")
+return redirect("/")
 
 # =========================
 # UPLOAD
