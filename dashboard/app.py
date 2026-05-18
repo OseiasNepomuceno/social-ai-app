@@ -167,19 +167,31 @@ def login():
         senha = request.form["senha"]
 
         try:
+
             resposta = supabase.auth.sign_in_with_password({
                 "email": email,
                 "password": senha
             })
 
-            print("LOGIN OK:", resposta)
+            # pega usuário logado corretamente
+            user = resposta.user
 
-            session["user"] = email
+            print("LOGIN OK:", user)
+
+            # 🔐 IMPORTANTE: usar ID do usuário (não email)
+            session["user"] = user.id
+            session["email"] = user.email
+
             return redirect("/")
 
         except Exception as e:
+
             print("LOGIN ERROR REAL:", str(e))
-            return render_template("login.html", erro=str(e))
+
+            return render_template(
+                "login.html",
+                erro="E-mail ou senha inválidos"
+            )
 
     return render_template("login.html")
 
