@@ -184,6 +184,95 @@ def verificar_limite(user_id):
 
 
 # =========================
+# IA GENERATOR
+# =========================
+
+@app.route("/ia", methods=["GET", "POST"])
+def ia():
+
+    if "user" not in session:
+        return redirect("/login")
+
+    if request.method == "POST":
+
+        try:
+
+            tema = request.form["tema"]
+
+            rede = request.form["rede"]
+
+            modo = request.form["modo"]
+
+            nicho = request.form["nicho"]
+
+            data_postagem = request.form["data"]
+
+            hora_postagem = request.form["hora"]
+
+            # =========================
+            # IA
+            # =========================
+
+            resultado = gerar_conteudo(
+                tema,
+                rede,
+                modo,
+                nicho
+            )
+
+            if not resultado["success"]:
+
+                return render_template(
+                    "ia.html",
+                    erro="Erro ao gerar conteúdo"
+                )
+
+            conteudo = resultado["conteudo"]
+
+            # =========================
+            # SALVAR POST
+            # =========================
+
+            supabase.table("posts").insert({
+
+                "tema": tema,
+
+                "rede": rede,
+
+                "conteudo": conteudo,
+
+                "modo": resultado["modo"],
+
+                "nicho": resultado["nicho"],
+
+                "data_postagem": data_postagem,
+
+                "hora_postagem": hora_postagem,
+
+                "status": "pendente",
+
+                "user_id": session["user"]
+
+            }).execute()
+
+            return render_template(
+                "ia.html",
+                sucesso=True,
+                conteudo=conteudo
+            )
+
+        except Exception as e:
+
+            print("ERRO IA:", str(e))
+
+            return render_template(
+                "ia.html",
+                erro=str(e)
+            )
+
+    return render_template("ia.html")
+
+# =========================
 # HOME
 # =========================
 
