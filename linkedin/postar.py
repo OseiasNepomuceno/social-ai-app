@@ -93,19 +93,21 @@ def publicar_linkedin(user_id, conteudo):
         # PAYLOAD
         # =========================
 
-        payload = {
-            "author": person_urn,
-            "commentary": conteudo,
-            "visibility": "PUBLIC",
-            "distribution": {
-                "feedDistribution": "MAIN_FEED",
-                "targetEntities": [],
-                "thirdPartyDistributionChannels": []
+       payload = {
+    "author": person_urn,
+    "lifecycleState": "PUBLISHED",
+    "specificContent": {
+        "com.linkedin.ugc.ShareContent": {
+            "shareCommentary": {
+                "text": conteudo
             },
-            "lifecycleState": "PUBLISHED",
-            "isReshareDisabledByAuthor": False
+            "shareMediaCategory": "NONE"
         }
-
+    },
+    "visibility": {
+        "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"
+    }
+}
         # =========================
         # HEADERS POSTAGEM
         # =========================
