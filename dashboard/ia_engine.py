@@ -53,6 +53,7 @@ def gerar_conteudo(
             "4": "marketing",
             "5": "imobiliaria",
             "6": "politica"
+            "7": "gestao_negocios"
         }
 
         nicho_nome = nichos.get(
