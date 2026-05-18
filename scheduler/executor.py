@@ -2,26 +2,26 @@ import os
 import time
 from supabase import create_client
 
-# =========================
-# ENV
-# =========================
+print("🚀 INICIANDO EXECUTOR...")
 
 SUPABASE_URL = os.getenv("SUPABASE_URL", "").strip()
 SUPABASE_KEY = os.getenv("SUPABASE_KEY", "").strip()
 
-if not SUPABASE_URL or not SUPABASE_KEY:
-    raise Exception("Variáveis SUPABASE não configuradas")
+print("SUPABASE_URL:", bool(SUPABASE_URL))
+print("SUPABASE_KEY:", bool(SUPABASE_KEY))
 
-# =========================
-# SUPABASE
-# =========================
+if not SUPABASE_URL:
+    raise Exception("SUPABASE_URL ausente")
+
+if not SUPABASE_KEY:
+    raise Exception("SUPABASE_KEY ausente")
 
 supabase = create_client(
     SUPABASE_URL,
     SUPABASE_KEY
 )
 
-print("🚀 Executor SaaS iniciado")
+print("✅ SUPABASE CONECTADO")
 
 
 # =========================
