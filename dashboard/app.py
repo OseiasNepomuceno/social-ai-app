@@ -12,22 +12,29 @@ import json
 import os
 from supabase import create_client
 
-import os
-from supabase import create_client
+
+# =========================
+# SUPABASE (ENV VARS SEGURAS)
+# =========================
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
+
+# =========================
+# FUNÇÃO: LIMITES DO PLANO
+# =========================
+
 def verificar_limite(user_id):
 
-    usuario = supabase.table("users").select("*").eq("id", user_id).execute()
+    res = supabase.table("users").select("*").eq("id", user_id).execute()
 
-    if not usuario.data:
+    if not res.data:
         return False, "Usuário não encontrado"
 
-    user = usuario.data[0]
+    user = res.data[0]
 
     plano = user.get("plano", "gratuito")
     limite = user.get("posts_limite", 10)
@@ -41,6 +48,7 @@ def verificar_limite(user_id):
 
     return True, "ok"
 
+
 # =========================
 # FLASK
 # =========================
@@ -53,16 +61,14 @@ app = Flask(
 
 app.secret_key = "social_ai_secret"
 
+
 # =========================
 # UPLOADS
 # =========================
 
 UPLOAD_FOLDER = "uploads"
 
-os.makedirs(
-    UPLOAD_FOLDER,
-    exist_ok=True
-)
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
@@ -78,25 +84,20 @@ def home():
         return redirect("/login")
 
     user_id = session["user"]
-    
-    resposta = supabase.table(
-        "posts"
-    ).select("*").eq(
-        "email",
-        session["user"]
-    ).execute()
 
-    agendamentos = resposta.data
+    resposta = supabase.table("posts") \
+        .select("*") \
+        .eq("user_id", user_id) \
+        .execute()
+
+    posts = resposta.data
 
     posts_ordenados = sorted(
-        agendamentos,
-        key=lambda x: (x["data"], x["hora"])
+        posts,
+        key=lambda x: (x.get("data", ""), x.get("hora", ""))
     )
 
-    return render_template(
-        "index.html",
-        posts=posts_ordenados
-    )
+    return render_template("index.html", posts=posts_ordenados)
 
 
 # =========================
@@ -111,19 +112,12 @@ def agendamentos():
 
     user_id = session["user"]
 
-    resposta = supabase.table(
-        "posts"
-    ).select("*").eq(
-        "email",
-        session["user"]
-    ).execute()
+    resposta = supabase.table("posts") \
+        .select("*") \
+        .eq("user_id", user_id) \
+        .execute()
 
-    posts = resposta.data
-
-    return render_template(
-        "index.html",
-        posts=posts
-    )
+    return render_template("index.html", posts=resposta.data)
 
 
 # =========================
@@ -138,24 +132,17 @@ def publicacoes():
 
     user_id = session["user"]
 
-    resposta = supabase.table(
-        "posts"
-    ).select("*").eq(
-        "email",
-        session["user"]
-    ).execute()
-
-    posts = resposta.data
+    resposta = supabase.table("posts") \
+        .select("*") \
+        .eq("user_id", user_id) \
+        .execute()
 
     posts_publicados = [
-        post for post in posts
-        if post["status"] == "executado"
+        p for p in resposta.data
+        if p.get("status") == "executado"
     ]
 
-    return render_template(
-        "index.html",
-        posts=posts_publicados
-    )
+    return render_template("index.html", posts=posts_publicados)
 
 
 # =========================
@@ -165,10 +152,10 @@ def publicacoes():
 @app.route("/ia")
 def ia():
 
-    return render_template(
-        "index.html",
-        posts=[]
-    )
+    if "user" not in session:
+        return redirect("/login")
+
+    return render_template("index.html", posts=[])
 
 
 # =========================
@@ -178,10 +165,12 @@ def ia():
 @app.route("/configuracoes")
 def configuracoes():
 
-    return render_template(
-        "index.html",
-        posts=[]
-    )
+    if "user" not in session:
+        return redirect("/login")
+
+    return render_template("index.html", posts=[])
+
+
 # =========================
 # LOGIN
 # =========================
@@ -201,18 +190,12 @@ def login():
                 "password": senha
             })
 
-            # pega usuário logado corretamente
             user = resposta.user
 
-            print("LOGIN OK:", user)
-
-            # sessão
             session["user"] = user.id
             session["email"] = user.email
 
-            # =========================
-            # CRIAR USUÁRIO NO BANCO (SAAS)
-            # =========================
+            # cria usuário se não existir (SaaS base)
             supabase.table("users").upsert({
                 "id": user.id,
                 "email": user.email,
@@ -224,13 +207,8 @@ def login():
             return redirect("/")
 
         except Exception as e:
-
-            print("LOGIN ERROR REAL:", str(e))
-
-            return render_template(
-                "login.html",
-                erro="E-mail ou senha inválidos"
-            )
+            print("LOGIN ERROR:", str(e))
+            return render_template("login.html", erro="E-mail ou senha inválidos")
 
     return render_template("login.html")
 
@@ -254,17 +232,11 @@ def register():
                 "password": senha
             })
 
-            return render_template(
-                "register.html",
-                sucesso="Conta criada com sucesso"
-            )
+            return render_template("register.html", sucesso="Conta criada com sucesso")
 
-        except Exception:
-
-            return render_template(
-                "register.html",
-                erro="Erro ao criar conta"
-            )
+        except Exception as e:
+            print("REGISTER ERROR:", str(e))
+            return render_template("register.html", erro="Erro ao criar conta")
 
     return render_template("register.html")
 
@@ -279,31 +251,61 @@ def logout():
     return redirect("/login")
 
 
+# =========================
+# PUBLICAR (COM BLOQUEIO SAAS)
+# =========================
+
 @app.route("/publicar/<int:post_id>")
 def publicar(post_id):
+
+    if "user" not in session:
+        return redirect("/login")
 
     user_id = session["user"]
 
     permitido, msg = verificar_limite(user_id)
 
     if not permitido:
-        return redirect("/planos")  # ou página de upgrade
+        return redirect("/planos")
 
-    resposta = supabase.table("posts").select("*").eq("id", post_id).execute()
+    post = supabase.table("posts") \
+        .select("*") \
+        .eq("id", post_id) \
+        .eq("user_id", user_id) \
+        .execute()
 
-    post = resposta.data[0]
+    if not post.data:
+        return "Acesso negado"
+
+    post = post.data[0]
 
     if post["rede"] == "linkedin":
         os.system("python linkedin/postar.py")
 
-    supabase.table("posts").update({
-        "status": "executado"
-    }).eq("id", post_id).execute()
+    if post["rede"] == "instagram":
+        print("Instagram futuramente")
 
-    # 🔥 incrementa uso
-    supabase.table("users").update({
-        "posts_usados": supabase.rpc("increment", {"x": 1})
-    }).eq("id", user_id).execute()
+    supabase.table("posts") \
+        .update({"status": "executado"}) \
+        .eq("id", post_id) \
+        .eq("user_id", user_id) \
+        .execute()
+
+    # incrementa uso (seguro)
+    usuario = supabase.table("users") \
+        .select("*") \
+        .eq("id", user_id) \
+        .execute()
+
+    if usuario.data:
+        u = usuario.data[0]
+
+        supabase.table("users") \
+            .update({
+                "posts_usados": u.get("posts_usados", 0) + 1
+            }) \
+            .eq("id", user_id) \
+            .execute()
 
     return redirect("/")
 
@@ -318,7 +320,7 @@ def excluir(post_id):
     if "user" not in session:
         return redirect("/login")
 
-    user_id = session["user"]  # 🔐 AQUI ENTRA O USER_ID
+    user_id = session["user"]
 
     supabase.table("posts") \
         .delete() \
@@ -339,7 +341,7 @@ def upload(post_id):
     if "user" not in session:
         return redirect("/login")
 
-    user_id = session["user"]  # 🔐 AQUI ENTRA O USER_ID
+    user_id = session["user"]
 
     if "imagem" not in request.files:
         return "Nenhum arquivo enviado"
@@ -360,14 +362,13 @@ def upload(post_id):
 
     imagem_url = f"{SUPABASE_URL}/storage/v1/object/public/social-ai/{nome_arquivo}"
 
-    # 🔐 garante que só altera o próprio usuário
-    resposta = supabase.table("posts") \
+    post = supabase.table("posts") \
         .select("*") \
         .eq("id", post_id) \
         .eq("user_id", user_id) \
         .execute()
 
-    if not resposta.data:
+    if not post.data:
         return "Acesso negado"
 
     supabase.table("posts") \
@@ -377,6 +378,8 @@ def upload(post_id):
         .execute()
 
     return redirect("/")
+
+
 # =========================
 # START
 # =========================
