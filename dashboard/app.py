@@ -10,9 +10,8 @@ from flask import (
 from werkzeug.utils import secure_filename
 import json
 import os
+import mercadopago
 from supabase import create_client
-token = os.getenv("MERCADO_PAGO_TOKEN")
-
 
 # =========================
 # SUPABASE (ENV VARS SEGURAS)
@@ -20,8 +19,19 @@ token = os.getenv("MERCADO_PAGO_TOKEN")
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+MERCADO_PAGO_TOKEN = os.getenv("MERCADO_PAGO_TOKEN")
+
+if not SUPABASE_URL or not SUPABASE_KEY:
+    raise Exception("Variáveis do Supabase não configuradas")
+
+if not MERCADO_PAGO_TOKEN:
+    print("⚠️ Mercado Pago não configurado")
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+mp = mercadopago.SDK(MERCADO_PAGO_TOKEN) if MERCADO_PAGO_TOKEN else None
+
+print("SUPABASE OK:", bool(SUPABASE_URL and SUPABASE_KEY))
+print("MERCADO PAGO OK:", bool(MERCADO_PAGO_TOKEN))
 
 
 # =========================
