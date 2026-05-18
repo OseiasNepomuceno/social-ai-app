@@ -55,6 +55,8 @@ def home():
     if "user" not in session:
         return redirect("/login")
 
+    user_id = session["user"]
+    
     resposta = supabase.table(
         "posts"
     ).select("*").eq(
@@ -85,6 +87,8 @@ def agendamentos():
     if "user" not in session:
         return redirect("/login")
 
+    user_id = session["user"]
+
     resposta = supabase.table(
         "posts"
     ).select("*").eq(
@@ -109,6 +113,8 @@ def publicacoes():
 
     if "user" not in session:
         return redirect("/login")
+
+    user_id = session["user"]
 
     resposta = supabase.table(
         "posts"
@@ -241,18 +247,25 @@ def logout():
 
 
 # =========================
-# PUBLICAR
+# PUBLICAR (MULTIUSUÁRIO)
 # =========================
 
 @app.route("/publicar/<int:post_id>")
 def publicar(post_id):
 
-    resposta = supabase.table(
-        "posts"
-    ).select("*").eq(
-        "id",
-        post_id
-    ).execute()
+    if "user" not in session:
+        return redirect("/login")
+
+    user_id = session["user"]  # 🔐 AQUI ENTRA O USER_ID
+
+    resposta = supabase.table("posts") \
+        .select("*") \
+        .eq("id", post_id) \
+        .eq("user_id", user_id) \
+        .execute()
+
+    if not resposta.data:
+        return "Acesso negado"
 
     post = resposta.data[0]
 
@@ -262,41 +275,47 @@ def publicar(post_id):
     if post["rede"] == "instagram":
         print("Instagram futuramente")
 
-    supabase.table(
-        "posts"
-    ).update({
-        "status": "executado"
-    }).eq(
-        "id",
-        post_id
-    ).execute()
+    supabase.table("posts") \
+        .update({"status": "executado"}) \
+        .eq("id", post_id) \
+        .eq("user_id", user_id) \
+        .execute()
 
     return redirect("/")
 
 
 # =========================
-# EXCLUIR
+# EXCLUIR (MULTIUSUÁRIO)
 # =========================
 
 @app.route("/excluir/<int:post_id>")
 def excluir(post_id):
 
-    supabase.table(
-        "posts"
-    ).delete().eq(
-        "id",
-        post_id
-    ).execute()
+    if "user" not in session:
+        return redirect("/login")
+
+    user_id = session["user"]  # 🔐 AQUI ENTRA O USER_ID
+
+    supabase.table("posts") \
+        .delete() \
+        .eq("id", post_id) \
+        .eq("user_id", user_id) \
+        .execute()
 
     return redirect("/")
 
 
 # =========================
-# UPLOAD
+# UPLOAD (MULTIUSUÁRIO)
 # =========================
 
 @app.route("/upload/<int:post_id>", methods=["POST"])
 def upload(post_id):
+
+    if "user" not in session:
+        return redirect("/login")
+
+    user_id = session["user"]  # 🔐 AQUI ENTRA O USER_ID
 
     if "imagem" not in request.files:
         return "Nenhum arquivo enviado"
@@ -317,18 +336,23 @@ def upload(post_id):
 
     imagem_url = f"{SUPABASE_URL}/storage/v1/object/public/social-ai/{nome_arquivo}"
 
-    supabase.table(
-        "posts"
-    ).update({
-        "imagem": imagem_url
-    }).eq(
-        "id",
-        post_id
-    ).execute()
+    # 🔐 garante que só altera o próprio usuário
+    resposta = supabase.table("posts") \
+        .select("*") \
+        .eq("id", post_id) \
+        .eq("user_id", user_id) \
+        .execute()
+
+    if not resposta.data:
+        return "Acesso negado"
+
+    supabase.table("posts") \
+        .update({"imagem": imagem_url}) \
+        .eq("id", post_id) \
+        .eq("user_id", user_id) \
+        .execute()
 
     return redirect("/")
-
-
 # =========================
 # START
 # =========================
