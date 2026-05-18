@@ -1,9 +1,10 @@
-import webbrowser
 import os
 from urllib.parse import quote
-from dotenv import load_dotenv
+from flask import redirect, session
 
-load_dotenv()
+# =========================
+# ENV
+# =========================
 
 CLIENT_ID = os.getenv(
     "LINKEDIN_CLIENT_ID"
@@ -13,18 +14,22 @@ REDIRECT_URI = os.getenv(
     "LINKEDIN_REDIRECT_URI"
 )
 
-scope = quote(
-    "openid profile email w_member_social"
-)
+# =========================
+# FUNÇÃO OAUTH
+# =========================
 
-auth_url = (
-    "https://www.linkedin.com/oauth/v2/authorization"
-    "?response_type=code"
-    f"&client_id={CLIENT_ID}"
-    f"&redirect_uri={REDIRECT_URI}"
-    f"&scope={scope}"
-)
+def linkedin_auth():
 
-print("Abrindo navegador LinkedIn 🚀")
+    scope = quote(
+        "openid profile email w_member_social"
+    )
 
-webbrowser.open(auth_url)
+    auth_url = (
+        "https://www.linkedin.com/oauth/v2/authorization"
+        "?response_type=code"
+        f"&client_id={CLIENT_ID}"
+        f"&redirect_uri={REDIRECT_URI}"
+        f"&scope={scope}"
+    )
+
+    return redirect(auth_url)
