@@ -61,32 +61,35 @@ def gerar_conteudo(
             "marketing"
         )
 
+               # =========================
+        # BASE DIR
+        # =========================
+
+        BASE_DIR = os.path.dirname(
+            os.path.dirname(__file__)
+        )
+
         # =========================
         # ARQUIVOS
         # =========================
 
-BASE_DIR = os.path.dirname(
-    os.path.dirname(__file__)
-)
+        arquivo_prompt = os.path.join(
+            BASE_DIR,
+            "prompts",
+            f"{rede}.txt"
+        )
 
-arquivo_prompt = os.path.join(
-    BASE_DIR,
-    "prompts",
-    f"{rede}.txt"
-)
+        arquivo_modo = os.path.join(
+            BASE_DIR,
+            "modes",
+            f"{modo_nome}.txt"
+        )
 
-arquivo_modo = os.path.join(
-    BASE_DIR,
-    "modes",
-    f"{modo_nome}.txt"
-)
-
-arquivo_nicho = os.path.join(
-    BASE_DIR,
-    "nichos",
-    f"{nicho_nome}.txt"
-)
-
+        arquivo_nicho = os.path.join(
+            BASE_DIR,
+            "nichos",
+            f"{nicho_nome}.txt"
+        )
         # =========================
         # LER PROMPTS
         # =========================
