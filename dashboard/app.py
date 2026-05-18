@@ -247,15 +247,14 @@ def logout():
 @app.route("/publicar/<int:post_id>")
 def publicar(post_id):
 
-    with open(
-        "scheduler/agendamentos.json",
-        "r",
-        encoding="utf-8"
-    ) as file:
+    resposta = supabase.table(
+        "posts"
+    ).select("*").eq(
+        "id",
+        post_id
+    ).execute()
 
-        posts = json.load(file)
-
-    post = posts[post_id]
+    post = resposta.data[0]
 
     # =========================
     # LINKEDIN
@@ -279,20 +278,14 @@ def publicar(post_id):
     # ALTERAR STATUS
     # =========================
 
-    posts[post_id]["status"] = "executado"
-
-    with open(
-        "scheduler/agendamentos.json",
-        "w",
-        encoding="utf-8"
-    ) as file:
-
-        json.dump(
-            posts,
-            file,
-            indent=4,
-            ensure_ascii=False
-        )
+    supabase.table(
+        "posts"
+    ).update({
+        "status":"executado"
+    }).eq(
+        "id",
+        post_id
+    ).execute()
 
     return redirect("/")
 
