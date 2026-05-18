@@ -49,7 +49,7 @@ def publicar_linkedin(user_id, conteudo):
             return False
 
         # =========================
-        # HEADERS
+        # HEADERS USERINFO
         # =========================
 
         headers = {
@@ -91,8 +91,13 @@ def publicar_linkedin(user_id, conteudo):
             "isReshareDisabledByAuthor": False
         }
 
+        # =========================
+        # HEADERS POSTAGEM
+        # =========================
+
         headers_post = {
             "Authorization": f"Bearer {access_token}",
+            "LinkedIn-Version": "202504",
             "X-Restli-Protocol-Version": "2.0.0",
             "Content-Type": "application/json"
         }
