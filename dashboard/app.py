@@ -23,11 +23,10 @@ MERCADO_PAGO_TOKEN = os.getenv("MERCADO_PAGO_TOKEN")
 if not SUPABASE_URL or not SUPABASE_KEY:
     raise Exception("Supabase não configurado")
 
-if not MERCADO_PAGO_TOKEN:
-    print("⚠️ Mercado Pago não configurado")
-
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
 mp = mercadopago.SDK(MERCADO_PAGO_TOKEN) if MERCADO_PAGO_TOKEN else None
+
 
 # =========================
 # FLASK APP
@@ -42,25 +41,13 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 
 # =========================
-# PLANOS (SAAS)
+# PLANOS
 # =========================
 
 PLANOS = {
-    "basic": {
-        "nome": "Basic",
-        "preco": 19.90,
-        "limite": 50
-    },
-    "pro": {
-        "nome": "Pro",
-        "preco": 39.90,
-        "limite": 200
-    },
-    "business": {
-        "nome": "Business",
-        "preco": 79.90,
-        "limite": 999999
-    }
+    "basic": {"nome": "Basic", "preco": 19.90, "limite": 50},
+    "pro": {"nome": "Pro", "preco": 39.90, "limite": 200},
+    "business": {"nome": "Business", "preco": 79.90, "limite": 999999}
 }
 
 
@@ -78,7 +65,7 @@ def planos():
 
 
 # =========================
-# CHECKOUT MERCADO PAGO
+# CHECKOUT
 # =========================
 
 @app.route("/checkout/<plano>")
@@ -86,6 +73,9 @@ def checkout(plano):
 
     if "user" not in session:
         return redirect("/login")
+
+    if not mp:
+        return "Mercado Pago não configurado"
 
     if plano not in PLANOS:
         return "Plano inválido"
@@ -104,9 +94,7 @@ def checkout(plano):
                 "unit_price": float(plano_info["preco"])
             }
         ],
-        "payer": {
-            "email": email
-        },
+        "payer": {"email": email},
         "back_urls": {
             "success": "https://SEU_DOMINIO/sucesso",
             "failure": "https://SEU_DOMINIO/falha",
@@ -122,26 +110,35 @@ def checkout(plano):
 
 
 # =========================
-# WEBHOOK MERCADO PAGO
+# WEBHOOK
 # =========================
 
 @app.route("/webhook/mercadopago", methods=["POST"])
 def webhook_mp():
 
-    data = request.get_json()
+    if not mp:
+        return "ok"
+
+    data = request.get_json(silent=True)
 
     if not data:
         return "ok"
 
     try:
-        payment_id = data["data"]["id"]
+        payment_id = data.get("data", {}).get("id")
+
+        if not payment_id:
+            return "ok"
 
         payment = mp.payment().get(payment_id)
         payment_info = payment["response"]
 
-        if payment_info["status"] == "approved":
+        if payment_info.get("status") == "approved":
 
             external_reference = payment_info.get("external_reference", "")
+            if "|" not in external_reference:
+                return "ok"
+
             user_id, plano = external_reference.split("|")
 
             plano_info = PLANOS.get(plano)
@@ -162,7 +159,7 @@ def webhook_mp():
 
 
 # =========================
-# FUNÇÃO LIMITE
+# LIMITE
 # =========================
 
 def verificar_limite(user_id):
@@ -195,7 +192,10 @@ def home():
 
     user_id = session["user"]
 
-    posts = supabase.table("posts").select("*").eq("user_id", user_id).execute().data
+    posts = supabase.table("posts") \
+        .select("*") \
+        .eq("user_id", user_id) \
+        .execute().data
 
     return render_template("index.html", posts=posts)
 
@@ -254,7 +254,6 @@ def register():
         senha = request.form["senha"]
 
         try:
-
             supabase.auth.sign_up({
                 "email": email,
                 "password": senha
@@ -280,7 +279,7 @@ def logout():
 
 
 # =========================
-# PUBLICAR (SAAS CHECK)
+# PUBLICAR
 # =========================
 
 @app.route("/publicar/<int:post_id>")
@@ -296,21 +295,31 @@ def publicar(post_id):
     if not permitido:
         return redirect("/planos")
 
-    post = supabase.table("posts").select("*").eq("id", post_id).eq("user_id", user_id).execute().data
+    post = supabase.table("posts") \
+        .select("*") \
+        .eq("id", post_id) \
+        .eq("user_id", user_id) \
+        .execute().data
 
     if not post:
         return "Acesso negado"
 
-    post = post[0]
+    supabase.table("posts") \
+        .update({"status": "executado"}) \
+        .eq("id", post_id) \
+        .execute()
 
-    supabase.table("posts").update({
-        "status": "executado"
-    }).eq("id", post_id).execute()
+    user = supabase.table("users") \
+        .select("*") \
+        .eq("id", user_id) \
+        .execute().data
 
-    user = supabase.table("users").select("*").eq("id", user_id).execute().data[0]
-
-    supabase.table("users").update({
-        "posts_usados": user.get("posts_usados", 0) + 1
-    }).eq("id", user_id).execute()
+    if user:
+        supabase.table("users") \
+            .update({
+                "posts_usados": user[0].get("posts_usados", 0) + 1
+            }) \
+            .eq("id", user_id) \
+            .execute()
 
     return redirect("/")
