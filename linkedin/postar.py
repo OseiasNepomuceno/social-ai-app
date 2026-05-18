@@ -67,8 +67,14 @@ def publicar_linkedin(user_id, conteudo):
 
         profile_data = profile_response.json()
 
-        print("\n===== PERFIL =====")
-        print(profile_data)
+        if "sub" not in profile_data:
+
+            print("❌ Token LinkedIn inválido")
+
+            return False
+
+print("\n===== PERFIL =====")
+print(profile_data)
 
         person_id = profile_data["sub"]
 
