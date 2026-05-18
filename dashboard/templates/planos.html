@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Planos - Social AI</title>
+
+<style>
+
+body{
+    font-family: Arial;
+    background:#f4f7fb;
+    margin:0;
+    padding:0;
+}
+
+/* HEADER */
+.header{
+    text-align:center;
+    padding:50px 20px;
+}
+
+.header h1{
+    font-size:36px;
+    margin-bottom:10px;
+}
+
+.header p{
+    color:#666;
+}
+
+/* PLANOS */
+.container{
+    display:flex;
+    justify-content:center;
+    gap:20px;
+    flex-wrap:wrap;
+    padding:20px;
+}
+
+.card{
+    background:white;
+    width:280px;
+    padding:30px;
+    border-radius:15px;
+    box-shadow:0 2px 10px rgba(0,0,0,0.08);
+    text-align:center;
+}
+
+.card h2{
+    margin-bottom:10px;
+}
+
+.preco{
+    font-size:28px;
+    font-weight:bold;
+    margin:15px 0;
+}
+
+.lista{
+    text-align:left;
+    margin:20px 0;
+    color:#444;
+}
+
+.btn{
+    display:inline-block;
+    padding:12px 20px;
+    border-radius:10px;
+    text-decoration:none;
+    font-weight:bold;
+    color:white;
+}
+
+.free{
+    background:#6b7280;
+}
+
+.pro{
+    background:#111827;
+}
+
+.business{
+    background:#2563eb;
+}
+
+.card:hover{
+    transform:scale(1.03);
+    transition:0.3s;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="header">
+    <h1>Escolha seu Plano</h1>
+    <p>Automatize suas redes sociais com IA</p>
+</div>
+
+<div class="container">
+
+    <!-- FREE -->
+    <div class="card">
+        <h2>Free</h2>
+        <div class="preco">R$0</div>
+
+        <div class="lista">
+            ✔ 10 posts/mês<br>
+            ✔ Dashboard básico<br>
+            ✔ IA limitada
+        </div>
+
+        <a href="/" class="btn free">
+            Começar Grátis
+        </a>
+    </div>
+
+    <!-- PRO -->
+    <div class="card">
+        <h2>Pro</h2>
+        <div class="preco">R$29/mês</div>
+
+        <div class="lista">
+            ✔ 200 posts/mês<br>
+            ✔ IA completa<br>
+            ✔ Agendamento automático<br>
+            ✔ Suporte básico
+        </div>
+
+        <a href="/checkout/pro" class="btn pro">
+            Assinar Pro
+        </a>
+    </div>
+
+    <!-- BUSINESS -->
+    <div class="card">
+        <h2>Business</h2>
+        <div class="preco">R$79/mês</div>
+
+        <div class="lista">
+            ✔ Posts ilimitados<br>
+            ✔ IA avançada<br>
+            ✔ Multiusuário<br>
+            ✔ Prioridade no suporte
+        </div>
+
+        <a href="/checkout/business" class="btn business">
+            Assinar Business
+        </a>
+    </div>
+
+</div>
+
+</body>
+</html>
