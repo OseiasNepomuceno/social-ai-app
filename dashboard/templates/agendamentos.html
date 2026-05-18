@@ -18,11 +18,13 @@
             display: grid;
 
             grid-template-columns:
-                repeat(auto-fit, minmax(150px, 1fr));
+                repeat(auto-fit, minmax(180px, 220px));
 
-            gap: 20px;
+            gap: 12px;
 
-            margin-top: 30px;
+            margin-top: 20px;
+
+            justify-content: start;
 
         }
 
@@ -30,11 +32,27 @@
 
             background: #ffffff;
 
-            padding: 8px;
+            padding: 6px;
 
-            border-radius: 12px;
+            border-radius: 10px;
 
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+
+        }
+
+        .card h2 {
+
+            font-size: 15px;
+
+            margin-bottom: 8px;
+
+        }
+
+        .card p {
+
+            font-size: 11px;
+
+            margin: 4px 0;
 
         }
 
@@ -42,11 +60,15 @@
 
             width: 100%;
 
-            margin-top: 15px;
+            margin-top: 10px;
 
-            border-radius: 8px;
+            border-radius: 6px;
 
-            padding: 10px;
+            padding: 5px;
+
+            font-size: 11px;
+
+            resize: none;
 
         }
 
@@ -54,17 +76,19 @@
 
             display: inline-block;
 
-            margin-top: 15px;
+            margin-top: 10px;
 
             background: #ff4d4d;
 
             color: white;
 
-            padding: 10px 15px;
+            padding: 5px 8px;
 
-            border-radius: 8px;
+            border-radius: 6px;
 
             text-decoration: none;
+
+            font-size: 11px;
 
         }
 
@@ -76,51 +100,51 @@
 
         .badge-success {
 
-    background: #d4edda;
+            background: #d4edda;
 
-    color: #155724;
+            color: #155724;
 
-    padding: 6px 12px;
+            padding: 3px 6px;
 
-    border-radius: 20px;
+            border-radius: 20px;
 
-    font-size: 14px;
+            font-size: 10px;
 
-    font-weight: bold;
+            font-weight: bold;
 
-}
+        }
 
-.badge-warning {
+        .badge-warning {
 
-    background: #fff3cd;
+            background: #fff3cd;
 
-    color: #856404;
+            color: #856404;
 
-    padding: 6px 12px;
+            padding: 3px 6px;
 
-    border-radius: 20px;
+            border-radius: 20px;
 
-    font-size: 14px;
+            font-size: 10px;
 
-    font-weight: bold;
+            font-weight: bold;
 
-}
+        }
 
-.badge-error {
+        .badge-error {
 
-    background: #f8d7da;
+            background: #f8d7da;
 
-    color: #721c24;
+            color: #721c24;
 
-    padding: 6px 12px;
+            padding: 3px 6px;
 
-    border-radius: 20px;
+            border-radius: 20px;
 
-    font-size: 14px;
+            font-size: 10px;
 
-    font-weight: bold;
+            font-weight: bold;
 
-}
+        }
 
     </style>
 
@@ -159,35 +183,35 @@
 
                 <p>
 
-    <strong>Status:</strong>
+                    <strong>Status:</strong>
 
-    {% if post.status == "executado" %}
+                    {% if post.status == "executado" %}
 
-        <span class="badge-success">
-            🟢 Executado
-        </span>
+                        <span class="badge-success">
+                            🟢 Executado
+                        </span>
 
-    {% elif post.status == "pendente" %}
+                    {% elif post.status == "pendente" %}
 
-        <span class="badge-warning">
-            🟡 Pendente
-        </span>
+                        <span class="badge-warning">
+                            🟡 Pendente
+                        </span>
 
-    {% elif post.status == "erro" %}
+                    {% elif post.status == "erro" %}
 
-        <span class="badge-error">
-            🔴 Erro
-        </span>
+                        <span class="badge-error">
+                            🔴 Erro
+                        </span>
 
-    {% else %}
+                    {% else %}
 
-        <span>
-            {{ post.status }}
-        </span>
+                        <span>
+                            {{ post.status }}
+                        </span>
 
-    {% endif %}
+                    {% endif %}
 
-</p>
+                </p>
 
                 <p>
                     <strong>Modo:</strong>
@@ -209,7 +233,7 @@
                     {{ post.hora_postagem }}
                 </p>
 
-                <textarea rows="4" readonly>{{ post.conteudo }}</textarea>
+                <textarea rows="2" readonly>{{ post.conteudo }}</textarea>
 
                 <a
                     href="/delete_post/{{ post.id }}"
