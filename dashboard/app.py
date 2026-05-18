@@ -11,6 +11,7 @@ import os
 import json
 import mercadopago
 from supabase import create_client
+from linkedin.auth import linkedin_auth
 
 # =========================
 # ENV (SEGURAS)
@@ -198,6 +199,18 @@ def home():
         .execute().data
 
     return render_template("index.html", posts=posts)
+
+
+# =========================
+# LINKEDIN
+# =========================
+@app.route("/linkedin/auth")
+def linkedin_oauth():
+
+    if "user" not in session:
+        return redirect("/login")
+
+    return linkedin_auth()
 
 
 # =========================
