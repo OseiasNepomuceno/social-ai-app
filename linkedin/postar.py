@@ -102,7 +102,7 @@ def publicar_linkedin(user_id, conteudo):
             "Content-Type": "application/json"
         }
         
-        }
+    
 
         # =========================
         # POSTAGEM
