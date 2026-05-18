@@ -294,6 +294,37 @@ def home():
 
 
 # =========================
+# AGENDAMENTOS
+# =========================
+
+@app.route("/agendamentos")
+def agendamentos():
+
+    if "user" not in session:
+        return redirect("/login")
+
+    try:
+
+        posts = supabase.table("posts") \
+            .select("*") \
+            .eq("user_id", session["user"]) \
+            .order("id", desc=True) \
+            .execute()
+
+        return render_template(
+            "agendamentos.html",
+            posts=posts.data
+        )
+
+    except Exception as e:
+
+        return render_template(
+            "agendamentos.html",
+            erro=str(e)
+        )
+
+
+# =========================
 # LINKEDIN
 # =========================
 @app.route("/linkedin/auth")
