@@ -1,6 +1,6 @@
 import os
 from openai import OpenAI
-from agents.image_agent import gerar_imagem
+from dashboard.agents.image_agent import gerar_imagem
 
 
 # =========================
