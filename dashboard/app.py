@@ -565,9 +565,13 @@ def publicar(post_id):
     if "user_id" not in session:
         return redirect("/login")
 
+    # =========================
+    # PUBLICAÇÃO MANUAL
+    # DESATIVADA
+    # =========================
+
     return redirect("/agendamentos")
-
-
+    
 # =========================
 # START
 # =========================
