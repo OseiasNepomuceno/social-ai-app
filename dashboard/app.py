@@ -565,8 +565,7 @@ def publicar(post_id):
     if "user_id" not in session:
         return redirect("/login")
 
-           return redirect("/agendamentos")
-
+    return redirect("/agendamentos")
 
 
 # =========================
