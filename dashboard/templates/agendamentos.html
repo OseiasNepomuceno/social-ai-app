@@ -1,17 +1,13 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
+{% extends "base.html" %}
 
-<head>
+{% block title %}
+Agendamentos
+{% endblock 
 
-    <meta charset="UTF-8">
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+{% block extra_css %}
 
-    <title>Agendamentos</title>
-
-    <link rel="stylesheet" href="/static/style.css">
-
-    <style>
+<style>
 
         .grid {
 
@@ -145,12 +141,13 @@
             font-weight: bold;
 
         }
+    
+</style>
 
-    </style>
+{% endblock %}
 
-</head>
 
-<body>
+{% block content %}
 
 <div class="container">
 
@@ -258,6 +255,8 @@
 
 </div>
 
-</body>
 
-</html>
+{% endblock %}
+
+
+
