@@ -291,6 +291,13 @@ def configuracoes():
             .eq("id", session["user"]) \
             .execute()
 
+        if not usuario.data:
+
+            return render_template(
+                "configuracoes.html",
+                erro="Usuário não encontrado"
+            )
+
         user = usuario.data[0]
 
         linkedin_conectado = bool(
@@ -305,12 +312,12 @@ def configuracoes():
 
     except Exception as e:
 
+        print("ERRO CONFIG:", str(e))
+
         return render_template(
             "configuracoes.html",
             erro=str(e)
         )
-
-
 # =========================
 # PUBLICAÇÕES
 # =========================
