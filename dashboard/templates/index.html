@@ -1,512 +1,239 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 
 <head>
 
-<meta charset="UTF-8">
+    <meta charset="UTF-8">
 
-<title>
-SOCIAL AI DASHBOARD
-</title>
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
 
-<link
-rel="icon"
-href="{{ url_for('static', filename='logo.png') }}"
->
+    <title>Dashboard</title>
 
-<style>
+    <link rel="stylesheet" href="/static/style.css">
 
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-}
+    <style>
 
-body{
-    font-family:Arial;
-    background:#f4f7fb;
-    display:flex;
-}
+        .stats {
 
-/* =========================
-SIDEBAR
-========================= */
+            display: grid;
 
+            grid-template-columns:
+                repeat(auto-fit, minmax(180px, 1fr));
 
+            gap: 20px;
 
-.sidebar{
+            margin-top: 30px;
 
-    width:250px;
+        }
 
-    height:100vh;
+        .stat-card {
 
-    background:#111827;
+            background: white;
 
-    color:white;
+            padding: 20px;
 
-    padding:30px;
+            border-radius: 12px;
 
-    position:fixed;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
 
-    top:0;
-    left:0;
-}
+            text-align: center;
 
-.sidebar img{
-    width:70px;
-    margin-bottom:20px;
-}
+        }
 
-.sidebar h2{
-    margin-bottom:40px;
-}
+        .stat-card h2 {
 
-.sidebar ul{
-    list-style:none;
-}
+            font-size: 30px;
 
-.sidebar li{
-    margin-bottom:20px;
-}
+            margin: 10px 0;
 
-.sidebar a{
-    color:white;
-    text-decoration:none;
-    font-weight:bold;
-}
+        }
 
-.sidebar a:hover{
-    opacity:0.8;
-}
-/* =========================
-CONTEÚDO
-========================= */
+        .posts-grid {
 
-.main{
-    margin-left:250px;
-    width:100%;
-    padding:30px;
-}
+            display: grid;
 
-/* =========================
-TOPO
-========================= */
+            grid-template-columns:
+                repeat(auto-fit, minmax(250px, 1fr));
 
-.topo{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:30px;
-}
+            gap: 15px;
 
-.topo h1{
-    font-size:32px;
-}
+            margin-top: 30px;
 
-/* =========================
-CARDS MÉTRICAS
-========================= */
+        }
 
-.metricas{
-    display:flex;
-    gap:20px;
-    margin-bottom:30px;
-}
+        .post-card {
 
-.metrica{
-    background:white;
-    padding:20px;
-    flex:1;
-    border-radius:15px;
-    box-shadow:0 2px 10px rgba(0,0,0,0.05);
-}
+            background: white;
 
-.metrica h3{
-    font-size:18px;
-    margin-bottom:10px;
-}
+            padding: 15px;
 
-.metrica p{
-    font-size:28px;
-    font-weight:bold;
-}
+            border-radius: 10px;
 
-/* =========================
-POSTS
-========================= */
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 
-/* =========================
-CALENDÁRIO
-========================= */
+        }
 
-.titulo-calendario{
-    margin-bottom:20px;
-}
+        .post-card h3 {
 
-.calendario{
-    background:white;
-    padding:25px;
-    border-radius:15px;
-    margin-bottom:30px;
-    box-shadow:0 2px 10px rgba(0,0,0,0.05);
-}
+            font-size: 16px;
 
-.evento{
-    display:flex;
-    align-items:center;
-    padding:15px 0;
-    border-bottom:1px solid #eee;
-}
+            margin-bottom: 10px;
 
-.evento:last-child{
-    border-bottom:none;
-}
+        }
 
-.evento-data{
-    width:120px;
-    font-weight:bold;
-    color:#111827;
-}
+        .post-card p {
 
-.evento-info h3{
-    margin-bottom:5px;
-}
+            font-size: 12px;
 
-.posts{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:20px;
-}
+            margin: 4px 0;
 
-.card{
-    background:white;
-    padding:25px;
-    border-radius:15px;
-    box-shadow:0 2px 10px rgba(0,0,0,0.05);
-}
+        }
 
-.preview-img{
-    width:100%;
-    border-radius:12px;
-    margin-bottom:15px;
-}
+        .badge {
 
-.card h2{
-    margin-bottom:20px;
-}
+            padding: 4px 8px;
 
-.card p{
-    margin-bottom:10px;
-}
+            border-radius: 20px;
 
-/* =========================
-STATUS
-========================= */
+            font-size: 10px;
 
-.executado{
-    color:green;
-    font-weight:bold;
-}
+            font-weight: bold;
 
-.pendente{
-    color:orange;
-    font-weight:bold;
-}
+        }
 
-.erro{
-    color:red;
-    font-weight:bold;
-}
+        .success {
 
-.btn{
+            background: #d4edda;
 
-    display:inline-block;
-    margin-top:15px;
-    padding:12px 18px;
+            color: #155724;
 
-    background:#111827;
-    color:white;
+        }
 
-    text-decoration:none;
+        .warning {
 
-    border-radius:10px;
+            background: #fff3cd;
 
-    font-weight:bold;
-}
+            color: #856404;
 
-.btn:hover{
-    opacity:0.9;
-}
+        }
 
-.excluir{
-    background:#dc2626;
-    margin-left:10px;
-}
+        .error {
 
-</style>
+            background: #f8d7da;
+
+            color: #721c24;
+
+        }
+
+    </style>
 
 </head>
 
 <body>
 
-<!-- SIDEBAR -->
+<div class="container">
 
-<div class="sidebar">
+    <h1>🚀 Dashboard Social AI</h1>
 
-<img
-src="{{ url_for('static', filename='logo.png') }}"
->
+    <div class="stats">
 
-<h2>
-SOCIAL AI
-</h2>
+        <div class="stat-card">
 
-<ul>
+            <p>Total Posts</p>
 
-<li>
-<a href="/">
-📊 Dashboard
-</a>
-</li>
+            <h2>{{ total_posts }}</h2>
 
-<li>
-    <a href="/agendamentos">
-        📅 Agendamentos
-    </a>
-</li>
+        </div>
 
-<li>
-    <a href="/publicacoes">
-        🚀 Publicações
-    </a>
-</li>
-<li>
-    <a href="/ia">
-        🤖 IA
-    </a>
-</li>
+        <div class="stat-card">
 
-<li>
-<a href="/planos">
-💰 Planos
-</a>
-</li>
-    
-<li>
-    <a href="/configuracoes">
-        ⚙️ Configurações
-    </a>
-</li>
+            <p>Executados</p>
 
-<li>
-<a href="/logout">
-🚪 Sair
-</a>
-</li>
+            <h2>{{ executados }}</h2>
 
-</ul>
+        </div>
 
-</div>
+        <div class="stat-card">
 
-<!-- MAIN -->
+            <p>Pendentes</p>
 
-<div class="main">
+            <h2>{{ pendentes }}</h2>
 
-<!-- TOPO -->
+        </div>
 
-<div class="topo">
+        <div class="stat-card">
 
-<div>
+            <p>Erros</p>
 
-<h1>
-🚀 SOCIAL AI DASHBOARD
-</h1>
+            <h2>{{ erros }}</h2>
 
-<p>
-Sistema Inteligente de Automação
-</p>
+        </div>
 
-</div>
+    </div>
 
-</div>
+    <h2 style="margin-top:40px;">
 
-<!-- MÉTRICAS -->
+        Últimas Publicações
 
-<div class="metricas">
+    </h2>
 
-<div class="metrica">
+    <div class="posts-grid">
 
-<h3>
-🚀 Executados
-</h3>
+        {% for post in posts %}
 
-<p>
-{{ posts | selectattr("status", "equalto", "executado") | list | length }}
-</p>
+            <div class="post-card">
 
-</div>
+                <h3>{{ post.tema }}</h3>
 
-<div class="metrica">
+                <p>
 
-<h3>
-⏳ Pendentes
-</h3>
+                    <strong>Rede:</strong>
+                    {{ post.rede }}
 
-<p>
-{{ posts | selectattr("status", "equalto", "pendente") | list | length }}
-</p>
+                </p>
 
-</div>
+                <p>
 
-<div class="metrica">
+                    <strong>Data:</strong>
+                    {{ post.data_postagem }}
 
-<h3>
-📅 Total
-</h3>
+                </p>
 
-<p>
-{{ posts | length }}
-</p>
+                <p>
 
-</div>
+                    <strong>Status:</strong>
 
-</div>
+                    {% if post.status == "executado" %}
 
-<!-- CALENDÁRIO -->
+                        <span class="badge success">
+                            Executado
+                        </span>
 
-<h2 class="titulo-calendario">
-📅 Calendário de Postagens
-</h2>
+                    {% elif post.status == "pendente" %}
 
-<div class="calendario">
+                        <span class="badge warning">
+                            Pendente
+                        </span>
 
-{% for post in posts %}
+                    {% else %}
 
-<div class="evento">
+                        <span class="badge error">
+                            Erro
+                        </span>
 
-<div class="evento-data">
-{{ post.data }}
-</div>
+                    {% endif %}
 
-<div class="evento-info">
+                </p>
 
-<h3>
-{{ post.tema }}
-</h3>
+            </div>
 
-<p>
-{{ post.rede }} • {{ post.hora }}
-</p>
+        {% endfor %}
 
-<p class="{{ post.status }}">
-{{ post.status }}
-</p>
-
-</div>
-
-</div>
-
-{% endfor %}
-
-</div>
-
-<!-- POSTS -->
-
-<div class="posts">
-
-{% for post in posts %}
-
-{% set post_id = post.id %}
-
-<div class="card">
-
-{% if post.imagem %}
-
-<img
-src="{{ post.imagem }}"
-class="preview-img"
->
-
-{% endif %}
-
-<h2>
-{{ post.tema }}
-</h2>
-
-<p>
-<b>Rede:</b>
-{{ post.rede }}
-</p>
-
-<p>
-<b>Modo:</b>
-{{ post.modo }}
-</p>
-
-<p>
-<b>Data:</b>
-{{ post.data }}
-</p>
-
-<p>
-<b>Hora:</b>
-{{ post.hora }}
-</p>
-
-<p class="{{ post.status }}">
-
-Status:
-{{ post.status }}
-
-</p>
-
-<a
-href="/publicar/{{ post_id }}"
-class="btn"
->
-
-🚀 Publicar Agora
-
-</a>
-
-<a
-href="/excluir/{{ post_id }}"
-class="btn excluir"
->
-
-🗑️ Excluir
-
-</a>
-
-<form
-action="/upload/{{ post_id }}"
-method="POST"
-enctype="multipart/form-data"
->
-
-<input
-type="file"
-name="imagem"
-required
->
-
-<button
-type="submit"
-class="btn"
->
-
-🖼️ Upload
-
-</button>
-
-</form>
-
-</div>
-
-{% endfor %}
-
+    </div>
 
 </div>
 
 </body>
+
 </html>
