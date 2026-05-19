@@ -266,9 +266,79 @@
 
         }
 
+        .chart-box {
+
+    background: white;
+
+    margin-top: 30px;
+
+    padding: 20px;
+
+    border-radius: 12px;
+
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+
+}
+
     </style>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 </head>
+
+    <script>
+
+const ctx = document.getElementById(
+    'postsChart'
+);
+
+new Chart(ctx, {
+
+    type: 'bar',
+
+    data: {
+
+        labels: [
+            'Executados',
+            'Pendentes',
+            'Erros'
+        ],
+
+        datasets: [{
+
+            label: 'Posts',
+
+            data: [
+                {{ executados }},
+                {{ pendentes }},
+                {{ erros }}
+            ],
+
+            borderWidth: 1
+
+        }]
+
+    },
+
+    options: {
+
+        responsive: true,
+
+        plugins: {
+
+            legend: {
+
+                display: false
+
+            }
+
+        }
+
+    }
+
+});
+
+</script>
 
 <body>
 
@@ -371,6 +441,14 @@
             <p>Erros</p>
 
             <h2>{{ erros }}</h2>
+
+        </div>
+
+        <div class="chart-box">
+
+            <h2>📈 Performance de Postagens</h2>
+
+            <canvas id="postsChart"></canvas>
 
         </div>
 
