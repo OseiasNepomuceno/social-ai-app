@@ -1,6 +1,12 @@
 import sys
 import os
 import time
+import sys
+
+from datetime import datetime
+from zoneinfo import ZoneInfo
+from supabase import create_client
+from linkedin.postar import publicar_linkedin
 
 # =========================
 # PATH ROOT PROJETO
@@ -15,8 +21,7 @@ sys.path.append(
     )
 )
 
-from supabase import create_client
-from linkedin.postar import publicar_linkedin
+
 
 print("🚀 EXECUTOR SAAS INICIANDO")
 
