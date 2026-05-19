@@ -91,8 +91,7 @@
 
             <strong>Email:</strong>
 
-            {{ user.email }}
-
+           {{ user.email if user else "Usuário não encontrado" }}
         </p>
 
     </div>
