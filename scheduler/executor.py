@@ -280,6 +280,77 @@ def loop_executor():
 
                         continue
 
+
+                                        # =========================
+                    # VALIDAR HORÁRIO
+                    # =========================
+
+                    data_post = post.get(
+                        "data_postagem"
+                    )
+
+                    hora_post = post.get(
+                        "hora_postagem"
+                    )
+
+                    if not data_post or not hora_post:
+
+                        print(
+                            "❌ Data/Hora ausente"
+                        )
+
+                        continue
+
+                    try:
+
+                        data_hora = datetime.strptime(
+
+                            f"{data_post} {hora_post}",
+
+                            "%Y-%m-%d %H:%M:%S"
+
+                        )
+
+                    except:
+
+                        data_hora = datetime.strptime(
+
+                            f"{data_post} {hora_post}",
+
+                            "%Y-%m-%d %H:%M"
+
+                        )
+
+                    agora = datetime.now(
+                        ZoneInfo(
+                            "America/Sao_Paulo"
+                        )
+                    ).replace(
+                        tzinfo=None
+                    )
+
+                    print(
+                        "🕒 Agora:",
+                        agora
+                    )
+
+                    print(
+                        "📅 Agendado:",
+                        data_hora
+                    )
+
+                    # =========================
+                    # AINDA NÃO CHEGOU
+                    # =========================
+
+                    if agora < data_hora:
+
+                        print(
+                            "⌛ Aguardando horário..."
+                        )
+
+                        continue
+
                     # =========================
                     # EVITAR DUPLICAÇÃO
                     # =========================
