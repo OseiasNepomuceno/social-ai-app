@@ -150,12 +150,14 @@ Tema do conteúdo:
         )
 
         resultado = response.choices[0].message.content
+        imagem_url = gerar_imagem(tema)
 
         print("✅ Conteúdo IA gerado")
 
         return {
             "success": True,
             "conteudo": resultado,
+            "imagem_url": imagem_url,
             "modo": modo_nome,
             "nicho": nicho_nome
         }
