@@ -565,56 +565,9 @@ def publicar(post_id):
     if "user_id" not in session:
         return redirect("/login")
 
-    # =========================
-    # PUBLICAÇÃO MANUAL
-    # DESATIVADA
-    # =========================
+           return redirect("/agendamentos")
 
-    return redirect("/agendamentos")
-        # =========================
-        # LINKEDIN
-        # =========================
 
-        if post["rede"] == "linkedin":
-
-            print(
-                "Publicando LinkedIn..."
-            )
-
-        # =========================
-        # INSTAGRAM
-        # =========================
-
-        if post["rede"] == "instagram":
-
-            print(
-                "Instagram futuramente"
-            )
-
-        # =========================
-        # ALTERAR STATUS
-        # =========================
-
-        supabase.table(
-            "posts"
-        ).update({
-
-            "status": "executado"
-
-        }).eq(
-            "id",
-            post_id
-        ).execute()
-
-        return redirect("/publicacoes")
-
-    except Exception as e:
-
-        print("PUBLICAR ERROR:")
-
-        print(str(e))
-
-        return redirect("/agendamentos")
 
 # =========================
 # START
