@@ -152,7 +152,7 @@ def webhook_mp():
                 supabase.table("users").update({
                     "plano": plano,
                     "posts_limite": plano_info["limite"]
-                }).eq("id", user_id).execute()
+                }).eq("user_id", session["user_id"]).execute()
 
                 print("Plano atualizado:", user_id, plano)
 
@@ -168,7 +168,7 @@ def webhook_mp():
 
 def verificar_limite(user_id):
 
-    res = supabase.table("users").select("*").eq("id", user_id).execute()
+    res = supabase.table("users").select("*").eq("user_id", session["user_id"]).execute()
 
     if not res.data:
         return False, "Usuário não encontrado"
@@ -337,7 +337,7 @@ def publicacoes():
 
         posts = supabase.table("posts") \
             .select("*") \
-            .eq("user_id", session["user"]) \
+            .eq("user_id", session["user_id"]) \
             .in_("status", ["executado", "erro"]) \
             .order("id", desc=True) \
             .execute()
@@ -389,7 +389,7 @@ def agendamentos():
 
         posts = supabase.table("posts") \
             .select("*") \
-            .eq("user_id", session["user"]) \
+            .eq("user_id", session["user_id"]) \
             .order("id", desc=True) \
             .execute()
 
@@ -533,7 +533,7 @@ def delete_post(post_id):
         supabase.table("posts") \
             .delete() \
             .eq("id", post_id) \
-            .eq("user_id", session["user"]) \
+            .eq("user_id", session["user_id"]) \
             .execute()
 
         return redirect("/agendamentos")
@@ -572,7 +572,7 @@ def publicar(post_id):
 
     post = supabase.table("posts") \
         .select("*") \
-        .eq("id", post_id) \
+        .eq("user_id", session["user_id"]) \
         .eq("user_id", user_id) \
         .execute().data
 
@@ -581,12 +581,12 @@ def publicar(post_id):
 
     supabase.table("posts") \
         .update({"status": "executado"}) \
-        .eq("id", post_id) \
+        .eq("user_id", session["user_id"]) \
         .execute()
 
     user = supabase.table("users") \
         .select("*") \
-        .eq("id", user_id) \
+        .eq("user_id", session["user_id"]) \
         .execute().data
 
     if user:
@@ -594,7 +594,7 @@ def publicar(post_id):
             .update({
                 "posts_usados": user[0].get("posts_usados", 0) + 1
             }) \
-            .eq("id", user_id) \
+            .eq("user_id", session["user_id"]) \
             .execute()
 
     return redirect("/")
