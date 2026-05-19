@@ -1,190 +1,172 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
+{% extends "base.html" %}
 
-<head>
+{% block title %}
+Publicações
+{% endblock %}
 
-    <meta charset="UTF-8">
+{% block extra_css %}
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
 
-    <title>Publicações</title>
+    .grid {
 
-    <link rel="stylesheet" href="/static/style.css">
+        display: grid;
 
-    <style>
+        grid-template-columns:
+            repeat(auto-fit, minmax(220px, 240px));
 
-        .grid {
+        gap: 12px;
 
-            display: grid;
+        margin-top: 20px;
 
-            grid-template-columns:
-                repeat(auto-fit, minmax(220px, 240px));
+    }
 
-            gap: 12px;
+    .card {
 
-            margin-top: 20px;
+        background: white;
 
-        }
+        padding: 10px;
 
-        .card {
+        border-radius: 10px;
 
-            background: white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 
-            padding: 10px;
+    }
 
-            border-radius: 10px;
+    textarea {
 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        width: 100%;
 
-        }
+        margin-top: 10px;
 
-        .card h2 {
+        border-radius: 6px;
 
-            font-size: 15px;
+        padding: 5px;
 
-            margin-bottom: 8px;
+        font-size: 11px;
 
-        }
+    }
 
-        .card p {
+    .badge-success {
 
-            font-size: 11px;
+        background: #d4edda;
 
-            margin: 4px 0;
+        color: #155724;
 
-        }
+        padding: 3px 6px;
 
-        textarea {
+        border-radius: 20px;
 
-            width: 100%;
+        font-size: 10px;
 
-            margin-top: 10px;
+        font-weight: bold;
 
-            border-radius: 6px;
+    }
 
-            padding: 5px;
+    .badge-error {
 
-            font-size: 11px;
+        background: #f8d7da;
 
-            resize: none;
+        color: #721c24;
 
-        }
+        padding: 3px 6px;
 
-        .badge-success {
+        border-radius: 20px;
 
-            background: #d4edda;
+        font-size: 10px;
 
-            color: #155724;
+        font-weight: bold;
 
-            padding: 3px 6px;
+    }
 
-            border-radius: 20px;
+</style>
 
-            font-size: 10px;
+{% endblock %}
 
-            font-weight: bold;
+{% block content %}
 
-        }
+<h1>🚀 Publicações</h1>
 
-        .badge-error {
+{% if erro %}
 
-            background: #f8d7da;
+    <div class="error">
 
-            color: #721c24;
+        {{ erro }}
 
-            padding: 3px 6px;
+    </div>
 
-            border-radius: 20px;
+{% endif %}
 
-            font-size: 10px;
+{% if posts %}
 
-            font-weight: bold;
+    <div class="grid">
 
-        }
+    {% for post in posts %}
 
-    </style>
+        <div class="card">
 
-</head>
+            <h2>{{ post.tema }}</h2>
 
-<body>
+            <p>
 
-<div class="container">
+                <strong>Rede:</strong>
 
-    <h1>🚀 Publicações</h1>
+                {{ post.rede }}
 
-    {% if erro %}
+            </p>
 
-        <div class="error">
+            <p>
 
-            {{ erro }}
+                <strong>Status:</strong>
+
+                {% if post.status == "executado" %}
+
+                    <span class="badge-success">
+                        🟢 Publicado
+                    </span>
+
+                {% else %}
+
+                    <span class="badge-error">
+                        🔴 Erro
+                    </span>
+
+                {% endif %}
+
+            </p>
+
+            <p>
+
+                <strong>Data:</strong>
+
+                {{ post.data_postagem }}
+
+            </p>
+
+            <p>
+
+                <strong>Hora:</strong>
+
+                {{ post.hora_postagem }}
+
+            </p>
+
+            <textarea rows="3" readonly>{{ post.conteudo }}</textarea>
 
         </div>
 
-    {% endif %}
+    {% endfor %}
 
-    {% if posts %}
+    </div>
 
-        <div class="grid">
+{% else %}
 
-        {% for post in posts %}
+    <p>
 
-            <div class="card">
+        Nenhuma publicação encontrada
 
-                <h2>{{ post.tema }}</h2>
+    </p>
 
-                <p>
-                    <strong>Rede:</strong>
-                    {{ post.rede }}
-                </p>
+{% endif %}
 
-                <p>
-
-                    <strong>Status:</strong>
-
-                    {% if post.status == "executado" %}
-
-                        <span class="badge-success">
-                            🟢 Publicado
-                        </span>
-
-                    {% elif post.status == "erro" %}
-
-                        <span class="badge-error">
-                            🔴 Erro
-                        </span>
-
-                    {% endif %}
-
-                </p>
-
-                <p>
-                    <strong>Data:</strong>
-                    {{ post.data_postagem }}
-                </p>
-
-                <p>
-                    <strong>Hora:</strong>
-                    {{ post.hora_postagem }}
-                </p>
-
-                <textarea rows="3" readonly>{{ post.conteudo }}</textarea>
-
-            </div>
-
-        {% endfor %}
-
-        </div>
-
-    {% else %}
-
-        <p>
-            Nenhuma publicação encontrada
-        </p>
-
-    {% endif %}
-
-</div>
-
-</body>
-
-</html>
+{% endblock %}
