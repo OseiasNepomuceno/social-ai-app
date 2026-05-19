@@ -273,6 +273,39 @@ def ia():
 
     return render_template("ia.html")
 
+
+# =========================
+# PUBLICAÇÕES
+# =========================
+
+@app.route("/publicacoes")
+def publicacoes():
+
+    if "user" not in session:
+        return redirect("/login")
+
+    try:
+
+        posts = supabase.table("posts") \
+            .select("*") \
+            .eq("user_id", session["user"]) \
+            .in_("status", ["executado", "erro"]) \
+            .order("id", desc=True) \
+            .execute()
+
+        return render_template(
+            "publicacoes.html",
+            posts=posts.data
+        )
+
+    except Exception as e:
+
+        return render_template(
+            "publicacoes.html",
+            erro=str(e)
+        )
+
+
 # =========================
 # HOME
 # =========================
