@@ -356,7 +356,7 @@ def publicacoes():
 
 
 # =========================
-# HOME
+# HOME DASHBOARD
 # =========================
 
 @app.route("/")
@@ -365,16 +365,52 @@ def home():
     if "user" not in session:
         return redirect("/login")
 
-    user_id = session["user"]
+    try:
 
-    posts = supabase.table("posts") \
-        .select("*") \
-        .eq("user_id", session["user_id"]) \
-        .execute().data
+        posts = (
+            supabase.table("posts")
+            .select("*")
+            .eq("user_id", session["user_id"])
+            .execute()
+            .data
+        )
 
-    return render_template("index.html", posts=posts)
+        total_posts = len(posts)
 
+        executados = len([
+            p for p in posts
+            if p["status"] == "executado"
+        ])
 
+        pendentes = len([
+            p for p in posts
+            if p["status"] == "pendente"
+        ])
+
+        erros = len([
+            p for p in posts
+            if p["status"] == "erro"
+        ])
+
+        ultimos_posts = posts[:5]
+
+        return render_template(
+            "index.html",
+
+            total_posts=total_posts,
+
+            executados=executados,
+
+            pendentes=pendentes,
+
+            erros=erros,
+
+            posts=ultimos_posts
+        )
+
+    except Exception as e:
+
+        return str(e)
 # =========================
 # AGENDAMENTOS
 # =========================
