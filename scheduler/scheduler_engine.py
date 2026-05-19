@@ -1,6 +1,8 @@
-from apscheduler.schedulers.blocking import (
-    BlockingScheduler
+from apscheduler.schedulers.background import (
+    BackgroundScheduler
 )
+
+import time
 
 from datetime import datetime
 
@@ -223,11 +225,13 @@ def verificar_agendamentos():
 
         print(str(e))
 
+
+
 # =========================
-# APSCHEDULER
+# SCHEDULER
 # =========================
 
-scheduler = BlockingScheduler()
+scheduler = BackgroundScheduler()
 
 scheduler.add_job(
 
@@ -235,16 +239,19 @@ scheduler.add_job(
 
     "interval",
 
-    seconds=60
+    seconds=10
 
-)
-
-print(
-    "🚀 Scheduler iniciado..."
-)
-
-print(
-    "🇧🇷 Timezone: America/Sao_Paulo"
 )
 
 scheduler.start()
+
+print("🔥 NOVO SCHEDULER_ENGINE ATIVO")
+print("🚀 Scheduler iniciado...")
+
+# =========================
+# KEEP ALIVE
+# =========================
+
+while True:
+
+    time.sleep(60)
