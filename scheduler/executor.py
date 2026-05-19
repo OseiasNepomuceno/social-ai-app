@@ -1,26 +1,31 @@
 import sys
 import os
 import time
-import sys
 
 from datetime import datetime
 from zoneinfo import ZoneInfo
-from supabase import create_client
-from linkedin.postar import publicar_linkedin
 
 # =========================
 # PATH ROOT PROJETO
 # =========================
 
-sys.path.append(
-    os.path.abspath(
-        os.path.join(
-            os.path.dirname(__file__),
-            ".."
-        )
+ROOT_DIR = os.path.abspath(
+    os.path.join(
+        os.path.dirname(__file__),
+        ".."
     )
 )
 
+sys.path.append(ROOT_DIR)
+
+print("📂 ROOT_DIR:", ROOT_DIR)
+
+# =========================
+# IMPORTS
+# =========================
+
+from supabase import create_client
+from linkedin.postar import publicar_linkedin
 
 
 print("🚀 EXECUTOR SAAS INICIANDO")
