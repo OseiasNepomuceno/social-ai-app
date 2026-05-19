@@ -1,158 +1,148 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
+{% extends "base.html" %}
 
-<head>
+{% block title %}
+Configurações
+{% endblock %}
 
-    <meta charset="UTF-8">
+{% block extra_css %}
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
 
-    <title>Configurações</title>
+    .config-box {
 
-    <link rel="stylesheet" href="/static/style.css">
+        background: white;
 
-    <style>
+        padding: 20px;
 
-        .config-box {
+        border-radius: 12px;
 
-            background: white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 
-            padding: 20px;
+        max-width: 500px;
 
-            border-radius: 12px;
+        margin-top: 20px;
 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
 
-            max-width: 500px;
+    .status-ok {
 
-            margin-top: 20px;
+        color: green;
 
-        }
+        font-weight: bold;
 
-        .status-ok {
+    }
 
-            color: green;
+    .status-off {
 
-            font-weight: bold;
+        color: red;
 
-        }
+        font-weight: bold;
 
-        .status-off {
+    }
 
-            color: red;
+    .btn {
 
-            font-weight: bold;
+        display: inline-block;
 
-        }
+        margin-top: 15px;
 
-        .btn {
+        padding: 10px 15px;
 
-            display: inline-block;
+        border-radius: 8px;
 
-            margin-top: 15px;
+        text-decoration: none;
 
-            padding: 10px 15px;
+        background: #0077ff;
 
-            border-radius: 8px;
+        color: white;
 
-            text-decoration: none;
+    }
 
-            background: #0077ff;
+</style>
 
-            color: white;
+{% endblock %}
 
-        }
+{% block content %}
 
-    </style>
+<h1>⚙️ Configurações</h1>
 
-</head>
+{% if erro %}
 
-<body>
+    <div class="error">
 
-<div class="container">
-
-    <h1>⚙️ Configurações</h1>
-
-    {% if erro %}
-
-        <div class="error">
-
-            {{ erro }}
-
-        </div>
-
-    {% endif %}
-
-    <div class="config-box">
-
-        <h2>👤 Usuário</h2>
-
-        <p>
-
-            <strong>Email:</strong>
-
-           {{ user.email if user else "Usuário não encontrado" }}
-        </p>
+        {{ erro }}
 
     </div>
 
-    <div class="config-box">
+{% endif %}
 
-        <h2>🔗 LinkedIn</h2>
+<div class="config-box">
 
-        {% if linkedin_conectado %}
+    <h2>👤 Usuário</h2>
 
-            <p class="status-ok">
+    <p>
 
-                ✅ LinkedIn conectado
+        <strong>Email:</strong>
 
-            </p>
+        {{ user.email if user else "Usuário não encontrado" }}
 
-        {% else %}
-
-            <p class="status-off">
-
-                ❌ LinkedIn desconectado
-
-            </p>
-
-            <a
-                href="/linkedin/login"
-                class="btn"
-            >
-                Conectar LinkedIn
-            </a>
-
-        {% endif %}
-
-    </div>
-
-    <div class="config-box">
-
-        <h2>📸 Instagram</h2>
-
-        <p>
-
-            🚧 Em breve
-
-        </p>
-
-    </div>
-
-    <div class="config-box">
-
-        <h2>💰 Plano</h2>
-
-        <p>
-
-            Free
-
-        </p>
-
-    </div>
+    </p>
 
 </div>
 
-</body>
+<div class="config-box">
 
-</html>
+    <h2>🔗 LinkedIn</h2>
+
+    {% if linkedin_conectado %}
+
+        <p class="status-ok">
+
+            ✅ LinkedIn conectado
+
+        </p>
+
+    {% else %}
+
+        <p class="status-off">
+
+            ❌ LinkedIn desconectado
+
+        </p>
+
+        <a
+            href="/linkedin/login"
+            class="btn"
+        >
+            Conectar LinkedIn
+        </a>
+
+    {% endif %}
+
+</div>
+
+<div class="config-box">
+
+    <h2>📸 Instagram</h2>
+
+    <p>
+
+        🚧 Em breve
+
+    </p>
+
+</div>
+
+<div class="config-box">
+
+    <h2>💰 Plano</h2>
+
+    <p>
+
+        Free
+
+    </p>
+
+</div>
+
+{% endblock %}
