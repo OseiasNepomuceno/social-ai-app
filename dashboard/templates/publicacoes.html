@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Publicações</title>
+
+    <link rel="stylesheet" href="/static/style.css">
+
+    <style>
+
+        .grid {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(auto-fit, minmax(220px, 240px));
+
+            gap: 12px;
+
+            margin-top: 20px;
+
+        }
+
+        .card {
+
+            background: white;
+
+            padding: 10px;
+
+            border-radius: 10px;
+
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+
+        }
+
+        .card h2 {
+
+            font-size: 15px;
+
+            margin-bottom: 8px;
+
+        }
+
+        .card p {
+
+            font-size: 11px;
+
+            margin: 4px 0;
+
+        }
+
+        textarea {
+
+            width: 100%;
+
+            margin-top: 10px;
+
+            border-radius: 6px;
+
+            padding: 5px;
+
+            font-size: 11px;
+
+            resize: none;
+
+        }
+
+        .badge-success {
+
+            background: #d4edda;
+
+            color: #155724;
+
+            padding: 3px 6px;
+
+            border-radius: 20px;
+
+            font-size: 10px;
+
+            font-weight: bold;
+
+        }
+
+        .badge-error {
+
+            background: #f8d7da;
+
+            color: #721c24;
+
+            padding: 3px 6px;
+
+            border-radius: 20px;
+
+            font-size: 10px;
+
+            font-weight: bold;
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>🚀 Publicações</h1>
+
+    {% if erro %}
+
+        <div class="error">
+
+            {{ erro }}
+
+        </div>
+
+    {% endif %}
+
+    {% if posts %}
+
+        <div class="grid">
+
+        {% for post in posts %}
+
+            <div class="card">
+
+                <h2>{{ post.tema }}</h2>
+
+                <p>
+                    <strong>Rede:</strong>
+                    {{ post.rede }}
+                </p>
+
+                <p>
+
+                    <strong>Status:</strong>
+
+                    {% if post.status == "executado" %}
+
+                        <span class="badge-success">
+                            🟢 Publicado
+                        </span>
+
+                    {% elif post.status == "erro" %}
+
+                        <span class="badge-error">
+                            🔴 Erro
+                        </span>
+
+                    {% endif %}
+
+                </p>
+
+                <p>
+                    <strong>Data:</strong>
+                    {{ post.data_postagem }}
+                </p>
+
+                <p>
+                    <strong>Hora:</strong>
+                    {{ post.hora_postagem }}
+                </p>
+
+                <textarea rows="3" readonly>{{ post.conteudo }}</textarea>
+
+            </div>
+
+        {% endfor %}
+
+        </div>
+
+    {% else %}
+
+        <p>
+            Nenhuma publicação encontrada
+        </p>
+
+    {% endif %}
+
+</div>
+
+</body>
+
+</html>
