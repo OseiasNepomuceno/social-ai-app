@@ -128,7 +128,7 @@ def verificar_agendamentos():
 
                     f"{data_post} {hora_post}",
 
-                    "%Y-%m-%d %H:%M"
+                    "%Y-%m-%d %H:%M:%S"
 
                 )
 
