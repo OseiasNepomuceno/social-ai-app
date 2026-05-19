@@ -231,15 +231,25 @@ def verificar_agendamentos():
 # SCHEDULER
 # =========================
 
-scheduler = BackgroundScheduler()
+scheduler = BackgroundScheduler(
+
+    timezone="America/Sao_Paulo"
+
+)
 
 scheduler.add_job(
 
     verificar_agendamentos,
 
-    "interval",
+    trigger="interval",
 
-    seconds=10
+    seconds=10,
+
+    max_instances=1,
+
+    coalesce=True,
+
+    misfire_grace_time=30
 
 )
 
@@ -247,6 +257,29 @@ scheduler.start()
 
 print("🔥 NOVO SCHEDULER_ENGINE ATIVO")
 print("🚀 Scheduler iniciado...")
+print("✅ Worker online 24h")
+
+# =========================
+# KEEP ALIVE
+# =========================
+
+try:
+
+    while True:
+
+        print(
+            "💓 Worker ativo..."
+        )
+
+        time.sleep(60)
+
+except (KeyboardInterrupt, SystemExit):
+
+    scheduler.shutdown()
+
+    print(
+        "🛑 Scheduler encerrado"
+    )
 
 # =========================
 # KEEP ALIVE
