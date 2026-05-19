@@ -437,6 +437,7 @@ def login():
     if request.method == "POST":
 
         email = request.form["email"]
+
         senha = request.form["senha"]
 
         try:
@@ -448,25 +449,48 @@ def login():
 
             user = resposta.user
 
-            session["user"] = user.id
+            # =========================
+            # SESSION
+            # =========================
+
+            session["user"] = user.email
+
+            session["user_id"] = user.id
+
             session["email"] = user.email
 
+            # =========================
+            # UPSERT USER
+            # =========================
+
             supabase.table("users").upsert({
+
                 "id": user.id,
+
                 "email": user.email,
+
                 "plano": "gratuito",
+
                 "posts_limite": 10,
+
                 "posts_usados": 0
+
             }).execute()
 
             return redirect("/")
 
         except Exception as e:
-            print("LOGIN ERROR:", str(e))
-            return render_template("login.html", erro="Login inválido")
+
+            print("LOGIN ERROR:")
+
+            print(str(e))
+
+            return render_template(
+                "login.html",
+                erro="Login inválido"
+            )
 
     return render_template("login.html")
-
 
 # =========================
 # REGISTER
