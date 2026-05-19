@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Configurações</title>
+
+    <link rel="stylesheet" href="/static/style.css">
+
+    <style>
+
+        .config-box {
+
+            background: white;
+
+            padding: 20px;
+
+            border-radius: 12px;
+
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+
+            max-width: 500px;
+
+            margin-top: 20px;
+
+        }
+
+        .status-ok {
+
+            color: green;
+
+            font-weight: bold;
+
+        }
+
+        .status-off {
+
+            color: red;
+
+            font-weight: bold;
+
+        }
+
+        .btn {
+
+            display: inline-block;
+
+            margin-top: 15px;
+
+            padding: 10px 15px;
+
+            border-radius: 8px;
+
+            text-decoration: none;
+
+            background: #0077ff;
+
+            color: white;
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>⚙️ Configurações</h1>
+
+    {% if erro %}
+
+        <div class="error">
+
+            {{ erro }}
+
+        </div>
+
+    {% endif %}
+
+    <div class="config-box">
+
+        <h2>👤 Usuário</h2>
+
+        <p>
+
+            <strong>Email:</strong>
+
+            {{ user.email }}
+
+        </p>
+
+    </div>
+
+    <div class="config-box">
+
+        <h2>🔗 LinkedIn</h2>
+
+        {% if linkedin_conectado %}
+
+            <p class="status-ok">
+
+                ✅ LinkedIn conectado
+
+            </p>
+
+        {% else %}
+
+            <p class="status-off">
+
+                ❌ LinkedIn desconectado
+
+            </p>
+
+            <a
+                href="/linkedin/login"
+                class="btn"
+            >
+                Conectar LinkedIn
+            </a>
+
+        {% endif %}
+
+    </div>
+
+    <div class="config-box">
+
+        <h2>📸 Instagram</h2>
+
+        <p>
+
+            🚧 Em breve
+
+        </p>
+
+    </div>
+
+    <div class="config-box">
+
+        <h2>💰 Plano</h2>
+
+        <p>
+
+            Free
+
+        </p>
+
+    </div>
+
+</div>
+
+</body>
+
+</html>
