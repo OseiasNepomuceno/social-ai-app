@@ -560,7 +560,7 @@ def delete_post(post_id):
 # =========================
 
 @app.route("/publicar/<int:post_id>")
-def publicar(post_id)
+def publicar(post_id):
     
     return redirect("/agendamentos"):
 
