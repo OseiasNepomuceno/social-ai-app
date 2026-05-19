@@ -322,7 +322,7 @@ def configuracoes():
             user=None,
             linkedin_conectado=False
         )
-        )
+        
 # =========================
 # PUBLICAÇÕES
 # =========================
