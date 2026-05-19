@@ -4,6 +4,8 @@ from apscheduler.schedulers.blocking import (
 
 from datetime import datetime
 
+from zoneinfo import ZoneInfo
+
 from supabase import create_client
 
 import os
@@ -35,23 +37,27 @@ def publicar_linkedin(post):
     try:
 
         print(
-            f"🚀 Publicando: {post['tema']}"
+            f"🚀 Publicando no LinkedIn: {post['tema']}"
+        )
+
+        print(
+            f"🖼️ Imagem: {post.get('imagem_url')}"
+        )
+
+        print(
+            f"📝 Conteúdo:\n{post['conteudo']}"
         )
 
         # =========================
-        # AQUI ENTRARÁ
-        # LINKEDIN API REAL
+        # FUTURA API LINKEDIN
         # =========================
-
-        # TEMPORÁRIO
-        print(post["conteudo"])
 
         return True
 
     except Exception as e:
 
         print(
-            "ERRO LINKEDIN:"
+            "❌ ERRO LINKEDIN:"
         )
 
         print(str(e))
@@ -65,7 +71,7 @@ def publicar_linkedin(post):
 def verificar_agendamentos():
 
     print(
-        "⏰ Verificando agendamentos..."
+        "\n⏰ Verificando agendamentos..."
     )
 
     try:
@@ -77,11 +83,45 @@ def verificar_agendamentos():
             "pendente"
         ).execute().data
 
-        agora = datetime.now()
+        # =========================
+        # HORÁRIO BRASIL
+        # =========================
+
+        agora = datetime.now(
+            ZoneInfo("America/Sao_Paulo")
+        ).replace(tzinfo=None)
+
+        print(
+            f"🕒 Horário atual: {agora}"
+        )
+
+        print(
+            f"📦 Total pendentes: {len(posts)}"
+        )
 
         for post in posts:
 
             try:
+
+                print(
+                    "\n========================="
+                )
+
+                print(
+                    f"📌 Post encontrado: {post['tema']}"
+                )
+
+                print(
+                    f"🌐 Rede: {post['rede']}"
+                )
+
+                print(
+                    f"📅 Data: {post['data_postagem']}"
+                )
+
+                print(
+                    f"⏰ Hora: {post['hora_postagem']}"
+                )
 
                 data_post = (
                     post["data_postagem"]
@@ -99,12 +139,20 @@ def verificar_agendamentos():
 
                 )
 
+                print(
+                    f"🕓 Agendado para: {data_hora}"
+                )
+
                 # =========================
                 # PUBLICAR SOMENTE
                 # NO HORÁRIO CERTO
                 # =========================
 
                 if agora >= data_hora:
+
+                    print(
+                        "✅ Horário atingido"
+                    )
 
                     sucesso = False
 
@@ -125,7 +173,7 @@ def verificar_agendamentos():
                     elif post["rede"] == "instagram":
 
                         print(
-                            "Instagram em breve"
+                            "📸 Instagram em breve"
                         )
 
                     # =========================
@@ -153,10 +201,16 @@ def verificar_agendamentos():
                         f"✅ Post atualizado: {novo_status}"
                     )
 
+                else:
+
+                    print(
+                        "⌛ Ainda não chegou o horário"
+                    )
+
             except Exception as post_error:
 
                 print(
-                    "ERRO POST:"
+                    "❌ ERRO POST:"
                 )
 
                 print(str(post_error))
@@ -164,7 +218,7 @@ def verificar_agendamentos():
     except Exception as e:
 
         print(
-            "ERRO SCHEDULER:"
+            "❌ ERRO SCHEDULER:"
         )
 
         print(str(e))
@@ -187,6 +241,10 @@ scheduler.add_job(
 
 print(
     "🚀 Scheduler iniciado..."
+)
+
+print(
+    "🇧🇷 Timezone: America/Sao_Paulo"
 )
 
 scheduler.start()
