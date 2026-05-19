@@ -1,5 +1,7 @@
 import os
 from openai import OpenAI
+from agents.image_agent import gerar_imagem
+
 
 # =========================
 # CLIENTE IA
