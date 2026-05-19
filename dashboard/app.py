@@ -561,30 +561,16 @@ def delete_post(post_id):
 
 @app.route("/publicar/<int:post_id>")
 def publicar(post_id):
-    
-    return redirect("/agendamentos")
 
     if "user_id" not in session:
         return redirect("/login")
 
-    try:
+    # =========================
+    # PUBLICAÇÃO MANUAL
+    # DESATIVADA
+    # =========================
 
-        post = supabase.table(
-            "posts"
-        ).select("*").eq(
-            "id",
-            post_id
-        ).eq(
-            "user_id",
-            session["user_id"]
-        ).execute().data
-
-        if not post:
-
-            return redirect("/agendamentos")
-
-        post = post[0]
-
+    return redirect("/agendamentos")
         # =========================
         # LINKEDIN
         # =========================
