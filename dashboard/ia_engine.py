@@ -202,11 +202,11 @@ def gerar_conteudo(
 
             prompt_nicho = file.read()
 
-# =========================
-# PROMPT FINAL
-# =========================
+        # =========================
+        # PROMPT FINAL
+        # =========================
 
-prompt = f"""
+        prompt = f"""
 {prompt_base}
 
 {prompt_modo}
@@ -231,6 +231,18 @@ REGRAS OBRIGATÓRIAS:
 - Foco em autoridade profissional
 - Foco em conversão
 - O texto deve parecer escrito por especialista humano
+
+ESTRUTURA OBRIGATÓRIA:
+
+[TÍTULO]
+
+Parágrafo curto 1
+
+Parágrafo curto 2
+
+CTA curto
+
+Hashtags
 
 REGRAS DA IMAGEM:
 
