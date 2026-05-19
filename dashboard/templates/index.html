@@ -1,490 +1,234 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
+{% extends "base.html" %}
 
-<head>
+{% block title %}
+Dashboard
+{% endblock %}
 
-    <meta charset="UTF-8">
+{% block extra_css %}
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+<style>
 
-    <title>Dashboard</title>
+    .stats {
 
-    <link rel="stylesheet" href="/static/style.css">
+        display: grid;
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        grid-template-columns:
+            repeat(auto-fit, minmax(180px, 1fr));
 
-    <style>
+        gap: 20px;
 
-        body {
+        margin-top: 30px;
 
-            margin: 0;
+    }
 
-            font-family: Arial, sans-serif;
+    .stat-card {
 
-            background: #f5f7fb;
+        background: white;
 
-            display: flex;
+        padding: 20px;
 
-        }
+        border-radius: 12px;
 
-        /* =========================
-           SIDEBAR
-        ========================= */
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
 
-        .sidebar {
+        text-align: center;
 
-            width: 240px;
+    }
 
-            height: 100vh;
+    .stat-card h2 {
 
-            background: #111827;
+        font-size: 30px;
 
-            color: white;
+        margin: 10px 0;
 
-            padding: 20px;
+    }
 
-            position: fixed;
+    .chart-box {
 
-            top: 0;
+        background: white;
 
-            left: 0;
+        margin-top: 30px;
 
-        }
+        padding: 20px;
 
-        .sidebar h2 {
+        border-radius: 12px;
 
-            margin-bottom: 30px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
 
-            font-size: 22px;
+    }
 
-        }
+    .posts-grid {
 
-        .sidebar ul {
+        display: grid;
 
-            list-style: none;
+        grid-template-columns:
+            repeat(auto-fit, minmax(250px, 1fr));
 
-            padding: 0;
+        gap: 15px;
 
-        }
+        margin-top: 30px;
 
-        .sidebar li {
+    }
 
-            margin-bottom: 18px;
+    .post-card {
 
-        }
+        background: white;
 
-        .sidebar a {
+        padding: 15px;
 
-            color: white;
+        border-radius: 10px;
 
-            text-decoration: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 
-            font-size: 15px;
+    }
 
-            transition: 0.2s;
+    .badge {
 
-        }
+        padding: 4px 8px;
 
-        .sidebar a:hover {
+        border-radius: 20px;
 
-            opacity: 0.7;
+        font-size: 10px;
 
-        }
+        font-weight: bold;
 
-        /* =========================
-           CONTEÚDO
-        ========================= */
+    }
 
-        .main-content {
+    .success {
 
-            margin-left: 260px;
+        background: #d4edda;
 
-            padding: 30px;
+        color: #155724;
 
-            width: 100%;
+    }
 
-        }
+    .warning {
 
-        /* =========================
-           CARDS ESTATÍSTICAS
-        ========================= */
+        background: #fff3cd;
 
-        .stats {
+        color: #856404;
 
-            display: grid;
+    }
 
-            grid-template-columns:
-                repeat(auto-fit, minmax(180px, 1fr));
+    .error {
 
-            gap: 20px;
+        background: #f8d7da;
 
-            margin-top: 30px;
+        color: #721c24;
 
-        }
+    }
 
-        .stat-card {
+</style>
 
-            background: white;
+{% endblock %}
 
-            padding: 20px;
+{% block content %}
 
-            border-radius: 12px;
+<h1>🚀 Dashboard Social AI</h1>
 
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+<div class="stats">
 
-            text-align: center;
+    <div class="stat-card">
 
-        }
+        <p>Total Posts</p>
 
-        .stat-card h2 {
-
-            font-size: 30px;
-
-            margin: 10px 0;
-
-        }
-
-        .stat-card p {
-
-            color: #666;
-
-            font-size: 14px;
-
-        }
-
-        /* =========================
-           GRÁFICO
-        ========================= */
-
-        .chart-box {
-
-            background: white;
-
-            margin-top: 30px;
-
-            padding: 20px;
-
-            border-radius: 12px;
-
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-
-        }
-
-        /* =========================
-           POSTS
-        ========================= */
-
-        .posts-grid {
-
-            display: grid;
-
-            grid-template-columns:
-                repeat(auto-fit, minmax(250px, 1fr));
-
-            gap: 15px;
-
-            margin-top: 30px;
-
-        }
-
-        .post-card {
-
-            background: white;
-
-            padding: 15px;
-
-            border-radius: 10px;
-
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-
-        }
-
-        .post-card h3 {
-
-            font-size: 16px;
-
-            margin-bottom: 10px;
-
-        }
-
-        .post-card p {
-
-            font-size: 12px;
-
-            margin: 4px 0;
-
-        }
-
-        /* =========================
-           BADGES
-        ========================= */
-
-        .badge {
-
-            padding: 4px 8px;
-
-            border-radius: 20px;
-
-            font-size: 10px;
-
-            font-weight: bold;
-
-        }
-
-        .success {
-
-            background: #d4edda;
-
-            color: #155724;
-
-        }
-
-        .warning {
-
-            background: #fff3cd;
-
-            color: #856404;
-
-        }
-
-        .error {
-
-            background: #f8d7da;
-
-            color: #721c24;
-
-        }
-
-        /* =========================
-           RESPONSIVO
-        ========================= */
-
-        @media(max-width: 768px) {
-
-            .sidebar {
-
-                width: 100%;
-
-                height: auto;
-
-                position: relative;
-
-            }
-
-            .main-content {
-
-                margin-left: 0;
-
-            }
-
-            body {
-
-                flex-direction: column;
-
-            }
-
-        }
-
-    </style>
-
-</head>
-
-<body>
-
-<!-- =========================
-     SIDEBAR
-========================= -->
-
-<div class="sidebar">
-
-    <h2>🚀 Social AI</h2>
-
-    <ul>
-
-        <li>
-            <a href="/">
-                🏠 Dashboard
-            </a>
-        </li>
-
-        <li>
-            <a href="/agendamentos">
-                📅 Agendamentos
-            </a>
-        </li>
-
-        <li>
-            <a href="/publicacoes">
-                🚀 Publicações
-            </a>
-        </li>
-
-        <li>
-            <a href="/ia">
-                🤖 IA
-            </a>
-        </li>
-
-        <li>
-            <a href="/planos">
-                💰 Planos
-            </a>
-        </li>
-
-        <li>
-            <a href="/configuracoes">
-                ⚙️ Configurações
-            </a>
-        </li>
-
-        <li>
-            <a href="/logout">
-                🚪 Sair
-            </a>
-        </li>
-
-    </ul>
-
-</div>
-
-<!-- =========================
-     CONTEÚDO
-========================= -->
-
-<div class="main-content">
-
-    <h1>🚀 Dashboard Social AI</h1>
-
-    <!-- =========================
-         ESTATÍSTICAS
-    ========================= -->
-
-    <div class="stats">
-
-        <div class="stat-card">
-
-            <p>Total Posts</p>
-
-            <h2>{{ total_posts }}</h2>
-
-        </div>
-
-        <div class="stat-card">
-
-            <p>Executados</p>
-
-            <h2>{{ executados }}</h2>
-
-        </div>
-
-        <div class="stat-card">
-
-            <p>Pendentes</p>
-
-            <h2>{{ pendentes }}</h2>
-
-        </div>
-
-        <div class="stat-card">
-
-            <p>Erros</p>
-
-            <h2>{{ erros }}</h2>
-
-        </div>
+        <h2>{{ total_posts }}</h2>
 
     </div>
 
-    <!-- =========================
-         GRÁFICO
-    ========================= -->
+    <div class="stat-card">
 
-    <div class="chart-box">
+        <p>Executados</p>
 
-        <h2>📈 Performance de Postagens</h2>
-
-        <canvas id="postsChart"></canvas>
+        <h2>{{ executados }}</h2>
 
     </div>
 
-    <!-- =========================
-         ÚLTIMAS PUBLICAÇÕES
-    ========================= -->
+    <div class="stat-card">
 
-    <h2 style="margin-top:40px;">
+        <p>Pendentes</p>
 
-        Últimas Publicações
+        <h2>{{ pendentes }}</h2>
 
-    </h2>
+    </div>
 
-    <div class="posts-grid">
+    <div class="stat-card">
 
-        {% for post in posts %}
+        <p>Erros</p>
 
-            <div class="post-card">
-
-                <h3>{{ post.tema }}</h3>
-
-                <p>
-
-                    <strong>Rede:</strong>
-
-                    {{ post.rede }}
-
-                </p>
-
-                <p>
-
-                    <strong>Data:</strong>
-
-                    {{ post.data_postagem }}
-
-                </p>
-
-                <p>
-
-                    <strong>Status:</strong>
-
-                    {% if post.status == "executado" %}
-
-                        <span class="badge success">
-
-                            Executado
-
-                        </span>
-
-                    {% elif post.status == "pendente" %}
-
-                        <span class="badge warning">
-
-                            Pendente
-
-                        </span>
-
-                    {% else %}
-
-                        <span class="badge error">
-
-                            Erro
-
-                        </span>
-
-                    {% endif %}
-
-                </p>
-
-            </div>
-
-        {% endfor %}
+        <h2>{{ erros }}</h2>
 
     </div>
 
 </div>
 
-<!-- =========================
-     CHART JS
-========================= -->
+<div class="chart-box">
+
+    <h2>📈 Performance de Postagens</h2>
+
+    <canvas id="postsChart"></canvas>
+
+</div>
+
+<h2 style="margin-top:40px;">
+
+    Últimas Publicações
+
+</h2>
+
+<div class="posts-grid">
+
+    {% for post in posts %}
+
+        <div class="post-card">
+
+            <h3>{{ post.tema }}</h3>
+
+            <p>
+                <strong>Rede:</strong>
+                {{ post.rede }}
+            </p>
+
+            <p>
+                <strong>Data:</strong>
+                {{ post.data_postagem }}
+            </p>
+
+            <p>
+
+                <strong>Status:</strong>
+
+                {% if post.status == "executado" %}
+
+                    <span class="badge success">
+                        Executado
+                    </span>
+
+                {% elif post.status == "pendente" %}
+
+                    <span class="badge warning">
+                        Pendente
+                    </span>
+
+                {% else %}
+
+                    <span class="badge error">
+                        Erro
+                    </span>
+
+                {% endif %}
+
+            </p>
+
+        </div>
+
+    {% endfor %}
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
 
 <script>
 
@@ -540,6 +284,4 @@ new Chart(ctx, {
 
 </script>
 
-</body>
-
-</html>
+{% endblock %}
