@@ -14,6 +14,100 @@
 
     <style>
 
+        body {
+
+            margin: 0;
+
+            font-family: Arial, sans-serif;
+
+            background: #f5f7fb;
+
+            display: flex;
+
+        }
+
+        /* =========================
+           SIDEBAR
+        ========================= */
+
+        .sidebar {
+
+            width: 240px;
+
+            height: 100vh;
+
+            background: #111827;
+
+            color: white;
+
+            padding: 20px;
+
+            position: fixed;
+
+            top: 0;
+
+            left: 0;
+
+        }
+
+        .sidebar h2 {
+
+            margin-bottom: 30px;
+
+            font-size: 22px;
+
+        }
+
+        .sidebar ul {
+
+            list-style: none;
+
+            padding: 0;
+
+        }
+
+        .sidebar li {
+
+            margin-bottom: 18px;
+
+        }
+
+        .sidebar a {
+
+            color: white;
+
+            text-decoration: none;
+
+            font-size: 15px;
+
+            transition: 0.2s;
+
+        }
+
+        .sidebar a:hover {
+
+            opacity: 0.7;
+
+        }
+
+        /* =========================
+           CONTEÚDO
+        ========================= */
+
+        .main-content {
+
+            margin-left: 260px;
+
+            padding: 30px;
+
+            width: 100%;
+
+        }
+
+        /* =========================
+           CARDS ESTATÍSTICAS
+        ========================= */
+
         .stats {
 
             display: grid;
@@ -48,6 +142,18 @@
             margin: 10px 0;
 
         }
+
+        .stat-card p {
+
+            color: #666;
+
+            font-size: 14px;
+
+        }
+
+        /* =========================
+           POSTS
+        ========================= */
 
         .posts-grid {
 
@@ -90,6 +196,10 @@
 
         }
 
+        /* =========================
+           BADGES
+        ========================= */
+
         .badge {
 
             padding: 4px 8px;
@@ -126,15 +236,109 @@
 
         }
 
+        /* =========================
+           RESPONSIVO
+        ========================= */
+
+        @media(max-width: 768px) {
+
+            .sidebar {
+
+                width: 100%;
+
+                height: auto;
+
+                position: relative;
+
+            }
+
+            .main-content {
+
+                margin-left: 0;
+
+            }
+
+            body {
+
+                flex-direction: column;
+
+            }
+
+        }
+
     </style>
 
 </head>
 
 <body>
 
-<div class="container">
+<!-- =========================
+     SIDEBAR
+========================= -->
+
+<div class="sidebar">
+
+    <h2>🚀 Social AI</h2>
+
+    <ul>
+
+        <li>
+            <a href="/">
+                🏠 Dashboard
+            </a>
+        </li>
+
+        <li>
+            <a href="/agendamentos">
+                📅 Agendamentos
+            </a>
+        </li>
+
+        <li>
+            <a href="/publicacoes">
+                🚀 Publicações
+            </a>
+        </li>
+
+        <li>
+            <a href="/ia">
+                🤖 IA
+            </a>
+        </li>
+
+        <li>
+            <a href="/planos">
+                💰 Planos
+            </a>
+        </li>
+
+        <li>
+            <a href="/configuracoes">
+                ⚙️ Configurações
+            </a>
+        </li>
+
+        <li>
+            <a href="/logout">
+                🚪 Sair
+            </a>
+        </li>
+
+    </ul>
+
+</div>
+
+<!-- =========================
+     CONTEÚDO
+========================= -->
+
+<div class="main-content">
 
     <h1>🚀 Dashboard Social AI</h1>
+
+    <!-- =========================
+         ESTATÍSTICAS
+    ========================= -->
 
     <div class="stats">
 
@@ -172,6 +376,10 @@
 
     </div>
 
+    <!-- =========================
+         ÚLTIMAS PUBLICAÇÕES
+    ========================= -->
+
     <h2 style="margin-top:40px;">
 
         Últimas Publicações
@@ -189,6 +397,7 @@
                 <p>
 
                     <strong>Rede:</strong>
+
                     {{ post.rede }}
 
                 </p>
@@ -196,6 +405,7 @@
                 <p>
 
                     <strong>Data:</strong>
+
                     {{ post.data_postagem }}
 
                 </p>
@@ -207,19 +417,25 @@
                     {% if post.status == "executado" %}
 
                         <span class="badge success">
+
                             Executado
+
                         </span>
 
                     {% elif post.status == "pendente" %}
 
                         <span class="badge warning">
+
                             Pendente
+
                         </span>
 
                     {% else %}
 
                         <span class="badge error">
+
                             Erro
+
                         </span>
 
                     {% endif %}
