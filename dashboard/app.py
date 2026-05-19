@@ -369,7 +369,7 @@ def home():
 
     posts = supabase.table("posts") \
         .select("*") \
-        .eq("user_id", user_id) \
+        .eq("user_id", session["user_id"]) \
         .execute().data
 
     return render_template("index.html", posts=posts)
