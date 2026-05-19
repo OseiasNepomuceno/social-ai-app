@@ -202,19 +202,66 @@ def gerar_conteudo(
 
             prompt_nicho = file.read()
 
-        # =========================
-        # PROMPT FINAL
-        # =========================
+# =========================
+# PROMPT FINAL
+# =========================
 
-        prompt = f"""
+prompt = f"""
 {prompt_base}
 
 {prompt_modo}
 
 {prompt_nicho}
 
+REGRAS OBRIGATÓRIAS:
+
+- Criar conteúdo profissional para LinkedIn
+- Máximo de 2 parágrafos curtos
+- Texto humano e persuasivo
+- Linguagem natural
+- NÃO criar textos longos
+- NÃO ultrapassar 1200 caracteres
+- Inserir emojis relacionados ao tema
+- Criar título forte e chamativo
+- Adicionar CTA curto no final
+- Adicionar hashtags relevantes
+- Separar bem os blocos do texto
+- Aparência premium de marketing
+- Foco em engajamento
+- Foco em autoridade profissional
+- Foco em conversão
+- O texto deve parecer escrito por especialista humano
+
+REGRAS DA IMAGEM:
+
+- A imagem deve ser totalmente relacionada ao tema
+- SEMPRE gerar uma imagem diferente
+- NÃO reutilizar layouts
+- NÃO reutilizar cores
+- NÃO reutilizar composição
+- NÃO reutilizar enquadramento
+- NÃO reutilizar estilo visual
+- NÃO reutilizar elementos gráficos
+- Estilo premium corporativo
+- Visual moderno
+- Alta qualidade
+- Formato ideal para LinkedIn
+- Sem textos na imagem
+- Aparência cinematográfica
+- Aparência profissional
+- Visual de marketing empresarial
+
 Tema do conteúdo:
 {tema}
+
+Rede social:
+{rede}
+
+Modo:
+{modo_nome}
+
+Nicho:
+{nicho_nome}
 """
 
         # =========================
