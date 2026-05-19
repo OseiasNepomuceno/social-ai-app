@@ -14,7 +14,6 @@ from dashboard.ia_engine import gerar_conteudo
 from supabase import create_client
 from linkedin.auth import linkedin_auth
 from linkedin.callback import linkedin_callback
-from dashboard.ia_engine import gerar_conteudo
 
 # =========================
 # ENV (SEGURAS)
@@ -27,33 +26,63 @@ MERCADO_PAGO_TOKEN = os.getenv("MERCADO_PAGO_TOKEN")
 if not SUPABASE_URL or not SUPABASE_KEY:
     raise Exception("Supabase não configurado")
 
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+supabase = create_client(
+    SUPABASE_URL,
+    SUPABASE_KEY
+)
 
-mp = mercadopago.SDK(MERCADO_PAGO_TOKEN) if MERCADO_PAGO_TOKEN else None
-
+mp = (
+    mercadopago.SDK(MERCADO_PAGO_TOKEN)
+    if MERCADO_PAGO_TOKEN
+    else None
+)
 
 # =========================
 # FLASK APP
 # =========================
 
-app = Flask(__name__, static_folder="static", template_folder="templates")
+app = Flask(
+    __name__,
+    static_folder="static",
+    template_folder="templates"
+)
+
 app.secret_key = "social_ai_secret"
 
 UPLOAD_FOLDER = "uploads"
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
+os.makedirs(
+    UPLOAD_FOLDER,
+    exist_ok=True
+)
+
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 # =========================
 # PLANOS
 # =========================
 
 PLANOS = {
-    "basic": {"nome": "Basic", "preco": 19.90, "limite": 50},
-    "pro": {"nome": "Pro", "preco": 39.90, "limite": 200},
-    "business": {"nome": "Business", "preco": 79.90, "limite": 999999}
-}
 
+    "basic": {
+        "nome": "Basic",
+        "preco": 19.90,
+        "limite": 50
+    },
+
+    "pro": {
+        "nome": "Pro",
+        "preco": 39.90,
+        "limite": 200
+    },
+
+    "business": {
+        "nome": "Business",
+        "preco": 79.90,
+        "limite": 999999
+    }
+
+}
 
 # =========================
 # PLANOS PAGE
@@ -62,11 +91,13 @@ PLANOS = {
 @app.route("/planos")
 def planos():
 
-    if "user" not in session:
+    if "user_id" not in session:
         return redirect("/login")
 
-    return render_template("planos.html", planos=PLANOS)
-
+    return render_template(
+        "planos.html",
+        planos=PLANOS
+    )
 
 # =========================
 # CHECKOUT
@@ -75,7 +106,7 @@ def planos():
 @app.route("/checkout/<plano>")
 def checkout(plano):
 
-    if "user" not in session:
+    if "user_id" not in session:
         return redirect("/login")
 
     if not mp:
@@ -84,62 +115,104 @@ def checkout(plano):
     if plano not in PLANOS:
         return "Plano inválido"
 
-    user_id = session["user"]
+    user_id = session["user_id"]
+
     email = session["email"]
 
     plano_info = PLANOS[plano]
 
     preference_data = {
+
         "items": [
+
             {
+
                 "title": f"Plano {plano_info['nome']}",
+
                 "quantity": 1,
+
                 "currency_id": "BRL",
-                "unit_price": float(plano_info["preco"])
+
+                "unit_price": float(
+                    plano_info["preco"]
+                )
+
             }
+
         ],
-        "payer": {"email": email},
-        "back_urls": {
-            "success": "https://SEU_DOMINIO/sucesso",
-            "failure": "https://SEU_DOMINIO/falha",
-            "pending": "https://SEU_DOMINIO/pendente"
+
+        "payer": {
+            "email": email
         },
+
+        "back_urls": {
+
+            "success": "https://SEU_DOMINIO/sucesso",
+
+            "failure": "https://SEU_DOMINIO/falha",
+
+            "pending": "https://SEU_DOMINIO/pendente"
+
+        },
+
         "auto_return": "approved",
+
         "external_reference": f"{user_id}|{plano}"
+
     }
 
-    preference = mp.preference().create(preference_data)
+    preference = mp.preference().create(
+        preference_data
+    )
 
-    return redirect(preference["response"]["init_point"])
-
+    return redirect(
+        preference["response"]["init_point"]
+    )
 
 # =========================
 # WEBHOOK
 # =========================
 
-@app.route("/webhook/mercadopago", methods=["POST"])
+@app.route(
+    "/webhook/mercadopago",
+    methods=["POST"]
+)
+
 def webhook_mp():
 
     if not mp:
         return "ok"
 
-    data = request.get_json(silent=True)
+    data = request.get_json(
+        silent=True
+    )
 
     if not data:
         return "ok"
 
     try:
-        payment_id = data.get("data", {}).get("id")
+
+        payment_id = data.get(
+            "data",
+            {}
+        ).get("id")
 
         if not payment_id:
             return "ok"
 
-        payment = mp.payment().get(payment_id)
+        payment = mp.payment().get(
+            payment_id
+        )
+
         payment_info = payment["response"]
 
         if payment_info.get("status") == "approved":
 
-            external_reference = payment_info.get("external_reference", "")
+            external_reference = payment_info.get(
+                "external_reference",
+                ""
+            )
+
             if "|" not in external_reference:
                 return "ok"
 
@@ -150,17 +223,30 @@ def webhook_mp():
             if plano_info:
 
                 supabase.table("users").update({
-                    "plano": plano,
-                    "posts_limite": plano_info["limite"]
-                }).eq("user_id", session["user_id"]).execute()
 
-                print("Plano atualizado:", user_id, plano)
+                    "plano": plano,
+
+                    "posts_limite": plano_info["limite"]
+
+                }).eq(
+                    "id",
+                    user_id
+                ).execute()
+
+                print(
+                    "Plano atualizado:",
+                    user_id,
+                    plano
+                )
 
     except Exception as e:
-        print("Webhook error:", str(e))
+
+        print(
+            "Webhook error:",
+            str(e)
+        )
 
     return "ok"
-
 
 # =========================
 # LIMITE
@@ -168,30 +254,57 @@ def webhook_mp():
 
 def verificar_limite(user_id):
 
-    res = supabase.table("users").select("*").eq("user_id", session["user_id"]).execute()
+    res = supabase.table("users") \
+        .select("*") \
+        .eq("id", user_id) \
+        .execute()
 
     if not res.data:
-        return False, "Usuário não encontrado"
+
+        return (
+            False,
+            "Usuário não encontrado"
+        )
 
     user = res.data[0]
 
     if user.get("plano") == "business":
-        return True, "ok"
 
-    if user.get("posts_usados", 0) >= user.get("posts_limite", 10):
-        return False, "Limite atingido"
+        return (
+            True,
+            "ok"
+        )
 
-    return True, "ok"
+    if user.get(
+        "posts_usados",
+        0
+    ) >= user.get(
+        "posts_limite",
+        10
+    ):
 
+        return (
+            False,
+            "Limite atingido"
+        )
+
+    return (
+        True,
+        "ok"
+    )
 
 # =========================
 # IA GENERATOR
 # =========================
 
-@app.route("/ia", methods=["GET", "POST"])
+@app.route(
+    "/ia",
+    methods=["GET", "POST"]
+)
+
 def ia():
 
-    if "user" not in session:
+    if "user_id" not in session:
         return redirect("/login")
 
     if request.method == "POST":
@@ -210,10 +323,6 @@ def ia():
 
             hora_postagem = request.form["hora"]
 
-            # =========================
-            # IA
-            # =========================
-
             resultado = gerar_conteudo(
                 tema,
                 rede,
@@ -229,10 +338,6 @@ def ia():
                 )
 
             conteudo = resultado["conteudo"]
-
-            # =========================
-            # SALVAR POST
-            # =========================
 
             supabase.table("posts").insert({
 
@@ -252,19 +357,28 @@ def ia():
 
                 "status": "pendente",
 
-                "user_id": session["user"]
+                "imagem_url": resultado.get("imagem_url"),
+
+                "user_id": session["user_id"]
 
             }).execute()
 
             return render_template(
+
                 "ia.html",
+
                 sucesso=True,
+
                 conteudo=conteudo
+
             )
 
         except Exception as e:
 
-            print("ERRO IA:", str(e))
+            print(
+                "ERRO IA:",
+                str(e)
+            )
 
             return render_template(
                 "ia.html",
@@ -273,7 +387,6 @@ def ia():
 
     return render_template("ia.html")
 
-
 # =========================
 # CONFIGURAÇÕES
 # =========================
@@ -281,7 +394,7 @@ def ia():
 @app.route("/configuracoes")
 def configuracoes():
 
-    if "user" not in session:
+    if "user_id" not in session:
         return redirect("/login")
 
     try:
@@ -289,7 +402,10 @@ def configuracoes():
         usuario = (
             supabase.table("users")
             .select("*")
-            .eq("email", session["user"])
+            .eq(
+                "id",
+                session["user_id"]
+            )
             .execute()
         )
 
@@ -307,330 +423,30 @@ def configuracoes():
         )
 
         return render_template(
+
             "configuracoes.html",
+
             user=user,
+
             linkedin_conectado=linkedin_conectado
+
         )
 
     except Exception as e:
 
-        print("ERRO CONFIG:", str(e))
+        print(
+            "ERRO CONFIG:",
+            str(e)
+        )
 
         return render_template(
+
             "configuracoes.html",
+
             erro=str(e),
+
             user=None,
+
             linkedin_conectado=False
+
         )
-        
-# =========================
-# PUBLICAÇÕES
-# =========================
-
-@app.route("/publicacoes")
-def publicacoes():
-
-    if "user" not in session:
-        return redirect("/login")
-
-    try:
-
-        posts = supabase.table("posts") \
-            .select("*") \
-            .eq("user_id", session["user_id"]) \
-            .in_("status", ["executado", "erro"]) \
-            .order("id", desc=True) \
-            .execute()
-
-        return render_template(
-            "publicacoes.html",
-            posts=posts.data
-        )
-
-    except Exception as e:
-
-        return render_template(
-            "publicacoes.html",
-            erro=str(e)
-        )
-
-
-# =========================
-# HOME DASHBOARD
-# =========================
-
-@app.route("/")
-def home():
-
-    if "user" not in session:
-        return redirect("/login")
-
-    try:
-
-        posts = (
-            supabase.table("posts")
-            .select("*")
-            .eq("user_id", session["user_id"])
-            .execute()
-            .data
-        )
-
-        total_posts = len(posts)
-
-        executados = len([
-            p for p in posts
-            if p["status"] == "executado"
-        ])
-
-        pendentes = len([
-            p for p in posts
-            if p["status"] == "pendente"
-        ])
-
-        erros = len([
-            p for p in posts
-            if p["status"] == "erro"
-        ])
-
-        ultimos_posts = posts[:5]
-
-        return render_template(
-            "index.html",
-
-            total_posts=total_posts,
-
-            executados=executados,
-
-            pendentes=pendentes,
-
-            erros=erros,
-
-            posts=ultimos_posts
-        )
-
-    except Exception as e:
-
-        return str(e)
-# =========================
-# AGENDAMENTOS
-# =========================
-
-@app.route("/agendamentos")
-def agendamentos():
-
-    if "user" not in session:
-        return redirect("/login")
-
-    try:
-
-        posts = supabase.table("posts") \
-            .select("*") \
-            .eq("user_id", session["user_id"]) \
-            .order("id", desc=True) \
-            .execute()
-
-        return render_template(
-            "agendamentos.html",
-            posts=posts.data
-        )
-
-    except Exception as e:
-
-        return render_template(
-            "agendamentos.html",
-            erro=str(e)
-        )
-
-
-# =========================
-# LINKEDIN
-# =========================
-@app.route("/linkedin/auth")
-def linkedin_oauth():
-
-    if "user" not in session:
-        return redirect("/login")
-
-    return linkedin_auth()
-
-# =========================
-# CALLBACK LINKEDIN
-# =========================
-
-@app.route("/linkedin/callback")
-def linkedin_callback_route():
-
-    return linkedin_callback()
-
-
-# =========================
-# LOGIN
-# =========================
-
-@app.route("/login", methods=["GET", "POST"])
-def login():
-
-    if request.method == "POST":
-
-        email = request.form["email"]
-
-        senha = request.form["senha"]
-
-        try:
-
-            resposta = supabase.auth.sign_in_with_password({
-                "email": email,
-                "password": senha
-            })
-
-            user = resposta.user
-
-            # =========================
-            # SESSION
-            # =========================
-
-            session["user"] = user.email
-
-            session["user_id"] = user.id
-
-            session["email"] = user.email
-
-            # =========================
-            # UPSERT USER
-            # =========================
-
-            supabase.table("users").upsert({
-
-                "id": user.id,
-
-                "email": user.email,
-
-                "plano": "gratuito",
-
-                "posts_limite": 10,
-
-                "posts_usados": 0
-
-            }).execute()
-
-            return redirect("/")
-
-        except Exception as e:
-
-            print("LOGIN ERROR:")
-
-            print(str(e))
-
-            return render_template(
-                "login.html",
-                erro="Login inválido"
-            )
-
-    return render_template("login.html")
-
-# =========================
-# REGISTER
-# =========================
-
-@app.route("/register", methods=["GET", "POST"])
-def register():
-
-    if request.method == "POST":
-
-        email = request.form["email"]
-        senha = request.form["senha"]
-
-        try:
-            supabase.auth.sign_up({
-                "email": email,
-                "password": senha
-            })
-
-            return render_template("register.html", sucesso="Conta criada")
-
-        except Exception as e:
-            print(e)
-            return render_template("register.html", erro="Erro")
-
-    return render_template("register.html")
-
-# =========================
-# EXCLUIR POST
-# =========================
-
-@app.route("/delete_post/<post_id>")
-def delete_post(post_id):
-
-    if "user" not in session:
-        return redirect("/login")
-
-    try:
-
-        supabase.table("posts") \
-            .delete() \
-            .eq("id", post_id) \
-            .eq("user_id", session["user_id"]) \
-            .execute()
-
-        return redirect("/agendamentos")
-
-    except Exception as e:
-
-        return str(e)
-
-
-# =========================
-# LOGOUT
-# =========================
-
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect("/login")
-
-
-# =========================
-# PUBLICAR
-# =========================
-
-@app.route("/publicar/<int:post_id>")
-def publicar(post_id):
-
-    if "user" not in session:
-        return redirect("/login")
-
-    user_id = session["user"]
-
-    permitido, msg = verificar_limite(user_id)
-
-    if not permitido:
-        return redirect("/planos")
-
-    post = supabase.table("posts") \
-        .select("*") \
-        .eq("user_id", session["user_id"]) \
-        .eq("user_id", user_id) \
-        .execute().data
-
-    if not post:
-        return "Acesso negado"
-
-    supabase.table("posts") \
-        .update({"status": "executado"}) \
-        .eq("user_id", session["user_id"]) \
-        .execute()
-
-    user = supabase.table("users") \
-        .select("*") \
-        .eq("user_id", session["user_id"]) \
-        .execute().data
-
-    if user:
-        supabase.table("users") \
-            .update({
-                "posts_usados": user[0].get("posts_usados", 0) + 1
-            }) \
-            .eq("user_id", session["user_id"]) \
-            .execute()
-
-    return redirect("/")
