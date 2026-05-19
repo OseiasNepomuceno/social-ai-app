@@ -286,10 +286,12 @@ def configuracoes():
 
     try:
 
-        usuario = supabase.table("users") \
-            .select("*") \
+        usuario = (
+            supabase.table("users")
+            .select("*")
             .eq("email", session["user"])
             .execute()
+        )
 
         if not usuario.data:
 
