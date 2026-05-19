@@ -288,7 +288,7 @@ def configuracoes():
 
         usuario = supabase.table("users") \
             .select("*") \
-            .eq("id", session["user"]) \
+            .eq("email", session["user"])
             .execute()
 
         if not usuario.data:
@@ -316,7 +316,10 @@ def configuracoes():
 
         return render_template(
             "configuracoes.html",
-            erro=str(e)
+            erro=str(e),
+            user=None,
+            linkedin_conectado=False
+        )
         )
 # =========================
 # PUBLICAÇÕES
