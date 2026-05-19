@@ -275,6 +275,43 @@ def ia():
 
 
 # =========================
+# CONFIGURAÇÕES
+# =========================
+
+@app.route("/configuracoes")
+def configuracoes():
+
+    if "user" not in session:
+        return redirect("/login")
+
+    try:
+
+        usuario = supabase.table("users") \
+            .select("*") \
+            .eq("id", session["user"]) \
+            .execute()
+
+        user = usuario.data[0]
+
+        linkedin_conectado = bool(
+            user.get("linkedin_token")
+        )
+
+        return render_template(
+            "configuracoes.html",
+            user=user,
+            linkedin_conectado=linkedin_conectado
+        )
+
+    except Exception as e:
+
+        return render_template(
+            "configuracoes.html",
+            erro=str(e)
+        )
+
+
+# =========================
 # PUBLICAÇÕES
 # =========================
 
