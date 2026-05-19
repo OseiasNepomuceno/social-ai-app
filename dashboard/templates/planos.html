@@ -1,156 +1,266 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-<meta charset="UTF-8">
-<title>Planos - Social AI</title>
+{% extends "base.html" %}
+
+{% block title %}
+Planos
+{% endblock %}
+
+{% block extra_css %}
 
 <style>
 
-body{
-    font-family: Arial;
-    background:#f4f7fb;
-    margin:0;
-    padding:0;
-}
+    .plans-grid {
 
-/* HEADER */
-.header{
-    text-align:center;
-    padding:50px 20px;
-}
+        display: grid;
 
-.header h1{
-    font-size:36px;
-    margin-bottom:10px;
-}
+        grid-template-columns:
+            repeat(auto-fit, minmax(260px, 1fr));
 
-.header p{
-    color:#666;
-}
+        gap: 20px;
 
-/* PLANOS */
-.container{
-    display:flex;
-    justify-content:center;
-    gap:20px;
-    flex-wrap:wrap;
-    padding:20px;
-}
+        margin-top: 30px;
 
-.card{
-    background:white;
-    width:280px;
-    padding:30px;
-    border-radius:15px;
-    box-shadow:0 2px 10px rgba(0,0,0,0.08);
-    text-align:center;
-}
+    }
 
-.card h2{
-    margin-bottom:10px;
-}
+    .plan-card {
 
-.preco{
-    font-size:28px;
-    font-weight:bold;
-    margin:15px 0;
-}
+        background: white;
 
-.lista{
-    text-align:left;
-    margin:20px 0;
-    color:#444;
-}
+        padding: 25px;
 
-.btn{
-    display:inline-block;
-    padding:12px 20px;
-    border-radius:10px;
-    text-decoration:none;
-    font-weight:bold;
-    color:white;
-}
+        border-radius: 14px;
 
-.free{
-    background:#6b7280;
-}
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
 
-.pro{
-    background:#111827;
-}
+        text-align: center;
 
-.business{
-    background:#2563eb;
-}
+        transition: 0.2s;
 
-.card:hover{
-    transform:scale(1.03);
-    transition:0.3s;
-}
+    }
+
+    .plan-card:hover {
+
+        transform: translateY(-3px);
+
+    }
+
+    .plan-title {
+
+        font-size: 24px;
+
+        font-weight: bold;
+
+        margin-bottom: 10px;
+
+    }
+
+    .price {
+
+        font-size: 34px;
+
+        font-weight: bold;
+
+        margin: 20px 0;
+
+        color: #0077ff;
+
+    }
+
+    .features {
+
+        text-align: left;
+
+        margin-top: 20px;
+
+    }
+
+    .features p {
+
+        margin: 10px 0;
+
+        color: #555;
+
+    }
+
+    .btn-plan {
+
+        display: inline-block;
+
+        margin-top: 25px;
+
+        background: #0077ff;
+
+        color: white;
+
+        padding: 12px 20px;
+
+        border-radius: 8px;
+
+        text-decoration: none;
+
+        font-weight: bold;
+
+    }
+
+    .popular {
+
+        border: 2px solid #0077ff;
+
+    }
+
+    .tag {
+
+        background: #0077ff;
+
+        color: white;
+
+        padding: 5px 10px;
+
+        border-radius: 20px;
+
+        font-size: 12px;
+
+        display: inline-block;
+
+        margin-bottom: 10px;
+
+    }
 
 </style>
-</head>
 
-<body>
+{% endblock %}
 
-<div class="header">
-    <h1>Escolha seu Plano</h1>
-    <p>Automatize suas redes sociais com IA</p>
-</div>
+{% block content %}
 
-<div class="container">
+<h1>💰 Planos Social AI</h1>
+
+<p>
+
+    Escolha o plano ideal para automatizar suas redes sociais 🚀
+
+</p>
+
+<div class="plans-grid">
 
     <!-- FREE -->
-    <div class="card">
-        <h2>Free</h2>
-        <div class="preco">R$0</div>
 
-        <div class="lista">
-            ✔ 10 posts/mês<br>
-            ✔ Dashboard básico<br>
-            ✔ IA limitada
+    <div class="plan-card">
+
+        <div class="plan-title">
+
+            Free
+
         </div>
 
-        <a href="/" class="btn free">
-            Começar Grátis
+        <div class="price">
+
+            R$0
+
+        </div>
+
+        <div class="features">
+
+            <p>✅ 10 posts por mês</p>
+
+            <p>✅ LinkedIn IA</p>
+
+            <p>✅ Agendamentos</p>
+
+            <p>❌ Instagram</p>
+
+            <p>❌ Analytics avançado</p>
+
+        </div>
+
+        <a href="#" class="btn-plan">
+
+            Plano Atual
+
         </a>
+
     </div>
 
     <!-- PRO -->
-    <div class="card">
-        <h2>Pro</h2>
-        <div class="preco">R$29/mês</div>
 
-        <div class="lista">
-            ✔ 200 posts/mês<br>
-            ✔ IA completa<br>
-            ✔ Agendamento automático<br>
-            ✔ Suporte básico
+    <div class="plan-card popular">
+
+        <div class="tag">
+
+            MAIS POPULAR
+
         </div>
 
-        <a href="/checkout/pro" class="btn pro">
+        <div class="plan-title">
+
+            Pro
+
+        </div>
+
+        <div class="price">
+
+            R$49
+
+        </div>
+
+        <div class="features">
+
+            <p>✅ Posts ilimitados</p>
+
+            <p>✅ LinkedIn + Instagram</p>
+
+            <p>✅ IA avançada</p>
+
+            <p>✅ Analytics completo</p>
+
+            <p>✅ Prioridade suporte</p>
+
+        </div>
+
+        <a href="#" class="btn-plan">
+
             Assinar Pro
+
         </a>
+
     </div>
 
-    <!-- BUSINESS -->
-    <div class="card">
-        <h2>Business</h2>
-        <div class="preco">R$79/mês</div>
+    <!-- ENTERPRISE -->
 
-        <div class="lista">
-            ✔ Posts ilimitados<br>
-            ✔ IA avançada<br>
-            ✔ Multiusuário<br>
-            ✔ Prioridade no suporte
+    <div class="plan-card">
+
+        <div class="plan-title">
+
+            Enterprise
+
         </div>
 
-        <a href="/checkout/business" class="btn business">
-            Assinar Business
+        <div class="price">
+
+            Sob consulta
+
+        </div>
+
+        <div class="features">
+
+            <p>✅ Multiempresas</p>
+
+            <p>✅ Multiusuários</p>
+
+            <p>✅ API exclusiva</p>
+
+            <p>✅ Gestão avançada</p>
+
+            <p>✅ Suporte VIP</p>
+
+        </div>
+
+        <a href="#" class="btn-plan">
+
+            Falar Comercial
+
         </a>
+
     </div>
 
 </div>
 
-</body>
-</html>
+{% endblock %}
