@@ -1,1 +1,224 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
 
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>
+        {% block title %}
+            Social AI
+        {% endblock %}
+    </title>
+
+    <link rel="stylesheet" href="/static/style.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+
+        body {
+
+            margin: 0;
+
+            font-family: Arial, sans-serif;
+
+            background: #f5f7fb;
+
+            display: flex;
+
+        }
+
+        /* =========================
+           SIDEBAR
+        ========================= */
+
+        .sidebar {
+
+            width: 240px;
+
+            height: 100vh;
+
+            background: #111827;
+
+            color: white;
+
+            padding: 20px;
+
+            position: fixed;
+
+            top: 0;
+
+            left: 0;
+
+        }
+
+        .sidebar h2 {
+
+            margin-bottom: 30px;
+
+            font-size: 22px;
+
+        }
+
+        .sidebar ul {
+
+            list-style: none;
+
+            padding: 0;
+
+        }
+
+        .sidebar li {
+
+            margin-bottom: 18px;
+
+        }
+
+        .sidebar a {
+
+            color: white;
+
+            text-decoration: none;
+
+            font-size: 15px;
+
+            transition: 0.2s;
+
+        }
+
+        .sidebar a:hover {
+
+            opacity: 0.7;
+
+        }
+
+        /* =========================
+           MAIN CONTENT
+        ========================= */
+
+        .main-content {
+
+            margin-left: 260px;
+
+            padding: 30px;
+
+            width: 100%;
+
+        }
+
+        /* =========================
+           RESPONSIVO
+        ========================= */
+
+        @media(max-width: 768px) {
+
+            .sidebar {
+
+                width: 100%;
+
+                height: auto;
+
+                position: relative;
+
+            }
+
+            .main-content {
+
+                margin-left: 0;
+
+            }
+
+            body {
+
+                flex-direction: column;
+
+            }
+
+        }
+
+    </style>
+
+    {% block extra_css %}
+    {% endblock %}
+
+</head>
+
+<body>
+
+<!-- =========================
+     SIDEBAR
+========================= -->
+
+<div class="sidebar">
+
+    <h2>🚀 Social AI</h2>
+
+    <ul>
+
+        <li>
+            <a href="/">
+                🏠 Dashboard
+            </a>
+        </li>
+
+        <li>
+            <a href="/agendamentos">
+                📅 Agendamentos
+            </a>
+        </li>
+
+        <li>
+            <a href="/publicacoes">
+                🚀 Publicações
+            </a>
+        </li>
+
+        <li>
+            <a href="/ia">
+                🤖 IA
+            </a>
+        </li>
+
+        <li>
+            <a href="/planos">
+                💰 Planos
+            </a>
+        </li>
+
+        <li>
+            <a href="/configuracoes">
+                ⚙️ Configurações
+            </a>
+        </li>
+
+        <li>
+            <a href="/logout">
+                🚪 Sair
+            </a>
+        </li>
+
+    </ul>
+
+</div>
+
+<!-- =========================
+     CONTEÚDO
+========================= -->
+
+<div class="main-content">
+
+    {% block content %}
+    {% endblock %}
+
+</div>
+
+{% block extra_js %}
+{% endblock %}
+
+</body>
+
+</html>
