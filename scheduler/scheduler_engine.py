@@ -11,7 +11,6 @@ from zoneinfo import ZoneInfo
 from supabase import create_client
 
 import os
-import requests
 
 # =========================
 # SUPABASE
@@ -85,10 +84,6 @@ def verificar_agendamentos():
             "pendente"
         ).execute().data
 
-        # =========================
-        # HORÁRIO BRASIL
-        # =========================
-
         agora = datetime.now(
             ZoneInfo("America/Sao_Paulo")
         ).replace(tzinfo=None)
@@ -125,13 +120,9 @@ def verificar_agendamentos():
                     f"⏰ Hora: {post['hora_postagem']}"
                 )
 
-                data_post = (
-                    post["data_postagem"]
-                )
+                data_post = post["data_postagem"]
 
-                hora_post = (
-                    post["hora_postagem"]
-                )
+                hora_post = post["hora_postagem"]
 
                 data_hora = datetime.strptime(
 
@@ -146,8 +137,7 @@ def verificar_agendamentos():
                 )
 
                 # =========================
-                # PUBLICAR SOMENTE
-                # NO HORÁRIO CERTO
+                # PUBLICAR NO HORÁRIO
                 # =========================
 
                 if agora >= data_hora:
@@ -225,8 +215,6 @@ def verificar_agendamentos():
 
         print(str(e))
 
-
-
 # =========================
 # SCHEDULER
 # =========================
@@ -243,7 +231,7 @@ scheduler.add_job(
 
     trigger="interval",
 
-    seconds=10,
+    seconds=30,
 
     max_instances=1,
 
@@ -280,11 +268,3 @@ except (KeyboardInterrupt, SystemExit):
     print(
         "🛑 Scheduler encerrado"
     )
-
-# =========================
-# KEEP ALIVE
-# =========================
-
-while True:
-
-    time.sleep(60)
