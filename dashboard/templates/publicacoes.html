@@ -79,6 +79,64 @@ Publicações
 
     }
 
+    .upload-box {
+
+        background: white;
+
+        padding: 20px;
+
+        border-radius: 12px;
+
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+
+        margin-bottom: 20px;
+
+    }
+
+    .upload-box form {
+
+        display: flex;
+
+        flex-direction: column;
+
+        gap: 12px;
+
+    }
+
+    .upload-box input[type="file"] {
+
+        padding: 10px;
+
+        border: 1px solid #ddd;
+
+        border-radius: 8px;
+
+    }
+
+    .upload-box button {
+
+        background: #007bff;
+
+        color: white;
+
+        border: none;
+
+        padding: 12px;
+
+        border-radius: 8px;
+
+        cursor: pointer;
+
+        font-weight: bold;
+
+    }
+
+    .upload-box button:hover {
+
+        opacity: 0.9;
+
+    }
+
 </style>
 
 {% endblock %}
@@ -86,6 +144,30 @@ Publicações
 {% block content %}
 
 <h1>🚀 Publicações</h1>
+
+<div class="upload-box">
+
+    <h2>📤 Upload de Imagem</h2>
+
+    <form
+        action="/upload"
+        method="POST"
+        enctype="multipart/form-data"
+    >
+
+        <input
+            type="file"
+            name="image"
+            required
+        >
+
+        <button type="submit">
+            Enviar Imagem
+        </button>
+
+    </form>
+
+</div>
 
 {% if erro %}
 
@@ -153,21 +235,22 @@ Publicações
 
             {% if post.imagem_url %}
 
-    <img
-        src="{{ post.imagem_url }}"
-        alt="Imagem do post"
-        loading="lazy"
-        style="
-            width:100%;
-            height:220px;
-            object-fit:cover;
-            border-radius:10px;
-            margin-top:10px;
-            box-shadow:0 2px 8px rgba(0,0,0,0.08);
-        "
-    >
+                <img
+                    src="{{ post.imagem_url }}"
+                    alt="Imagem do post"
+                    loading="lazy"
+                    style="
+                        width:100%;
+                        height:220px;
+                        object-fit:cover;
+                        border-radius:10px;
+                        margin-top:10px;
+                        box-shadow:0 2px 8px rgba(0,0,0,0.08);
+                    "
+                >
 
-{% endif %}
+            {% endif %}
+
             <textarea rows="3" readonly>{{ post.conteudo }}</textarea>
 
         </div>
