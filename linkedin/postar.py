@@ -1,5 +1,7 @@
 import os
 import requests
+import tempfile
+
 from supabase import create_client
 
 # =========================
@@ -7,6 +9,7 @@ from supabase import create_client
 # =========================
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
+
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
 supabase = create_client(
@@ -18,21 +21,51 @@ print("🚀 LinkedIn Poster iniciado")
 
 
 # =========================
-# FUNÇÃO PUBLICAR
+# DOWNLOAD IMAGEM
 # =========================
 
-def publicar_linkedin(user_id, conteudo):
+def baixar_imagem(image_url):
+
+    response = requests.get(image_url)
+
+    if response.status_code != 200:
+
+        return None
+
+    temp = tempfile.NamedTemporaryFile(
+        delete=False,
+        suffix=".jpg"
+    )
+
+    temp.write(response.content)
+
+    temp.close()
+
+    return temp.name
+
+
+# =========================
+# PUBLICAR
+# =========================
+
+def publicar_linkedin(
+    user_id,
+    conteudo,
+    image_url=None
+):
 
     try:
 
         # =========================
-        # BUSCAR USUÁRIO
+        # USER
         # =========================
 
-        usuario = supabase.table("users") \
-            .select("*") \
-            .eq("id", user_id) \
-            .execute()
+        usuario = supabase.table(
+            "users"
+        ).select("*").eq(
+            "id",
+            user_id
+        ).execute()
 
         if not usuario.data:
 
@@ -42,104 +75,260 @@ def publicar_linkedin(user_id, conteudo):
 
         user = usuario.data[0]
 
-        # =========================
-        # TOKEN
-        # =========================
-
-        access_token = user.get("linkedin_token")
+        access_token = user.get(
+            "linkedin_token"
+        )
 
         if not access_token:
 
-            print("❌ Usuário sem token LinkedIn")
+            print("❌ Token ausente")
 
             return False
 
         # =========================
-        # HEADERS USERINFO
+        # USER INFO
         # =========================
 
         headers = {
-            "Authorization": f"Bearer {access_token}"
+
+            "Authorization":
+            f"Bearer {access_token}"
+
         }
 
-        # =========================
-        # USERINFO
-        # =========================
-
         profile_response = requests.get(
+
             "https://api.linkedin.com/v2/userinfo",
+
             headers=headers
+
         )
 
         profile_data = profile_response.json()
 
-        # =========================
-        # VALIDAR TOKEN
-        # =========================
-
         if "sub" not in profile_data:
 
-            print("❌ Token LinkedIn inválido")
+            print("❌ Token inválido")
 
             print(profile_data)
 
             return False
+
+        person_id = profile_data["sub"]
+
+        person_urn = f"urn:li:person:{person_id}"
 
         print("\n===== PERFIL =====")
 
         print(profile_data)
 
         # =========================
-        # PERSON URN
+        # SEM IMAGEM
         # =========================
 
-        person_id = profile_data["sub"]
+        media_payload = {
 
-        person_urn = f"urn:li:person:{person_id}"
+            "shareCommentary": {
+                "text": conteudo
+            },
+
+            "shareMediaCategory": "NONE"
+
+        }
 
         # =========================
-        # PAYLOAD UGC POSTS
+        # COM IMAGEM
         # =========================
 
-        payload = {
-            "author": person_urn,
-            "lifecycleState": "PUBLISHED",
-            "specificContent": {
-                "com.linkedin.ugc.ShareContent": {
+        if image_url:
+
+            print("🖼️ Baixando imagem...")
+
+            image_path = baixar_imagem(
+                image_url
+            )
+
+            if image_path:
+
+                # =========================
+                # REGISTER UPLOAD
+                # =========================
+
+                register_payload = {
+
+                    "registerUploadRequest": {
+
+                        "recipes": [
+
+                            "urn:li:digitalmediaRecipe:feedshare-image"
+
+                        ],
+
+                        "owner": person_urn,
+
+                        "serviceRelationships": [
+
+                            {
+
+                                "relationshipType": "OWNER",
+
+                                "identifier":
+                                "urn:li:userGeneratedContent"
+
+                            }
+
+                        ]
+
+                    }
+
+                }
+
+                headers_upload = {
+
+                    "Authorization":
+                    f"Bearer {access_token}",
+
+                    "X-Restli-Protocol-Version":
+                    "2.0.0",
+
+                    "Content-Type":
+                    "application/json"
+
+                }
+
+                register_response = requests.post(
+
+                    "https://api.linkedin.com/v2/assets?action=registerUpload",
+
+                    headers=headers_upload,
+
+                    json=register_payload
+
+                )
+
+                register_data = register_response.json()
+
+                print("\n===== REGISTER =====")
+
+                print(register_data)
+
+                upload_url = register_data[
+                    "value"
+                ][
+                    "uploadMechanism"
+                ][
+                    "com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest"
+                ][
+                    "uploadUrl"
+                ]
+
+                asset = register_data[
+                    "value"
+                ][
+                    "asset"
+                ]
+
+                # =========================
+                # UPLOAD BINÁRIO
+                # =========================
+
+                with open(image_path, "rb") as img:
+
+                    upload_response = requests.put(
+
+                        upload_url,
+
+                        data=img,
+
+                        headers={
+                            "Authorization":
+                            f"Bearer {access_token}"
+                        }
+
+                    )
+
+                print("\n===== UPLOAD =====")
+
+                print(upload_response.status_code)
+
+                # =========================
+                # PAYLOAD MEDIA
+                # =========================
+
+                media_payload = {
+
                     "shareCommentary": {
                         "text": conteudo
                     },
-                    "shareMediaCategory": "NONE"
+
+                    "shareMediaCategory": "IMAGE",
+
+                    "media": [
+
+                        {
+
+                            "status": "READY",
+
+                            "media": asset
+
+                        }
+
+                    ]
+
                 }
-            },
-            "visibility": {
-                "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"
-            }
-        }
 
         # =========================
-        # HEADERS POSTAGEM
+        # PAYLOAD FINAL
         # =========================
+
+        payload = {
+
+            "author": person_urn,
+
+            "lifecycleState": "PUBLISHED",
+
+            "specificContent": {
+
+                "com.linkedin.ugc.ShareContent":
+                media_payload
+
+            },
+
+            "visibility": {
+
+                "com.linkedin.ugc.MemberNetworkVisibility":
+                "PUBLIC"
+
+            }
+
+        }
 
         headers_post = {
-            "Authorization": f"Bearer {access_token}",
-            "X-Restli-Protocol-Version": "2.0.0",
-            "Content-Type": "application/json"
+
+            "Authorization":
+            f"Bearer {access_token}",
+
+            "X-Restli-Protocol-Version":
+            "2.0.0",
+
+            "Content-Type":
+            "application/json"
+
         }
 
         # =========================
-        # POSTAGEM
+        # PUBLICAR
         # =========================
 
         response = requests.post(
-            "https://api.linkedin.com/v2/ugcPosts",
-            headers=headers_post,
-            json=payload
-        )
 
-        # =========================
-        # LOGS
-        # =========================
+            "https://api.linkedin.com/v2/ugcPosts",
+
+            headers=headers_post,
+
+            json=payload
+
+        )
 
         print("\n===== RESPOSTA LINKEDIN =====")
 
@@ -147,19 +336,11 @@ def publicar_linkedin(user_id, conteudo):
 
         print(response.text)
 
-        # =========================
-        # SUCESSO
-        # =========================
-
         if response.status_code in [200, 201]:
 
             print("✅ PUBLICADO COM SUCESSO")
 
             return True
-
-        # =========================
-        # ERRO API
-        # =========================
 
         print("❌ ERRO LINKEDIN")
 
