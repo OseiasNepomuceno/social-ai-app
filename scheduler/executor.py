@@ -144,7 +144,7 @@ def executar_post(post, user):
             )
 
             image_url = post.get(
-                "image_url"
+                "imagem_url"
             )
 
             sucesso = publicar_linkedin(
