@@ -1,6 +1,7 @@
 import sys
 import os
 import time
+print("🚀 EXECUTOR SAAS INICIANDO")
 
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -17,8 +18,8 @@ ROOT_DIR = os.path.abspath(
 )
 
 sys.path.append(ROOT_DIR)
-
 print("📂 ROOT_DIR:", ROOT_DIR)
+
 
 # =========================
 # IMPORTS
@@ -26,6 +27,7 @@ print("📂 ROOT_DIR:", ROOT_DIR)
 
 from supabase import create_client
 from linkedin.postar import publicar_linkedin
+print("✅ IMPORTS OK")
 
 print("🚀 EXECUTOR SAAS INICIANDO")
 
@@ -57,6 +59,7 @@ if not SUPABASE_URL or not SUPABASE_KEY:
 # =========================
 
 supabase = create_client(
+    print("✅ SUPABASE CONECTADO")
     SUPABASE_URL,
     SUPABASE_KEY
 )
