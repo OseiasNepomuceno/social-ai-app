@@ -12,6 +12,7 @@ import mercadopago
 
 from supabase import create_client
 from services.supabase_storage import upload_image
+from dashboard.image_agent import gerar_imagem
 
 from dashboard.ia_engine import (
     gerar_conteudo
@@ -274,20 +275,33 @@ def ia():
             hora_postagem = request.form["hora"]
 
             
+# =========================
+# UPLOAD MANUAL
+# =========================
 
-            imagem_url = None
+if "image" in request.files:
 
-            if "image" in request.files:
+    file = request.files["image"]
 
-                file = request.files["image"]
+    if file.filename != "":
 
-                if file.filename != "":
+        print("🖼️ Upload manual detectado")
 
-                    upload_result = upload_image(file)
+        upload_result = upload_image(file)
 
-                    if upload_result["success"]:
+        if upload_result["success"]:
 
-                        imagem_url = upload_result["public_url"]
+            imagem_url = upload_result["public_url"]
+
+# =========================
+# FAL AI AUTOMÁTICO
+# =========================
+
+if not imagem_url:
+
+    print("🤖 Gerando imagem com FAL AI")
+
+    imagem_url = gerar_imagem(tema)
 
             
 
