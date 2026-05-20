@@ -145,7 +145,7 @@ print(conteudo)
 
 nome_arquivo = re.sub(r'[^a-zA-Z0-9_]', '', tema.replace(" ", "_").lower())
 
-novo_post = {
+}novo_post = {
     "user_id": user_id,
     "tema": tema,
     "rede": rede,
@@ -156,6 +156,9 @@ novo_post = {
     "conteudo": conteudo,
     "arquivo": f"ai_generated/{nome_arquivo}.txt",
     "status": "pendente",
+
+    "imagem_url": "",
+
     "created_at": str(datetime.now())
 }
 
