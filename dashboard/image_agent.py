@@ -72,6 +72,14 @@ Regras:
 
         )
 
+        print("STATUS FAL:")
+
+        print(response.status_code)
+
+        print("TEXTO FAL:")
+
+        print(response.text)
+
         data = response.json()
 
         print("🖼️ RESPOSTA FAL:")
