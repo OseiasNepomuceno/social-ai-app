@@ -414,13 +414,17 @@ def loop_executor():
                     # VALIDAR HORÁRIO
                     # =========================
 
-                    data_post = post.get(
-                        "data_postagem"
-                    )
+                   data_post = post.get(
+                       "data_postagem"
+                   ) or post.get(
+                       "data"
+                   )
 
-                    hora_post = post.get(
-                        "hora_postagem"
-                    )
+                   hora_post = post.get(
+                       "hora_postagem"
+                   ) or post.get(
+                       "hora"
+                   )
 
                     if not data_post or not hora_post:
 
