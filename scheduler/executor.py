@@ -113,9 +113,10 @@ def executar_post(post, user):
 
             print("🚀 Publicando no LinkedIn...")
 
-            sucesso = publicar_linkedin(
-                user["id"],
-                conteudo
+            publicar_linkedin(
+                user_id,
+                conteudo,
+                image_url
             )
 
             if not sucesso:
