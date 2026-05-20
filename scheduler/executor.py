@@ -415,6 +415,19 @@ def loop_executor():
                             "❌ Data/Hora ausente"
                         )
 
+                        supabase.table(
+                            "posts"
+                        ).update({
+
+                            "status": "erro"
+
+                        }).eq(
+
+                            "id",
+                            post["id"]
+
+                        ).execute()
+
                         continue
 
                     try:
