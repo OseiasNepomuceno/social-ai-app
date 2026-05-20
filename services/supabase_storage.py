@@ -20,7 +20,7 @@ supabase = create_client(
 # CONFIG STORAGE
 # ==========================================
 
-BUCKET_NAME = "posts"
+BUCKET_NAME = "social-ai"
 
 ALLOWED_EXTENSIONS = {
     "png",
