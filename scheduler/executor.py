@@ -337,6 +337,12 @@ def loop_executor():
                         "user_id"
                     )
 
+                    print("USER_ID POST:")
+
+                    print(user_id)
+
+                    print(type(user_id))
+
                     if not user_id:
 
                         print(
@@ -355,6 +361,12 @@ def loop_executor():
                         "id",
                         user_id
                     ).execute()
+
+                    print("RESULTADO USER:")
+
+                    print(user_res.data)
+
+                    print("BUSCANDO USER...")
 
                     if not user_res.data:
 
