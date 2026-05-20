@@ -27,7 +27,6 @@ print("📂 ROOT_DIR:", ROOT_DIR)
 from supabase import create_client
 from linkedin.postar import publicar_linkedin
 
-
 print("🚀 EXECUTOR SAAS INICIANDO")
 
 # =========================
@@ -48,7 +47,10 @@ print("SUPABASE_URL:", bool(SUPABASE_URL))
 print("SUPABASE_KEY:", bool(SUPABASE_KEY))
 
 if not SUPABASE_URL or not SUPABASE_KEY:
-    raise Exception("Variáveis Supabase ausentes")
+
+    raise Exception(
+        "Variáveis Supabase ausentes"
+    )
 
 # =========================
 # SUPABASE
@@ -61,22 +63,32 @@ supabase = create_client(
 
 print("✅ SUPABASE CONECTADO")
 
-
 # =========================
 # VERIFICAR LIMITE
 # =========================
 
 def pode_publicar(user):
 
-    plano = user.get("plano", "gratuito")
-    usados = user.get("posts_usados", 0)
-    limite = user.get("posts_limite", 10)
+    plano = user.get(
+        "plano",
+        "gratuito"
+    )
+
+    usados = user.get(
+        "posts_usados",
+        0
+    )
+
+    limite = user.get(
+        "posts_limite",
+        10
+    )
 
     if plano == "business":
+
         return True
 
     return usados < limite
-
 
 # =========================
 # EXECUTAR POST
@@ -87,13 +99,29 @@ def executar_post(post, user):
     try:
 
         print("\n🚀 EXECUTANDO POST")
-        print("Usuário:", user.get("email"))
-        print("Tema:", post.get("tema"))
-        print("Rede:", post.get("rede"))
 
-        conteudo = post.get("conteudo", "")
+        print(
+            "Usuário:",
+            user.get("email")
+        )
+
+        print(
+            "Tema:",
+            post.get("tema")
+        )
+
+        print(
+            "Rede:",
+            post.get("rede")
+        )
+
+        conteudo = post.get(
+            "conteudo",
+            ""
+        )
 
         print("\n===== CONTEÚDO =====")
+
         print(conteudo)
 
         # =========================
@@ -111,23 +139,41 @@ def executar_post(post, user):
 
         if rede == "linkedin":
 
-            print("🚀 Publicando no LinkedIn...")
+            print(
+                "🚀 Publicando no LinkedIn..."
+            )
 
-            publicar_linkedin(
-                user_id,
+            image_url = post.get(
+                "image_url"
+            )
+
+            sucesso = publicar_linkedin(
+
+                user["id"],
+
                 conteudo,
+
                 image_url
+
             )
 
             if not sucesso:
 
-                print("❌ Falha publicação LinkedIn")
+                print(
+                    "❌ Falha publicação LinkedIn"
+                )
 
-                supabase.table("posts").update({
+                supabase.table(
+                    "posts"
+                ).update({
+
                     "status": "erro"
+
                 }).eq(
+
                     "id",
                     post["id"]
+
                 ).execute()
 
                 return
@@ -138,7 +184,9 @@ def executar_post(post, user):
 
         elif rede == "instagram":
 
-            print("🚀 Instagram futuramente")
+            print(
+                "🚀 Instagram futuramente"
+            )
 
         # =========================
         # REDE INVÁLIDA
@@ -146,13 +194,21 @@ def executar_post(post, user):
 
         else:
 
-            print("❌ Rede social inválida")
+            print(
+                "❌ Rede social inválida"
+            )
 
-            supabase.table("posts").update({
+            supabase.table(
+                "posts"
+            ).update({
+
                 "status": "erro"
+
             }).eq(
+
                 "id",
                 post["id"]
+
             ).execute()
 
             return
@@ -161,21 +217,29 @@ def executar_post(post, user):
         # ALTERAR STATUS
         # =========================
 
-        supabase.table("posts").update({
+        supabase.table(
+            "posts"
+        ).update({
+
             "status": "executado"
+
         }).eq(
+
             "id",
             post["id"]
+
         ).execute()
 
         # =========================
         # INCREMENTAR USO
         # =========================
 
-        usuario = supabase.table("users") \
-            .select("*") \
-            .eq("id", user["id"]) \
-            .execute()
+        usuario = supabase.table(
+            "users"
+        ).select("*").eq(
+            "id",
+            user["id"]
+        ).execute()
 
         if usuario.data:
 
@@ -186,26 +250,40 @@ def executar_post(post, user):
                 0
             ) + 1
 
-            supabase.table("users").update({
+            supabase.table(
+                "users"
+            ).update({
+
                 "posts_usados": novo_total
+
             }).eq(
+
                 "id",
                 user["id"]
+
             ).execute()
 
         print("✅ Post executado")
 
     except Exception as e:
 
-        print("❌ ERRO EXECUTANDO POST:", str(e))
+        print(
+            "❌ ERRO EXECUTANDO POST:",
+            str(e)
+        )
 
-        supabase.table("posts").update({
+        supabase.table(
+            "posts"
+        ).update({
+
             "status": "erro"
+
         }).eq(
+
             "id",
             post["id"]
-        ).execute()
 
+        ).execute()
 
 # =========================
 # LOOP PRINCIPAL
@@ -217,22 +295,28 @@ def loop_executor():
 
         try:
 
-            print("\n⏰ Verificando posts pendentes...")
+            print(
+                "\n⏰ Verificando posts pendentes..."
+            )
 
             # =========================
             # BUSCAR POSTS
             # =========================
 
-            posts = supabase.table("posts") \
-                .select("*") \
-                .eq("status", "pendente") \
-                .execute()
+            posts = supabase.table(
+                "posts"
+            ).select("*").eq(
+                "status",
+                "pendente"
+            ).execute()
 
             posts = posts.data
 
             if not posts:
 
-                print("Nenhum post pendente")
+                print(
+                    "Nenhum post pendente"
+                )
 
                 time.sleep(10)
 
@@ -246,25 +330,35 @@ def loop_executor():
 
                 try:
 
-                    user_id = post.get("user_id")
+                    user_id = post.get(
+                        "user_id"
+                    )
 
                     if not user_id:
 
-                        print("❌ Post sem user_id")
+                        print(
+                            "❌ Post sem user_id"
+                        )
+
                         continue
 
                     # =========================
                     # BUSCAR USER
                     # =========================
 
-                    user_res = supabase.table("users") \
-                        .select("*") \
-                        .eq("id", user_id) \
-                        .execute()
+                    user_res = supabase.table(
+                        "users"
+                    ).select("*").eq(
+                        "id",
+                        user_id
+                    ).execute()
 
                     if not user_res.data:
 
-                        print("❌ Usuário não encontrado")
+                        print(
+                            "❌ Usuário não encontrado"
+                        )
+
                         continue
 
                     user = user_res.data[0]
@@ -273,7 +367,9 @@ def loop_executor():
                     # VALIDAR LIMITE
                     # =========================
 
-                    permitido = pode_publicar(user)
+                    permitido = pode_publicar(
+                        user
+                    )
 
                     if not permitido:
 
@@ -282,17 +378,22 @@ def loop_executor():
                             user.get("email")
                         )
 
-                        supabase.table("posts").update({
+                        supabase.table(
+                            "posts"
+                        ).update({
+
                             "status": "bloqueado"
+
                         }).eq(
+
                             "id",
                             post["id"]
+
                         ).execute()
 
                         continue
 
-
-                                        # =========================
+                    # =========================
                     # VALIDAR HORÁRIO
                     # =========================
 
@@ -366,11 +467,17 @@ def loop_executor():
                     # EVITAR DUPLICAÇÃO
                     # =========================
 
-                    supabase.table("posts").update({
+                    supabase.table(
+                        "posts"
+                    ).update({
+
                         "status": "processando"
+
                     }).eq(
+
                         "id",
                         post["id"]
+
                     ).execute()
 
                     # =========================
@@ -401,7 +508,6 @@ def loop_executor():
         # =========================
 
         time.sleep(10)
-
 
 # =========================
 # START
