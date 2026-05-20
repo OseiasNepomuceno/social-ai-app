@@ -48,6 +48,8 @@ SUPABASE_KEY = os.getenv(
 
 print("SUPABASE_URL:", bool(SUPABASE_URL))
 print("SUPABASE_KEY:", bool(SUPABASE_KEY))
+print("URL USADA:")
+print(SUPABASE_URL)
 
 if not SUPABASE_URL or not SUPABASE_KEY:
 
