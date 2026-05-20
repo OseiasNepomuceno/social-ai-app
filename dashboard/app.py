@@ -258,10 +258,9 @@ def ia():
     if "user_id" not in session:
         return redirect("/login")
 
-    if request.method == "POST":
+if request.method == "POST":
 
-        try:
-
+    try:
             tema = request.form["tema"]
 
             rede = request.form["rede"]
@@ -274,116 +273,122 @@ def ia():
 
             hora_postagem = request.form["hora"]
 
+            # =========================
+            # IMAGEM
+            # =========================
+
+            imagem_url = None
+        
+            # =========================
+            # UPLOAD MANUAL
+            # =========================
             
-# =========================
-# UPLOAD MANUAL
-# =========================
-
-if "image" in request.files:
-
-    file = request.files["image"]
-
-    if file.filename != "":
-
-        print("🖼️ Upload manual detectado")
-
-        upload_result = upload_image(file)
-
-        if upload_result["success"]:
-
-            imagem_url = upload_result["public_url"]
-
-# =========================
-# FAL AI AUTOMÁTICO
-# =========================
-
-if not imagem_url:
-
-    print("🤖 Gerando imagem com FAL AI")
-
-    imagem_url = gerar_imagem(tema)
-
+            if "image" in request.files:
             
-
-            resultado = gerar_conteudo(
-
-                tema,
-
-                rede,
-
-                modo,
-
-                nicho
-
-            )
-
-            if not resultado["success"]:
-
-                return render_template(
-
-                    "ia.html",
-
-                    erro=resultado["erro"]
-
-                )
-
-            conteudo = resultado["conteudo"]
-
-           
-            supabase.table(
-                "posts"
-            ).insert({
-
-                "tema": tema,
-
-                "rede": rede,
-
-                "conteudo": conteudo,
-
-                "modo": resultado["modo"],
-
-                "nicho": resultado["nicho"],
-
-                "imagem_url": imagem_url,
-
-                "data_postagem": data_postagem,
-
-                "hora_postagem": hora_postagem,
-
-                "status": "pendente",
-
-                "user_id": session["user_id"]
-
-            }).execute()
-
+                file = request.files["image"]
+            
+                if file.filename != "":
+            
+                    print("🖼️ Upload manual detectado")
+            
+                    upload_result = upload_image(file)
+            
+                    if upload_result["success"]:
+            
+                        imagem_url = upload_result["public_url"]
+    
+            # =========================
+            # FAL AI AUTOMÁTICO
+            # =========================
+            
+            if not imagem_url:
+            
+                print("🤖 Gerando imagem com FAL AI")
+            
+                imagem_url = gerar_imagem(tema)
+            
+            # =========================
+            # GERAR CONTEÚDO
+            # =========================            
+            
+           resultado = gerar_conteudo(
+               tema,
+            
+               rede,
+            
+               modo,
+            
+              nicho
+            
+        ) 
+                            
+        if not resultado["success"]:
+            
             return render_template(
-
+            
                 "ia.html",
+            
+                erro=resultado["erro"]
+            
+          )
+            
+      conteudo = resultado["conteudo"]      
 
-                sucesso=True,
 
-                conteudo=conteudo
+      # =========================
+      # SALVAR POST
+      # =========================
+             
 
-            )
-
-        except Exception as e:
-
-            print("ERRO IA:")
-
-            print(str(e))
-
-            return render_template(
-
-                "ia.html",
-
-                erro=str(e)
-
-            )
-
-    return render_template(
-        "ia.html"
-    )
-
+       supabase.table(
+           "posts"
+       ).insert({
+            
+      "tema": tema,
+            
+                            "rede": rede,
+            
+                            "conteudo": conteudo,
+            
+                            "modo": resultado["modo"],
+            
+                            "nicho": resultado["nicho"],
+            
+                            "imagem_url": imagem_url,
+            
+                            "data_postagem": data_postagem,
+            
+                            "hora_postagem": hora_postagem,
+            
+                            "status": "pendente",
+            
+                            "user_id": session["user_id"]                      
+            
+                        }).execute()                
+                       
+            
+                        return render_template(
+            
+                            "ia.html",
+            
+                            sucesso=True,
+            
+                            conteudo=conteudo
+            
+                        )
+            
+                    except Exception as e:
+            
+                        print("ERRO IA:")
+            
+                        print(str(e))
+            
+                        return render_template(
+            
+                            "ia.html",
+            
+                            erro=str(e)
+        
 # =========================
 # AGENDAMENTOS
 # =========================
