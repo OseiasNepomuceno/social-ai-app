@@ -1,5 +1,9 @@
 import os
 import requests
+import tempfile
+import uuid
+
+from services.supabase_storage import upload_image
 
 # =========================
 # FAL AI
@@ -82,13 +86,83 @@ Regras:
 
         data = response.json()
 
-        print("🖼️ RESPOSTA FAL:")
+        print("RESPOSTA FAL:")
 
         print(data)
 
         image_url = data["images"][0]["url"]
 
-        print("✅ IMAGEM GERADA:")
+        # =========================
+        # DOWNLOAD IMAGEM FAL
+        # =========================
+
+        img_response = requests.get(
+            image_url
+        )
+
+        temp = tempfile.NamedTemporaryFile(
+            delete=False,
+            suffix=".png"
+        )
+
+        temp.write(
+            img_response.content
+        )
+
+        temp.close()
+
+        # =========================
+        # CONVERTER PARA FILE
+        # =========================
+
+        class TempFile:
+
+            def __init__(self, path):
+
+                self.filename = (
+                    str(uuid.uuid4()) + ".png"
+                )
+
+                self.path = path
+
+            def read(self):
+
+                with open(
+                    self.path,
+                    "rb"
+                ) as f:
+
+                    return f.read()
+
+        temp_file = TempFile(
+            temp.name
+        )
+
+        # =========================
+        # UPLOAD SUPABASE
+        # =========================
+
+        upload_result = upload_image(
+            temp_file
+        )
+
+        if upload_result["success"]:
+
+            image_url = upload_result[
+                "public_url"
+            ]
+
+            print(
+                "UPLOAD SUPABASE OK"
+            )
+
+        else:
+
+            print(
+                "ERRO UPLOAD SUPABASE"
+            )
+
+        print("IMAGEM GERADA:")
 
         print(image_url)
 
@@ -96,7 +170,7 @@ Regras:
 
     except Exception as e:
 
-        print("❌ ERRO IMAGE AGENT:")
+        print("ERRO IMAGE AGENT:")
 
         print(str(e))
 
