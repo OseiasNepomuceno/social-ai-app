@@ -11,6 +11,7 @@ import os
 import mercadopago
 
 from supabase import create_client
+from services.supabase_storage import upload_image
 
 from dashboard.ia_engine import (
     gerar_conteudo
@@ -395,6 +396,31 @@ def agendamentos():
             posts=[]
 
         )
+
+# =========================
+# UPLOAD
+# =========================
+
+@app.route("/upload", methods=["POST"])
+def upload():
+
+    if "image" not in request.files:
+
+        return {
+            "success": False,
+            "error": "Nenhuma imagem enviada"
+        }, 400
+
+    file = request.files["image"]
+
+    result = upload_image(file)
+
+    if not result["success"]:
+
+        return result, 400
+
+    return result
+
 
 # =========================
 # PUBLICAÇÕES
