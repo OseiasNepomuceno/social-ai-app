@@ -273,6 +273,24 @@ def ia():
 
             hora_postagem = request.form["hora"]
 
+            
+
+            imagem_url = None
+
+            if "image" in request.files:
+
+                file = request.files["image"]
+
+                if file.filename != "":
+
+                    upload_result = upload_image(file)
+
+                    if upload_result["success"]:
+
+                        imagem_url = upload_result["public_url"]
+
+            
+
             resultado = gerar_conteudo(
 
                 tema,
@@ -297,10 +315,7 @@ def ia():
 
             conteudo = resultado["conteudo"]
 
-            imagem_url = resultado.get(
-                "imagem_url"
-            )
-
+           
             supabase.table(
                 "posts"
             ).insert({
