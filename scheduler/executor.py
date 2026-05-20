@@ -240,8 +240,8 @@ def executar_post(post, user):
         usuario = supabase.table(
             "users"
         ).select("*").eq(
-            "uuid",
-            user["uuid"]
+            "id",
+            user["id"]
         ).execute()
 
         if usuario.data:
@@ -358,7 +358,7 @@ def loop_executor():
                     user_res = supabase.table(
                         "users"
                     ).select("*").eq(
-                        "uuid",
+                        "id",
                         user_id
                     ).execute()
 
