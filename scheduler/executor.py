@@ -1,10 +1,11 @@
 import sys
 import os
 import time
-print("EXECUTOR SAAS INICIANDO")
 
 from datetime import datetime
 from zoneinfo import ZoneInfo
+
+print("EXECUTOR SAAS INICIANDO")
 
 # =========================
 # PATH ROOT PROJETO
@@ -19,8 +20,6 @@ ROOT_DIR = os.path.abspath(
 
 sys.path.append(ROOT_DIR)
 
-
-
 # =========================
 # IMPORTS
 # =========================
@@ -30,7 +29,6 @@ from linkedin.postar import publicar_linkedin
 
 print("ROOT_DIR:", ROOT_DIR)
 print("IMPORTS OK")
-print("EXECUTOR SAAS INICIANDO")
 
 # =========================
 # ENV
@@ -129,10 +127,6 @@ def executar_post(post, user):
 
         print(conteudo)
 
-        # =========================
-        # REDE SOCIAL
-        # =========================
-
         rede = post.get(
             "rede",
             ""
@@ -192,10 +186,6 @@ def executar_post(post, user):
             print(
                 "🚀 Instagram futuramente"
             )
-
-        # =========================
-        # REDE INVÁLIDA
-        # =========================
 
         else:
 
@@ -304,10 +294,6 @@ def loop_executor():
                 "\n⏰ Verificando posts pendentes..."
             )
 
-            # =========================
-            # BUSCAR POSTS
-            # =========================
-
             posts = supabase.table(
                 "posts"
             ).select("*").eq(
@@ -340,9 +326,7 @@ def loop_executor():
                     )
 
                     print("USER_ID POST:")
-
                     print(user_id)
-
                     print(type(user_id))
 
                     if not user_id:
@@ -365,7 +349,6 @@ def loop_executor():
                     ).execute()
 
                     print("RESULTADO USER:")
-
                     print(user_res.data)
 
                     print("BUSCANDO USER...")
@@ -414,17 +397,17 @@ def loop_executor():
                     # VALIDAR HORÁRIO
                     # =========================
 
-                   data_post = post.get(
-                       "data_postagem"
-                   ) or post.get(
-                       "data"
-                   )
+                    data_post = post.get(
+                        "data_postagem"
+                    ) or post.get(
+                        "data"
+                    )
 
-                   hora_post = post.get(
-                       "hora_postagem"
-                   ) or post.get(
-                       "hora"
-                   )
+                    hora_post = post.get(
+                        "hora_postagem"
+                    ) or post.get(
+                        "hora"
+                    )
 
                     if not data_post or not hora_post:
 
