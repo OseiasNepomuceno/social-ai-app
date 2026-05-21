@@ -165,13 +165,12 @@ Publicações
 
         {% if post.imagem_url %}
 
-            <a
-                href="{{ post.imagem_url }}"
-                download
+            <button
                 class="btn btn-download"
+                onclick="baixarImagem('{{ post.imagem_url }}')"
             >
                 ⬇️ Baixar Imagem
-            </a>
+            </button>
 
         {% endif %}
 
@@ -214,6 +213,42 @@ function copiarTexto(id) {
     );
 
     alert("✅ Legenda copiada");
+
+}
+
+function baixarImagem(url) {
+
+    fetch(url)
+
+    .then(response => response.blob())
+
+    .then(blob => {
+
+        const blobUrl = window.URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+
+        a.href = blobUrl;
+
+        a.download = "coregov-post.jpg";
+
+        document.body.appendChild(a);
+
+        a.click();
+
+        a.remove();
+
+        window.URL.revokeObjectURL(blobUrl);
+
+    })
+
+    .catch(error => {
+
+        alert("Erro ao baixar imagem");
+
+        console.log(error);
+
+    });
 
 }
 
