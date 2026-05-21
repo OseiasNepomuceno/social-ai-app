@@ -52,8 +52,7 @@ Regras:
 
         }
 
-        }
-
+    
         payload = {
 
             "prompt": prompt,
