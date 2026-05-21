@@ -207,10 +207,6 @@ def login():
 
             user = resposta.user
 
-            # =========================
-            # SESSION PERMANENTE
-            # =========================
-
             session.permanent = True
 
             session["user_id"] = user.id
@@ -273,10 +269,6 @@ def register():
 
         try:
 
-            # =========================
-            # CRIAR USUÁRIO AUTH
-            # =========================
-
             resposta = (
                 supabase.auth
                 .sign_up({
@@ -300,10 +292,6 @@ def register():
 
                 )
 
-            # =========================
-            # SALVAR DATABASE
-            # =========================
-
             supabase.table(
                 "users"
             ).upsert({
@@ -321,10 +309,6 @@ def register():
                 "posts_usados": 0
 
             }).execute()
-
-            # =========================
-            # LOGIN AUTOMÁTICO
-            # =========================
 
             session.permanent = True
 
@@ -535,10 +519,6 @@ def ia():
 
             print("CONTEÚDO GERADO:")
             print(conteudo)
-
-            # =========================
-            # SALVAR POST
-            # =========================
 
             payload = {
 
@@ -830,6 +810,102 @@ def planos():
         planos=PLANOS
 
     )
+
+# =========================
+# CHECKOUT PRO
+# =========================
+
+@app.route("/checkout/pro")
+def checkout_pro():
+
+    if "user_id" not in session:
+
+        return redirect("/login")
+
+    try:
+
+        user_id = session["user_id"]
+
+        email = session["email"]
+
+        preference_data = {
+
+            "items": [
+
+                {
+
+                    "title":
+                    "Social AI Pro",
+
+                    "quantity": 1,
+
+                    "currency_id":
+                    "BRL",
+
+                    "unit_price": 49.90
+
+                }
+
+            ],
+
+            "payer": {
+
+                "email": email
+
+            },
+
+            "back_urls": {
+
+                "success":
+                "https://app.coregov.com.br/planos",
+
+                "failure":
+                "https://app.coregov.com.br/planos",
+
+                "pending":
+                "https://app.coregov.com.br/planos"
+
+            },
+
+            "auto_return":
+            "approved",
+
+            "external_reference":
+            user_id
+
+        }
+
+        preference_response = (
+            mp.preference().create(
+                preference_data
+            )
+        )
+
+        preference = (
+            preference_response[
+                "response"
+            ]
+        )
+
+        checkout_url = preference[
+            "init_point"
+        ]
+
+        print("✅ CHECKOUT GERADO")
+
+        print(checkout_url)
+
+        return redirect(
+            checkout_url
+        )
+
+    except Exception as e:
+
+        print("❌ ERRO CHECKOUT")
+
+        print(str(e))
+
+        return str(e)
 
 # =========================
 # START
