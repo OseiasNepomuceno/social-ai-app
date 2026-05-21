@@ -1,4 +1,5 @@
 import os
+import time
 import requests
 import tempfile
 import uuid
@@ -46,6 +47,34 @@ supabase = create_client(
 BUCKET_NAME = "coregov-media"
 
 # =========================
+# LIMITES
+# =========================
+
+MAX_IMAGENS_TOTAL = 1000
+
+NICHOS = {
+
+    "marketing": 300,
+
+    "negocios": 200,
+
+    "financeiro": 150,
+
+    "tecnologia": 150,
+
+    "vendas": 100,
+
+    "empreendedorismo": 100
+
+}
+
+# =========================
+# CONTADOR TOTAL
+# =========================
+
+contador_total = 0
+
+# =========================
 # BUSCAR IMAGENS PIXABAY
 # =========================
 
@@ -53,13 +82,21 @@ def buscar_imagens_pixabay(
 
     termo="marketing",
 
-    quantidade=10
+    quantidade=20,
+
+    pagina=1
 
 ):
 
     try:
 
-        print("🔎 BUSCANDO IMAGENS PIXABAY")
+        print("\n🔎 BUSCANDO IMAGENS PIXABAY")
+
+        print("NICHO:")
+        print(termo)
+
+        print("PÁGINA:")
+        print(pagina)
 
         url = (
             "https://pixabay.com/api/"
@@ -75,6 +112,8 @@ def buscar_imagens_pixabay(
 
             "per_page": quantidade,
 
+            "page": pagina,
+
             "safesearch": "true"
 
         }
@@ -87,11 +126,22 @@ def buscar_imagens_pixabay(
 
         )
 
+        print("STATUS PIXABAY:")
+        print(response.status_code)
+
         data = response.json()
 
-        print("✅ RESPOSTA PIXABAY")
+        if "hits" not in data:
 
-        print(data.keys())
+            print("❌ SEM HITS")
+
+            print(data)
+
+            return []
+
+        print(
+            f"✅ TOTAL RETORNADO: {len(data['hits'])}"
+        )
 
         return data.get(
             "hits",
@@ -239,7 +289,9 @@ def salvar_database(
 
             "origem": origem,
 
-            "tags": nicho
+            "tags": nicho,
+
+            "ativo": True
 
         }).execute()
 
@@ -252,82 +304,169 @@ def salvar_database(
         print(str(e))
 
 # =========================
-# PROCESSO COMPLETO
+# PROCESSAR IMAGEM
 # =========================
 
-def executar_coleta(
+def processar_imagem(
 
-    nicho="marketing",
+    image_url,
 
-    quantidade=10
+    nicho
 
 ):
 
-    imagens = buscar_imagens_pixabay(
+    global contador_total
 
-        nicho,
+    try:
 
-        quantidade
+        if contador_total >= MAX_IMAGENS_TOTAL:
 
-    )
-
-    print(
-        f"📸 TOTAL ENCONTRADO: {len(imagens)}"
-    )
-
-    for item in imagens:
-
-        try:
-
-            image_url = item.get(
-
-                "largeImageURL"
-
+            print(
+                "\n🚫 LIMITE GLOBAL ATINGIDO"
             )
 
-            if not image_url:
+            return False
 
-                continue
+        print("⬇️ BAIXANDO")
 
-            print("⬇️ BAIXANDO")
+        arquivo = baixar_imagem(
+            image_url
+        )
 
-            arquivo = baixar_imagem(
-                image_url
-            )
+        if not arquivo:
 
-            if not arquivo:
+            return False
 
-                continue
+        print("☁️ ENVIANDO SUPABASE")
 
-            print("☁️ ENVIANDO SUPABASE")
+        nova_url = upload_supabase(
 
-            nova_url = upload_supabase(
+            arquivo,
 
-                arquivo,
+            nicho
 
-                nicho
+        )
 
-            )
+        if not nova_url:
 
-            if not nova_url:
+            return False
 
-                continue
+        salvar_database(
 
-            salvar_database(
+            nicho,
 
-                nicho,
+            nova_url
 
-                nova_url
+        )
 
-            )
+        contador_total += 1
 
-            print("✅ IMAGEM PROCESSADA")
+        print(
+            f"✅ IMAGEM PROCESSADA: {contador_total}"
+        )
 
-        except Exception as e:
+        return True
 
-            print("❌ ERRO PROCESSAMENTO")
+    except Exception as e:
 
-            print(str(e))
+        print("❌ ERRO PROCESSAMENTO")
+
+        print(str(e))
+
+        return False
+
+# =========================
+# EXECUTAR NICHO
+# =========================
+
+def executar_nicho(
+
+    nicho,
+
+    total_desejado
+
+):
+
+    print("\n========================")
+    print(f"🚀 NICHO: {nicho}")
+    print("========================")
+
+    processadas = 0
+
+    pagina = 1
+
+    while processadas < total_desejado:
+
+        restantes = (
+            total_desejado - processadas
+        )
+
+        quantidade = min(
+            restantes,
+            20
+        )
+
+        imagens = buscar_imagens_pixabay(
+
+            termo=nicho,
+
+            quantidade=quantidade,
+
+            pagina=pagina
+
+        )
+
+        if not imagens:
+
+            print("❌ SEM IMAGENS")
+
+            break
+
+        for item in imagens:
+
+            try:
+
+                image_url = item.get(
+                    "largeImageURL"
+                )
+
+                if not image_url:
+
+                    continue
+
+                sucesso = processar_imagem(
+
+                    image_url,
+
+                    nicho
+
+                )
+
+                if sucesso:
+
+                    processadas += 1
+
+                if processadas >= total_desejado:
+
+                    break
+
+                if contador_total >= MAX_IMAGENS_TOTAL:
+
+                    break
+
+            except Exception as e:
+
+                print(str(e))
+
+        pagina += 1
+
+        # =========================
+        # RATE LIMIT SAFETY
+        # =========================
+
+        print("⏳ AGUARDANDO...")
+
+        time.sleep(2)
 
 # =========================
 # START
@@ -335,10 +474,24 @@ def executar_coleta(
 
 if __name__ == "__main__":
 
-    executar_coleta(
+    print("\n🚀 COREGOV MEDIA ENGINE")
 
-        nicho="marketing",
+    for nicho, total in NICHOS.items():
 
-        quantidade=10
+        executar_nicho(
 
+            nicho,
+
+            total
+
+        )
+
+        if contador_total >= MAX_IMAGENS_TOTAL:
+
+            break
+
+    print("\n✅ COLETA FINALIZADA")
+
+    print(
+        f"📸 TOTAL FINAL: {contador_total}"
     )
