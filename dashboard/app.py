@@ -403,10 +403,6 @@ def ia():
             print("MODO:")
             print(modo)
 
-            # =========================
-            # STATUS INTELIGENTE
-            # =========================
-
             if rede == "instagram":
 
                 status_post = "pronto_instagram"
@@ -418,10 +414,6 @@ def ia():
             print("STATUS POST:")
             print(status_post)
 
-            # =========================
-            # IMAGEM
-            # =========================
-
             imagem_url = None
 
             file = request.files.get(
@@ -430,10 +422,6 @@ def ia():
 
             print("REQUEST FILES:")
             print(request.files)
-
-            # =========================
-            # UPLOAD MANUAL
-            # =========================
 
             if file and file.filename != "":
 
@@ -460,10 +448,6 @@ def ia():
 
                     print(imagem_url)
 
-            # =========================
-            # IMAGEM AUTOMÁTICA
-            # =========================
-
             if not imagem_url:
 
                 print(
@@ -485,10 +469,6 @@ def ia():
                 )
 
                 print(imagem_url)
-
-            # =========================
-            # GERAR CONTEÚDO
-            # =========================
 
             resultado = gerar_conteudo(
 
@@ -906,6 +886,123 @@ def checkout_pro():
         print(str(e))
 
         return str(e)
+
+# =========================
+# WEBHOOK MERCADO PAGO
+# =========================
+
+@app.route(
+    "/webhook/mercadopago",
+    methods=["POST"]
+)
+
+def webhook_mercadopago():
+
+    try:
+
+        data = request.json
+
+        print("\n========================")
+        print("🚀 WEBHOOK MERCADO PAGO")
+        print("========================")
+
+        print(data)
+
+        if not data:
+
+            return {
+                "success": False
+            }, 400
+
+        payment_type = data.get(
+            "type"
+        )
+
+        if payment_type != "payment":
+
+            return {
+                "success": True
+            }, 200
+
+        payment_id = data[
+            "data"
+        ][
+            "id"
+        ]
+
+        print("PAYMENT ID:")
+        print(payment_id)
+
+        payment_info = (
+            mp.payment().get(
+                payment_id
+            )
+        )
+
+        payment = payment_info[
+            "response"
+        ]
+
+        print("PAYMENT:")
+        print(payment)
+
+        status = payment.get(
+            "status"
+        )
+
+        print("STATUS:")
+        print(status)
+
+        if status != "approved":
+
+            return {
+                "success": True
+            }, 200
+
+        user_id = payment.get(
+            "external_reference"
+        )
+
+        print("USER ID:")
+        print(user_id)
+
+        if not user_id:
+
+            return {
+                "success": False
+            }, 400
+
+        supabase.table(
+            "users"
+        ).update({
+
+            "plano": "pro",
+
+            "posts_limite": 999999
+
+        }).eq(
+
+            "id",
+            user_id
+
+        ).execute()
+
+        print("✅ PLANO PRO ATIVADO")
+
+        return {
+            "success": True
+        }, 200
+
+    except Exception as e:
+
+        print("❌ WEBHOOK ERROR")
+
+        print(str(e))
+
+        return {
+            "success": False,
+            "error": str(e)
+        }, 500
 
 # =========================
 # START
