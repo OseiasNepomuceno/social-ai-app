@@ -33,6 +33,16 @@ Agendamentos
 
     }
 
+    .post-image {
+
+        width: 100%;
+
+        border-radius: 10px;
+
+        margin-bottom: 10px;
+
+    }
+
     textarea {
 
         width: 100%;
@@ -143,6 +153,15 @@ Agendamentos
 
         <div class="card">
 
+            {% if post.imagem_url %}
+
+                <img
+                    src="{{ post.imagem_url }}"
+                    class="post-image"
+                >
+
+            {% endif %}
+
             <h2>{{ post.tema }}</h2>
 
             <p>
@@ -222,8 +241,9 @@ Agendamentos
             <textarea rows="4" readonly>{{ post.conteudo }}</textarea>
 
             <a
-                href="/delete_post/{{ post.id }}"
+                href="/deletar/{{ post.id }}"
                 class="btn-delete"
+                onclick="return confirm('Deseja excluir este post?')"
             >
                 ❌ Excluir
             </a>
