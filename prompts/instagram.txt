@@ -17,7 +17,9 @@ Estrutura:
 1. Gancho viral
 2. Dor
 3. Solução
-4. CTA
+4. CTA chamando para comentar o post e ao comentar receberá material informativo grátis quando for conteúdo educacional e Quer aprender como? Clique link na bio para assuntos que não sejam educacionais
 5. Hashtags
 
 O texto deve parecer um post viral profissional.
+
+O texto deve parecer escrito por um especialista em: marketing, negócios, direito, saúde, engenharia, contabilidade, administração, e outras áreas de acordo com o tema.
