@@ -90,6 +90,18 @@ IA Social AI
 
     }
 
+    .preview-image {
+
+        width: 100%;
+
+        margin-top: 20px;
+
+        border-radius: 12px;
+
+        box-shadow: 0 2px 10px rgba(0,0,0,0.10);
+
+    }
+
 </style>
 
 {% endblock %}
@@ -135,7 +147,7 @@ IA Social AI
 
         <label>Rede Social</label>
 
-        <select name="rede">
+        <select name="rede" required>
 
             <option value="linkedin">
                 LinkedIn
@@ -149,21 +161,21 @@ IA Social AI
 
         <label>Modo</label>
 
-        <select name="modo">
+        <select name="modo" required>
 
-            <option value="1">
+            <option value="viral">
                 Viral
             </option>
 
-            <option value="2">
+            <option value="autoridade">
                 Autoridade
             </option>
 
-            <option value="3">
+            <option value="vendas">
                 Vendas
             </option>
 
-            <option value="4">
+            <option value="storytelling">
                 Storytelling
             </option>
 
@@ -171,15 +183,47 @@ IA Social AI
 
         <label>Nicho</label>
 
-        <select name="nicho">
+        <select name="nicho" required>
 
-            <option value="1">Contabilidade</option>
-            <option value="2">Advocacia</option>
-            <option value="3">Saúde</option>
-            <option value="4">Marketing</option>
-            <option value="5">Imobiliária</option>
-            <option value="6">Política</option>
-            <option value="7">Gestão de Negócios</option>
+            <option value="contabilidade">
+                Contabilidade
+            </option>
+
+            <option value="advocacia">
+                Advocacia
+            </option>
+
+            <option value="saude">
+                Saúde
+            </option>
+
+            <option value="marketing">
+                Marketing
+            </option>
+
+            <option value="imobiliaria">
+                Imobiliária
+            </option>
+
+            <option value="politica">
+                Política
+            </option>
+
+            <option value="negocios">
+                Gestão de Negócios
+            </option>
+
+            <option value="financeiro">
+                Financeiro
+            </option>
+
+            <option value="tecnologia">
+                Tecnologia
+            </option>
+
+            <option value="empreendedorismo">
+                Empreendedorismo
+            </option>
 
         </select>
 
@@ -220,6 +264,17 @@ IA Social AI
         <h2>Conteúdo Gerado</h2>
 
         <textarea rows="15">{{ conteudo }}</textarea>
+
+    {% endif %}
+
+    {% if imagem_url %}
+
+        <h2>Imagem Selecionada</h2>
+
+        <img
+            src="{{ imagem_url }}"
+            class="preview-image"
+        >
 
     {% endif %}
 
