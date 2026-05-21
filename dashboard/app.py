@@ -319,6 +319,21 @@ def ia():
             print(modo)
 
             # =========================
+            # STATUS INTELIGENTE
+            # =========================
+
+            if rede == "instagram":
+
+                status_post = "pronto_instagram"
+
+            else:
+
+                status_post = "pendente"
+
+            print("STATUS POST:")
+            print(status_post)
+
+            # =========================
             # IMAGEM
             # =========================
 
@@ -442,7 +457,7 @@ def ia():
 
                 "hora_postagem": hora_postagem,
 
-                "status": "pendente",
+                "status": status_post,
 
                 "user_id": session["user_id"]
 
@@ -598,9 +613,12 @@ def publicacoes():
         ).select("*").eq(
             "user_id",
             session["user_id"]
-        ).eq(
+        ).in_(
             "status",
-            "executado"
+            [
+                "executado",
+                "pronto_instagram"
+            ]
         ).order(
             "id",
             desc=True
