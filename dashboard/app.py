@@ -3,8 +3,7 @@ from flask import (
     render_template,
     redirect,
     request,
-    session,
-    url_for
+    session
 )
 
 import os
@@ -14,7 +13,9 @@ from supabase import create_client
 
 from services.supabase_storage import upload_image
 
-from dashboard.image_agent import gerar_imagem
+from dashboard.agents.media_selector import (
+    selecionar_imagem
+)
 
 from dashboard.ia_engine import (
     gerar_conteudo
@@ -102,6 +103,7 @@ PLANOS = {
 def home():
 
     if "user_id" not in session:
+
         return redirect("/login")
 
     try:
@@ -119,18 +121,27 @@ def home():
         total_posts = len(posts)
 
         executados = len([
+
             p for p in posts
+
             if p["status"] == "executado"
+
         ])
 
         pendentes = len([
+
             p for p in posts
+
             if p["status"] == "pendente"
+
         ])
 
         erros = len([
+
             p for p in posts
+
             if p["status"] == "erro"
+
         ])
 
         return render_template(
@@ -193,7 +204,9 @@ def login():
 
             session["email"] = user.email
 
-            supabase.table("users").upsert({
+            supabase.table(
+                "users"
+            ).upsert({
 
                 "id": user.id,
 
@@ -258,6 +271,7 @@ def logout():
 def ia():
 
     if "user_id" not in session:
+
         return redirect("/login")
 
     if request.method == "POST":
@@ -292,23 +306,47 @@ def ia():
 
                 if file.filename != "":
 
-                    print("🖼️ Upload manual detectado")
+                    print(
+                        "🖼️ Upload manual detectado"
+                    )
 
-                    upload_result = upload_image(file)
+                    upload_result = upload_image(
+                        file
+                    )
 
                     if upload_result["success"]:
 
-                        imagem_url = upload_result["public_url"]
+                        imagem_url = upload_result[
+                            "public_url"
+                        ]
+
+                        print(
+                            "✅ Upload manual OK"
+                        )
 
             # =========================
-            # FAL AI AUTOMÁTICO
+            # IMAGEM AUTOMÁTICA
             # =========================
 
             if not imagem_url:
 
-                print("🤖 Gerando imagem com FAL AI")
+                print(
+                    "🖼️ BUSCANDO IMAGEM AUTOMÁTICA"
+                )
 
-                imagem_url = gerar_imagem(tema)
+                imagem_url = selecionar_imagem(
+
+                    nicho=nicho,
+
+                    rede=rede,
+
+                    estilo="premium"
+
+                )
+
+                print("✅ IMAGEM ENCONTRADA:")
+
+                print(imagem_url)
 
             # =========================
             # GERAR CONTEÚDO
@@ -368,13 +406,17 @@ def ia():
 
             }).execute()
 
+            print("✅ POST SALVO")
+
             return render_template(
 
                 "ia.html",
 
                 sucesso=True,
 
-                conteudo=conteudo
+                conteudo=conteudo,
+
+                imagem_url=imagem_url
 
             )
 
@@ -404,6 +446,7 @@ def ia():
 def agendamentos():
 
     if "user_id" not in session:
+
         return redirect("/login")
 
     try:
@@ -442,14 +485,21 @@ def agendamentos():
 # UPLOAD
 # =========================
 
-@app.route("/upload", methods=["POST"])
+@app.route(
+    "/upload",
+    methods=["POST"]
+)
+
 def upload():
 
     if "image" not in request.files:
 
         return {
+
             "success": False,
+
             "error": "Nenhuma imagem enviada"
+
         }, 400
 
     file = request.files["image"]
@@ -470,6 +520,7 @@ def upload():
 def publicacoes():
 
     if "user_id" not in session:
+
         return redirect("/login")
 
     try:
@@ -515,6 +566,7 @@ def publicacoes():
 def configuracoes():
 
     if "user_id" not in session:
+
         return redirect("/login")
 
     try:
@@ -582,11 +634,15 @@ def configuracoes():
 def planos():
 
     if "user_id" not in session:
+
         return redirect("/login")
 
     return render_template(
+
         "planos.html",
+
         planos=PLANOS
+
     )
 
 # =========================
@@ -597,6 +653,7 @@ def planos():
 def delete_post(post_id):
 
     if "user_id" not in session:
+
         return redirect("/login")
 
     try:
@@ -611,7 +668,9 @@ def delete_post(post_id):
             session["user_id"]
         ).execute()
 
-        return redirect("/agendamentos")
+        return redirect(
+            "/agendamentos"
+        )
 
     except Exception as e:
 
@@ -619,7 +678,9 @@ def delete_post(post_id):
 
         print(str(e))
 
-        return redirect("/agendamentos")
+        return redirect(
+            "/agendamentos"
+        )
 
 # =========================
 # PUBLICAR
@@ -629,6 +690,7 @@ def delete_post(post_id):
 def publicar(post_id):
 
     if "user_id" not in session:
+
         return redirect("/login")
 
     # =========================
@@ -636,7 +698,9 @@ def publicar(post_id):
     # DESATIVADA
     # =========================
 
-    return redirect("/agendamentos")
+    return redirect(
+        "/agendamentos"
+    )
 
 # =========================
 # START
