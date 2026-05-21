@@ -46,9 +46,11 @@ Regras:
 
         headers = {
 
-            "Authorization": f"Key {FAL_API_KEY}",
+            "Authorization": f"Bearer {FAL_API_KEY}",
 
             "Content-Type": "application/json"
+
+        }
 
         }
 
