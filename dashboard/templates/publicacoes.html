@@ -13,9 +13,9 @@ Publicações
         display: grid;
 
         grid-template-columns:
-            repeat(auto-fit, minmax(220px, 240px));
+            repeat(auto-fit, minmax(260px, 300px));
 
-        gap: 12px;
+        gap: 20px;
 
         margin-top: 20px;
 
@@ -25,11 +25,21 @@ Publicações
 
         background: white;
 
-        padding: 10px;
+        border-radius: 14px;
+
+        padding: 15px;
+
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+
+    }
+
+    .post-image {
+
+        width: 100%;
 
         border-radius: 10px;
 
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        margin-bottom: 15px;
 
     }
 
@@ -37,101 +47,59 @@ Publicações
 
         width: 100%;
 
-        margin-top: 10px;
-
-        border-radius: 6px;
-
-        padding: 5px;
-
-        font-size: 11px;
-
-    }
-
-    .badge-success {
-
-        background: #d4edda;
-
-        color: #155724;
-
-        padding: 3px 6px;
-
-        border-radius: 20px;
-
-        font-size: 10px;
-
-        font-weight: bold;
-
-    }
-
-    .badge-error {
-
-        background: #f8d7da;
-
-        color: #721c24;
-
-        padding: 3px 6px;
-
-        border-radius: 20px;
-
-        font-size: 10px;
-
-        font-weight: bold;
-
-    }
-
-    .upload-box {
-
-        background: white;
-
-        padding: 20px;
-
-        border-radius: 12px;
-
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-
-        margin-bottom: 20px;
-
-    }
-
-    .upload-box form {
-
-        display: flex;
-
-        flex-direction: column;
-
-        gap: 12px;
-
-    }
-
-    .upload-box input[type="file"] {
+        border-radius: 8px;
 
         padding: 10px;
 
-        border: 1px solid #ddd;
+        margin-top: 10px;
 
-        border-radius: 8px;
+        resize: none;
 
     }
 
-    .upload-box button {
+    .btn {
 
-        background: #007bff;
+        display: inline-block;
+
+        margin-top: 10px;
+
+        margin-right: 5px;
+
+        padding: 10px 14px;
+
+        border-radius: 8px;
+
+        text-decoration: none;
 
         color: white;
 
+        font-size: 14px;
+
         border: none;
-
-        padding: 12px;
-
-        border-radius: 8px;
 
         cursor: pointer;
 
-        font-weight: bold;
+    }
+
+    .btn-copy {
+
+        background: #0077ff;
 
     }
 
-    .upload-box button:hover {
+    .btn-download {
+
+        background: #00a86b;
+
+    }
+
+    .btn-instagram {
+
+        background: #E1306C;
+
+    }
+
+    .btn:hover {
 
         opacity: 0.9;
 
@@ -145,105 +113,110 @@ Publicações
 
 <h1>🚀 Publicações</h1>
 
-
-{% if erro %}
-
-    <div class="error">
-
-        {{ erro }}
-
-    </div>
-
-{% endif %}
-
 {% if posts %}
 
-    <div class="grid">
+<div class="grid">
 
-    {% for post in posts %}
+{% for post in posts %}
 
-        <div class="card">
+    <div class="card">
 
-            <h2>{{ post.tema }}</h2>
+        {% if post.imagem_url %}
 
-            <p>
+            <img
+                src="{{ post.imagem_url }}"
+                class="post-image"
+            >
 
-                <strong>Rede:</strong>
+        {% endif %}
 
-                {{ post.rede }}
+        <h2>{{ post.tema }}</h2>
 
-            </p>
+        <p>
 
-            <p>
+            <strong>Rede:</strong>
 
-                <strong>Status:</strong>
+            {{ post.rede }}
 
-                {% if post.status == "executado" %}
+        </p>
 
-                    <span class="badge-success">
-                        🟢 Publicado
-                    </span>
+        <p>
 
-                {% else %}
+            <strong>Nicho:</strong>
 
-                    <span class="badge-error">
-                        🔴 Erro
-                    </span>
+            {{ post.nicho }}
 
-                {% endif %}
+        </p>
 
-            </p>
+        <textarea
+            rows="8"
+            readonly
+            id="texto-{{ post.id }}"
+        >{{ post.conteudo }}</textarea>
 
-            <p>
+        <br>
 
-                <strong>Data:</strong>
+        <button
+            class="btn btn-copy"
+            onclick="copiarTexto('texto-{{ post.id }}')"
+        >
+            📋 Copiar Legenda
+        </button>
 
-                {{ post.data_postagem }}
+        {% if post.imagem_url %}
 
-            </p>
+            <a
+                href="{{ post.imagem_url }}"
+                download
+                class="btn btn-download"
+            >
+                ⬇️ Baixar Imagem
+            </a>
 
-            <p>
+        {% endif %}
 
-                <strong>Hora:</strong>
-
-                {{ post.hora_postagem }}
-
-            </p>
-
-            {% if post.imagem_url %}
-
-                <img
-                    src="{{ post.imagem_url }}"
-                    alt="Imagem do post"
-                    loading="lazy"
-                    style="
-                        width:100%;
-                        height:220px;
-                        object-fit:cover;
-                        border-radius:10px;
-                        margin-top:10px;
-                        box-shadow:0 2px 8px rgba(0,0,0,0.08);
-                    "
-                >
-
-            {% endif %}
-
-            <textarea rows="3" readonly>{{ post.conteudo }}</textarea>
-
-        </div>
-
-    {% endfor %}
+        <a
+            href="https://www.instagram.com/"
+            target="_blank"
+            class="btn btn-instagram"
+        >
+            📲 Abrir Instagram
+        </a>
 
     </div>
+
+{% endfor %}
+
+</div>
 
 {% else %}
 
-    <p>
+<p>
 
-        Nenhuma publicação encontrada
+    Nenhuma publicação encontrada
 
-    </p>
+</p>
 
 {% endif %}
+
+<script>
+
+function copiarTexto(id) {
+
+    const texto = document.getElementById(id);
+
+    texto.select();
+
+    texto.setSelectionRange(0, 99999);
+
+    navigator.clipboard.writeText(
+        texto.value
+    );
+
+    alert("✅ Legenda copiada");
+
+}
+
+</script>
 
 {% endblock %}
