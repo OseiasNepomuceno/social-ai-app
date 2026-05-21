@@ -1,715 +1,255 @@
-from flask import (
-    Flask,
-    render_template,
-    redirect,
-    request,
-    session
-)
+{% extends "base.html" %}
 
-import os
-import mercadopago
+{% block title %}
+Agendamentos
+{% endblock %}
 
-from supabase import create_client
+{% block extra_css %}
 
-from services.supabase_storage import upload_image
+<style>
 
-from dashboard.agents.media_selector import (
-    selecionar_imagem
-)
+    .posts-grid {
 
-from dashboard.ia_engine import (
-    gerar_conteudo
-)
+        display: grid;
 
-# =========================
-# FLASK
-# =========================
+        grid-template-columns: repeat(
+            auto-fit,
+            minmax(320px, 1fr)
+        );
 
-app = Flask(
-    __name__,
-    static_folder="static",
-    template_folder="templates"
-)
+        gap: 20px;
 
-app.secret_key = os.getenv(
-    "SECRET_KEY",
-    "social_ai_secret"
-)
-
-# =========================
-# SUPABASE
-# =========================
-
-SUPABASE_URL = os.getenv(
-    "SUPABASE_URL"
-)
-
-SUPABASE_KEY = os.getenv(
-    "SUPABASE_KEY"
-)
-
-supabase = create_client(
-    SUPABASE_URL,
-    SUPABASE_KEY
-)
-
-# =========================
-# MERCADO PAGO
-# =========================
-
-MERCADO_PAGO_TOKEN = os.getenv(
-    "MERCADO_PAGO_TOKEN"
-)
-
-mp = (
-    mercadopago.SDK(MERCADO_PAGO_TOKEN)
-    if MERCADO_PAGO_TOKEN
-    else None
-)
-
-# =========================
-# PLANOS
-# =========================
-
-PLANOS = {
-
-    "free": {
-
-        "nome": "Free",
-
-        "preco": 0,
-
-        "limite": 10
-
-    },
-
-    "pro": {
-
-        "nome": "Pro",
-
-        "preco": 49.90,
-
-        "limite": 999999
+        margin-top: 20px;
 
     }
 
-}
+    .post-card {
 
-# =========================
-# HOME
-# =========================
+        background: white;
 
-@app.route("/")
-def home():
+        border-radius: 14px;
 
-    if "user_id" not in session:
+        padding: 18px;
 
-        return redirect("/login")
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
 
-    try:
+    }
 
-        posts = supabase.table(
-            "posts"
-        ).select("*").eq(
-            "user_id",
-            session["user_id"]
-        ).order(
-            "id",
-            desc=True
-        ).limit(6).execute().data
+    .post-image {
 
-        total_posts = len(posts)
+        width: 100%;
 
-        executados = len([
+        border-radius: 10px;
 
-            p for p in posts
+        margin-bottom: 15px;
 
-            if p["status"] == "executado"
+    }
 
-        ])
+    .post-title {
 
-        pendentes = len([
+        font-size: 18px;
 
-            p for p in posts
+        font-weight: bold;
 
-            if p["status"] == "pendente"
+        margin-bottom: 10px;
 
-        ])
+    }
 
-        erros = len([
+    .post-content {
 
-            p for p in posts
+        white-space: pre-wrap;
 
-            if p["status"] == "erro"
+        margin-bottom: 15px;
 
-        ])
+        color: #444;
 
-        return render_template(
+    }
 
-            "index.html",
+    .post-info {
 
-            posts=posts,
+        font-size: 14px;
 
-            total_posts=total_posts,
+        color: #666;
 
-            executados=executados,
+        margin-bottom: 6px;
 
-            pendentes=pendentes,
+    }
 
-            erros=erros
+    .status {
 
-        )
+        display: inline-block;
 
-    except Exception as e:
+        padding: 5px 10px;
 
-        print("HOME ERROR:")
-        print(str(e))
+        border-radius: 20px;
 
-        return str(e)
+        font-size: 12px;
 
-# =========================
-# LOGIN
-# =========================
+        font-weight: bold;
 
-@app.route(
-    "/login",
-    methods=["GET", "POST"]
-)
+        margin-top: 10px;
 
-def login():
+    }
 
-    if request.method == "POST":
+    .pendente {
 
-        email = request.form["email"]
+        background: #fff3cd;
 
-        senha = request.form["senha"]
+        color: #856404;
 
-        try:
+    }
 
-            resposta = (
-                supabase.auth
-                .sign_in_with_password({
+    .executado {
 
-                    "email": email,
+        background: #d4edda;
 
-                    "password": senha
+        color: #155724;
 
-                })
-            )
+    }
 
-            user = resposta.user
+    .erro {
 
-            session["user_id"] = user.id
+        background: #f8d7da;
 
-            session["email"] = user.email
+        color: #721c24;
 
-            supabase.table(
-                "users"
-            ).upsert({
+    }
 
-                "id": user.id,
+    .delete-btn {
 
-                "email": user.email,
+        display: inline-block;
 
-                "plano": "free",
+        margin-top: 15px;
 
-                "posts_limite": 10,
+        background: #ff4d4d;
 
-                "posts_usados": 0
+        color: white;
 
-            }).execute()
+        padding: 10px 14px;
 
-            return redirect("/")
+        border-radius: 8px;
 
-        except Exception as e:
+        text-decoration: none;
 
-            print("LOGIN ERROR:")
-            print(str(e))
+        font-size: 14px;
 
-            return render_template(
+    }
 
-                "login.html",
+    .delete-btn:hover {
 
-                erro="Login inválido"
+        opacity: 0.9;
 
-            )
+    }
 
-    return render_template(
-        "login.html"
-    )
+</style>
 
-# =========================
-# LOGOUT
-# =========================
+{% endblock %}
 
-@app.route("/logout")
-def logout():
+{% block content %}
 
-    session.pop(
-        "user_id",
-        None
-    )
+<h1>📅 Agendamentos</h1>
 
-    session.pop(
-        "email",
-        None
-    )
+{% if erro %}
 
-    return redirect("/login")
+    <div style="
+        background:#f8d7da;
+        color:#721c24;
+        padding:10px;
+        border-radius:8px;
+        margin-bottom:20px;
+    ">
 
-# =========================
-# IA
-# =========================
+        {{ erro }}
 
-@app.route(
-    "/ia",
-    methods=["GET", "POST"]
-)
+    </div>
 
-def ia():
+{% endif %}
 
-    if "user_id" not in session:
+<div class="posts-grid">
 
-        return redirect("/login")
+    {% for post in posts %}
 
-    if request.method == "POST":
+        <div class="post-card">
 
-        try:
+            {% if post.imagem_url %}
 
-            tema = request.form["tema"]
+                <img
+                    src="{{ post.imagem_url }}"
+                    class="post-image"
+                >
 
-            rede = request.form["rede"]
+            {% endif %}
 
-            modo = request.form["modo"]
+            <div class="post-title">
 
-            nicho = request.form["nicho"]
+                {{ post.tema }}
 
-            data_postagem = request.form["data"]
+            </div>
 
-            hora_postagem = request.form["hora"]
+            <div class="post-content">
 
-            print("\n========================")
-            print("🚀 NOVO POST")
-            print("========================")
+                {{ post.conteudo }}
 
-            print("TEMA:")
-            print(tema)
+            </div>
 
-            print("NICHO:")
-            print(nicho)
+            <div class="post-info">
 
-            print("REDE:")
-            print(rede)
+                🌐 Rede:
+                {{ post.rede }}
 
-            print("MODO:")
-            print(modo)
+            </div>
 
-            # =========================
-            # IMAGEM
-            # =========================
+            <div class="post-info">
 
-            imagem_url = None
+                🎯 Nicho:
+                {{ post.nicho }}
 
-            file = request.files.get(
-                "image"
-            )
+            </div>
 
-            print("REQUEST FILES:")
-            print(request.files)
+            <div class="post-info">
 
-            # =========================
-            # UPLOAD MANUAL
-            # =========================
+                🚀 Modo:
+                {{ post.modo }}
 
-            if file and file.filename != "":
+            </div>
 
-                print(
-                    "🖼️ Upload manual detectado"
-                )
+            <div class="post-info">
 
-                upload_result = upload_image(
-                    file
-                )
+                📅 Data:
+                {{ post.data_postagem }}
 
-                print("UPLOAD RESULT:")
-                print(upload_result)
+            </div>
 
-                if upload_result["success"]:
+            <div class="post-info">
 
-                    imagem_url = upload_result[
-                        "public_url"
-                    ]
+                ⏰ Hora:
+                {{ post.hora_postagem }}
 
-                    print(
-                        "✅ Upload manual OK"
-                    )
+            </div>
 
-                    print(imagem_url)
+            <div class="
+                status
+                {{ post.status }}
+            ">
 
-            # =========================
-            # IMAGEM AUTOMÁTICA
-            # =========================
+                {{ post.status }}
 
-            if not imagem_url:
+            </div>
 
-                print(
-                    "🖼️ BUSCANDO IMAGEM AUTOMÁTICA"
-                )
+            <br>
 
-                imagem_url = selecionar_imagem(
+            <a
+                href="/deletar/{{ post.id }}"
+                class="delete-btn"
+                onclick="return confirm('Deseja excluir este post?')"
+            >
+                🗑️ Excluir
+            </a>
 
-                    nicho=nicho,
+        </div>
 
-                    rede=rede,
+    {% endfor %}
 
-                    estilo="premium"
+</div>
 
-                )
-
-                print(
-                    "✅ IMAGEM ENCONTRADA:"
-                )
-
-                print(imagem_url)
-
-            # =========================
-            # GERAR CONTEÚDO
-            # =========================
-
-            resultado = gerar_conteudo(
-
-                tema,
-
-                rede,
-
-                modo,
-
-                nicho
-
-            )
-
-            print("RESULTADO IA:")
-            print(resultado)
-
-            if not resultado["success"]:
-
-                return render_template(
-
-                    "ia.html",
-
-                    erro=resultado["erro"]
-
-                )
-
-            conteudo = resultado["conteudo"]
-
-            print("CONTEÚDO GERADO:")
-            print(conteudo)
-
-            # =========================
-            # SALVAR POST
-            # =========================
-
-            payload = {
-
-                "tema": tema,
-
-                "rede": rede,
-
-                "conteudo": conteudo,
-
-                "modo": modo,
-
-                "nicho": nicho,
-
-                "imagem_url": imagem_url,
-
-                "data_postagem": data_postagem,
-
-                "hora_postagem": hora_postagem,
-
-                "status": "pendente",
-
-                "user_id": session["user_id"]
-
-            }
-
-            print("\n===== PAYLOAD POST =====")
-            print(payload)
-
-            response = supabase.table(
-                "posts"
-            ).insert(
-                payload
-            ).execute()
-
-            print("\n===== RESPONSE POST =====")
-            print(response)
-
-            print("✅ POST SALVO")
-
-            return render_template(
-
-                "ia.html",
-
-                sucesso=True,
-
-                conteudo=conteudo,
-
-                imagem_url=imagem_url
-
-            )
-
-        except Exception as e:
-
-            print("ERRO IA:")
-            print(str(e))
-
-            return render_template(
-
-                "ia.html",
-
-                erro=str(e)
-
-            )
-
-    return render_template(
-        "ia.html"
-    )
-
-# =========================
-# AGENDAMENTOS
-# =========================
-
-@app.route("/agendamentos")
-def agendamentos():
-
-    if "user_id" not in session:
-
-        return redirect("/login")
-
-    try:
-
-        posts = supabase.table(
-            "posts"
-        ).select("*").eq(
-            "user_id",
-            session["user_id"]
-        ).order(
-            "id",
-            desc=True
-        ).execute().data
-
-        return render_template(
-
-            "agendamentos.html",
-
-            posts=posts
-
-        )
-
-    except Exception as e:
-
-        return render_template(
-
-            "agendamentos.html",
-
-            erro=str(e),
-
-            posts=[]
-
-        )
-
-# =========================
-# DELETAR POST
-# =========================
-
-@app.route(
-    "/deletar/<int:post_id>"
-)
-def deletar_post(post_id):
-
-    if "user_id" not in session:
-
-        return redirect("/login")
-
-    try:
-
-        print("\n========================")
-        print("🗑️ DELETANDO POST")
-        print("========================")
-
-        print("POST ID:")
-        print(post_id)
-
-        print("USER:")
-        print(session["user_id"])
-
-        response = supabase.table(
-            "posts"
-        ).delete().eq(
-            "id",
-            post_id
-        ).eq(
-            "user_id",
-            session["user_id"]
-        ).execute()
-
-        print("RESPONSE DELETE:")
-        print(response)
-
-        print("✅ POST DELETADO")
-
-        return redirect(
-            "/agendamentos"
-        )
-
-    except Exception as e:
-
-        print("❌ ERRO DELETE")
-
-        print(str(e))
-
-        return str(e)
-
-# =========================
-# PUBLICAÇÕES
-# =========================
-
-@app.route("/publicacoes")
-def publicacoes():
-
-    if "user_id" not in session:
-
-        return redirect("/login")
-
-    try:
-
-        posts = supabase.table(
-            "posts"
-        ).select("*").eq(
-            "user_id",
-            session["user_id"]
-        ).eq(
-            "status",
-            "executado"
-        ).order(
-            "id",
-            desc=True
-        ).execute().data
-
-        return render_template(
-
-            "publicacoes.html",
-
-            posts=posts
-
-        )
-
-    except Exception as e:
-
-        return render_template(
-
-            "publicacoes.html",
-
-            erro=str(e),
-
-            posts=[]
-
-        )
-
-# =========================
-# CONFIGURAÇÕES
-# =========================
-
-@app.route("/configuracoes")
-def configuracoes():
-
-    if "user_id" not in session:
-
-        return redirect("/login")
-
-    try:
-
-        usuario = supabase.table(
-            "users"
-        ).select("*").eq(
-            "id",
-            session["user_id"]
-        ).execute()
-
-        if not usuario.data:
-
-            return render_template(
-
-                "configuracoes.html",
-
-                erro="Usuário não encontrado",
-
-                user=None,
-
-                linkedin_conectado=False
-
-            )
-
-        user = usuario.data[0]
-
-        linkedin_conectado = bool(
-            user.get("linkedin_token")
-        )
-
-        return render_template(
-
-            "configuracoes.html",
-
-            user=user,
-
-            linkedin_conectado=linkedin_conectado
-
-        )
-
-    except Exception as e:
-
-        print("ERRO CONFIG:")
-        print(str(e))
-
-        return render_template(
-
-            "configuracoes.html",
-
-            erro=str(e),
-
-            user=None,
-
-            linkedin_conectado=False
-
-        )
-
-# =========================
-# PLANOS
-# =========================
-
-@app.route("/planos")
-def planos():
-
-    if "user_id" not in session:
-
-        return redirect("/login")
-
-    return render_template(
-
-        "planos.html",
-
-        planos=PLANOS
-
-    )
-
-# =========================
-# START
-# =========================
-
-if __name__ == "__main__":
-
-    app.run(
-        debug=True
-    )
+{% endblock %}
