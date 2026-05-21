@@ -521,6 +521,58 @@ def agendamentos():
         )
 
 # =========================
+# DELETAR POST
+# =========================
+
+@app.route(
+    "/deletar/<int:post_id>"
+)
+def deletar_post(post_id):
+
+    if "user_id" not in session:
+
+        return redirect("/login")
+
+    try:
+
+        print("\n========================")
+        print("🗑️ DELETANDO POST")
+        print("========================")
+
+        print("POST ID:")
+        print(post_id)
+
+        print("USER:")
+        print(session["user_id"])
+
+        response = supabase.table(
+            "posts"
+        ).delete().eq(
+            "id",
+            post_id
+        ).eq(
+            "user_id",
+            session["user_id"]
+        ).execute()
+
+        print("RESPONSE DELETE:")
+        print(response)
+
+        print("✅ POST DELETADO")
+
+        return redirect(
+            "/agendamentos"
+        )
+
+    except Exception as e:
+
+        print("❌ ERRO DELETE")
+
+        print(str(e))
+
+        return str(e)
+
+# =========================
 # PUBLICAÇÕES
 # =========================
 
