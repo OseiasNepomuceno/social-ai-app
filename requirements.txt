@@ -4,5 +4,5 @@ werkzeug
 supabase
 mercadopago
 openai
-apscheduler
+apscheduler>=3.10.4
 fal-client
