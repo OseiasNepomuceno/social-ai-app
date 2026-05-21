@@ -46,6 +46,7 @@ SUPABASE_KEY = os.getenv(
 
 print("SUPABASE_URL:", bool(SUPABASE_URL))
 print("SUPABASE_KEY:", bool(SUPABASE_KEY))
+
 print("URL USADA:")
 print(SUPABASE_URL)
 
@@ -74,7 +75,7 @@ def pode_publicar(user):
 
     plano = user.get(
         "plano",
-        "gratuito"
+        "free"
     )
 
     usados = user.get(
@@ -123,9 +124,17 @@ def executar_post(post, user):
             ""
         )
 
+        imagem_url = post.get(
+            "imagem_url"
+        )
+
         print("\n===== CONTEÚDO =====")
 
         print(conteudo)
+
+        print("\n===== IMAGEM =====")
+
+        print(imagem_url)
 
         rede = post.get(
             "rede",
@@ -142,17 +151,13 @@ def executar_post(post, user):
                 "🚀 Publicando no LinkedIn..."
             )
 
-            image_url = post.get(
-                "imagem_url"
-            )
-
             sucesso = publicar_linkedin(
 
                 user["id"],
 
                 conteudo,
 
-                image_url
+                imagem_url
 
             )
 
@@ -263,9 +268,10 @@ def executar_post(post, user):
     except Exception as e:
 
         print(
-            "❌ ERRO EXECUTANDO POST:",
-            str(e)
+            "❌ ERRO EXECUTANDO POST:"
         )
+
+        print(str(e))
 
         supabase.table(
             "posts"
@@ -327,6 +333,7 @@ def loop_executor():
 
                     print("USER_ID POST:")
                     print(user_id)
+
                     print(type(user_id))
 
                     if not user_id:
@@ -374,7 +381,10 @@ def loop_executor():
                     if not permitido:
 
                         print(
-                            "🚫 Limite atingido:",
+                            "🚫 Limite atingido:"
+                        )
+
+                        print(
                             user.get("email")
                         )
 
@@ -394,7 +404,7 @@ def loop_executor():
                         continue
 
                     # =========================
-                    # VALIDAR HORÁRIO
+                    # VALIDAR DATA/HORA
                     # =========================
 
                     data_post = post.get(
@@ -430,6 +440,10 @@ def loop_executor():
 
                         continue
 
+                    # =========================
+                    # CONVERTER DATA
+                    # =========================
+
                     try:
 
                         data_hora = datetime.strptime(
@@ -451,9 +465,11 @@ def loop_executor():
                         )
 
                     agora = datetime.now(
+
                         ZoneInfo(
                             "America/Sao_Paulo"
                         )
+
                     ).replace(
                         tzinfo=None
                     )
@@ -498,7 +514,7 @@ def loop_executor():
                     ).execute()
 
                     # =========================
-                    # EXECUTAR
+                    # EXECUTAR POST
                     # =========================
 
                     executar_post(
@@ -509,16 +525,18 @@ def loop_executor():
                 except Exception as e:
 
                     print(
-                        "❌ Erro no loop do post:",
-                        str(e)
+                        "❌ Erro no loop do post:"
                     )
+
+                    print(str(e))
 
         except Exception as e:
 
             print(
-                "❌ ERRO GERAL:",
-                str(e)
+                "❌ ERRO GERAL:"
             )
+
+            print(str(e))
 
         # =========================
         # INTERVALO
