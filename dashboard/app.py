@@ -163,7 +163,6 @@ def home():
     except Exception as e:
 
         print("HOME ERROR:")
-
         print(str(e))
 
         return str(e)
@@ -225,7 +224,6 @@ def login():
         except Exception as e:
 
             print("LOGIN ERROR:")
-
             print(str(e))
 
             return render_template(
@@ -290,39 +288,63 @@ def ia():
 
             hora_postagem = request.form["hora"]
 
+            print("\n========================")
+            print("🚀 NOVO POST")
+            print("========================")
+
+            print("TEMA:")
+            print(tema)
+
+            print("NICHO:")
+            print(nicho)
+
+            print("REDE:")
+            print(rede)
+
+            print("MODO:")
+            print(modo)
+
             # =========================
             # IMAGEM
             # =========================
 
             imagem_url = None
 
+            file = request.files.get(
+                "image"
+            )
+
+            print("REQUEST FILES:")
+            print(request.files)
+
             # =========================
             # UPLOAD MANUAL
             # =========================
 
-            if "image" in request.files:
+            if file and file.filename != "":
 
-                file = request.files["image"]
+                print(
+                    "🖼️ Upload manual detectado"
+                )
 
-                if file.filename != "":
+                upload_result = upload_image(
+                    file
+                )
+
+                print("UPLOAD RESULT:")
+                print(upload_result)
+
+                if upload_result["success"]:
+
+                    imagem_url = upload_result[
+                        "public_url"
+                    ]
 
                     print(
-                        "🖼️ Upload manual detectado"
+                        "✅ Upload manual OK"
                     )
 
-                    upload_result = upload_image(
-                        file
-                    )
-
-                    if upload_result["success"]:
-
-                        imagem_url = upload_result[
-                            "public_url"
-                        ]
-
-                        print(
-                            "✅ Upload manual OK"
-                        )
+                    print(imagem_url)
 
             # =========================
             # IMAGEM AUTOMÁTICA
@@ -344,7 +366,9 @@ def ia():
 
                 )
 
-                print("✅ IMAGEM ENCONTRADA:")
+                print(
+                    "✅ IMAGEM ENCONTRADA:"
+                )
 
                 print(imagem_url)
 
@@ -364,6 +388,9 @@ def ia():
 
             )
 
+            print("RESULTADO IA:")
+            print(resultado)
+
             if not resultado["success"]:
 
                 return render_template(
@@ -376,13 +403,14 @@ def ia():
 
             conteudo = resultado["conteudo"]
 
+            print("CONTEÚDO GERADO:")
+            print(conteudo)
+
             # =========================
             # SALVAR POST
             # =========================
 
-            supabase.table(
-                "posts"
-            ).insert({
+            payload = {
 
                 "tema": tema,
 
@@ -390,9 +418,9 @@ def ia():
 
                 "conteudo": conteudo,
 
-                "modo": resultado["modo"],
+                "modo": modo,
 
-                "nicho": resultado["nicho"],
+                "nicho": nicho,
 
                 "imagem_url": imagem_url,
 
@@ -404,7 +432,19 @@ def ia():
 
                 "user_id": session["user_id"]
 
-            }).execute()
+            }
+
+            print("\n===== PAYLOAD POST =====")
+            print(payload)
+
+            response = supabase.table(
+                "posts"
+            ).insert(
+                payload
+            ).execute()
+
+            print("\n===== RESPONSE POST =====")
+            print(response)
 
             print("✅ POST SALVO")
 
@@ -423,7 +463,6 @@ def ia():
         except Exception as e:
 
             print("ERRO IA:")
-
             print(str(e))
 
             return render_template(
@@ -480,37 +519,6 @@ def agendamentos():
             posts=[]
 
         )
-
-# =========================
-# UPLOAD
-# =========================
-
-@app.route(
-    "/upload",
-    methods=["POST"]
-)
-
-def upload():
-
-    if "image" not in request.files:
-
-        return {
-
-            "success": False,
-
-            "error": "Nenhuma imagem enviada"
-
-        }, 400
-
-    file = request.files["image"]
-
-    result = upload_image(file)
-
-    if not result["success"]:
-
-        return result, 400
-
-    return result
 
 # =========================
 # PUBLICAÇÕES
@@ -611,7 +619,6 @@ def configuracoes():
     except Exception as e:
 
         print("ERRO CONFIG:")
-
         print(str(e))
 
         return render_template(
@@ -643,63 +650,6 @@ def planos():
 
         planos=PLANOS
 
-    )
-
-# =========================
-# DELETE POST
-# =========================
-
-@app.route("/delete_post/<int:post_id>")
-def delete_post(post_id):
-
-    if "user_id" not in session:
-
-        return redirect("/login")
-
-    try:
-
-        supabase.table(
-            "posts"
-        ).delete().eq(
-            "id",
-            post_id
-        ).eq(
-            "user_id",
-            session["user_id"]
-        ).execute()
-
-        return redirect(
-            "/agendamentos"
-        )
-
-    except Exception as e:
-
-        print("DELETE ERROR:")
-
-        print(str(e))
-
-        return redirect(
-            "/agendamentos"
-        )
-
-# =========================
-# PUBLICAR
-# =========================
-
-@app.route("/publicar/<int:post_id>")
-def publicar(post_id):
-
-    if "user_id" not in session:
-
-        return redirect("/login")
-
-    # =========================
-    # PUBLICAÇÃO MANUAL
-    # DESATIVADA
-    # =========================
-
-    return redirect(
-        "/agendamentos"
     )
 
 # =========================
