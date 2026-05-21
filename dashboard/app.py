@@ -1,9 +1,3 @@
-{% extends "base.html" %}
-
-{% block title %}
-Agendamentos
-{% endblock %}
-
 {% block extra_css %}
 
 <style>
