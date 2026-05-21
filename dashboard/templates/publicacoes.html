@@ -248,15 +248,33 @@ function baixarImagemFormato(
 
     img.onload = function () {
 
-        const canvas = document.createElement(
-            "canvas"
-        );
+        const canvas =
+            document.createElement("canvas");
 
         canvas.width = largura;
 
         canvas.height = altura;
 
-        const ctx = canvas.getContext("2d");
+        const ctx =
+            canvas.getContext("2d");
+
+        // =========================
+        // FUNDO BRANCO
+        // =========================
+
+        ctx.fillStyle = "#ffffff";
+
+        ctx.fillRect(
+            0,
+            0,
+            largura,
+            altura
+        );
+
+        // =========================
+        // REDIMENSIONAMENTO
+        // SEM CORTAR
+        // =========================
 
         const proporcaoImagem =
             img.width / img.height;
@@ -264,50 +282,49 @@ function baixarImagemFormato(
         const proporcaoCanvas =
             largura / altura;
 
-        let novaLargura;
-        let novaAltura;
-
-        let offsetX = 0;
-        let offsetY = 0;
+        let drawWidth;
+        let drawHeight;
 
         if (
             proporcaoImagem >
             proporcaoCanvas
         ) {
 
-            novaAltura = altura;
+            drawWidth = largura;
 
-            novaLargura =
-                img.width *
-                (altura / img.height);
-
-            offsetX =
-                (largura - novaLargura) / 2;
+            drawHeight =
+                largura / proporcaoImagem;
 
         } else {
 
-            novaLargura = largura;
+            drawHeight = altura;
 
-            novaAltura =
-                img.height *
-                (largura / img.width);
-
-            offsetY =
-                (altura - novaAltura) / 2;
+            drawWidth =
+                altura * proporcaoImagem;
 
         }
+
+        const posX =
+            (largura - drawWidth) / 2;
+
+        const posY =
+            (altura - drawHeight) / 2;
 
         ctx.drawImage(
 
             img,
 
-            offsetX,
-            offsetY,
+            posX,
+            posY,
 
-            novaLargura,
-            novaAltura
+            drawWidth,
+            drawHeight
 
         );
+
+        // =========================
+        // DOWNLOAD
+        // =========================
 
         canvas.toBlob(function(blob) {
 
@@ -317,7 +334,8 @@ function baixarImagemFormato(
             link.href =
                 URL.createObjectURL(blob);
 
-            link.download = nomeArquivo;
+            link.download =
+                nomeArquivo;
 
             document.body.appendChild(link);
 
