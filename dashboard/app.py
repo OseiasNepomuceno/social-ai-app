@@ -253,6 +253,107 @@ def login():
     )
 
 # =========================
+# REGISTER
+# =========================
+
+@app.route(
+    "/register",
+    methods=["GET", "POST"]
+)
+
+def register():
+
+    if request.method == "POST":
+
+        nome = request.form["nome"]
+
+        email = request.form["email"]
+
+        senha = request.form["senha"]
+
+        try:
+
+            # =========================
+            # CRIAR USUÁRIO AUTH
+            # =========================
+
+            resposta = (
+                supabase.auth
+                .sign_up({
+
+                    "email": email,
+
+                    "password": senha
+
+                })
+            )
+
+            user = resposta.user
+
+            if not user:
+
+                return render_template(
+
+                    "register.html",
+
+                    erro="Erro ao criar conta"
+
+                )
+
+            # =========================
+            # SALVAR DATABASE
+            # =========================
+
+            supabase.table(
+                "users"
+            ).upsert({
+
+                "id": user.id,
+
+                "nome": nome,
+
+                "email": email,
+
+                "plano": "free",
+
+                "posts_limite": 10,
+
+                "posts_usados": 0
+
+            }).execute()
+
+            # =========================
+            # LOGIN AUTOMÁTICO
+            # =========================
+
+            session.permanent = True
+
+            session["user_id"] = user.id
+
+            session["email"] = email
+
+            print("✅ USUÁRIO CRIADO")
+
+            return redirect("/")
+
+        except Exception as e:
+
+            print("REGISTER ERROR:")
+            print(str(e))
+
+            return render_template(
+
+                "register.html",
+
+                erro="Erro ao criar conta"
+
+            )
+
+    return render_template(
+        "register.html"
+    )
+
+# =========================
 # LOGOUT
 # =========================
 
