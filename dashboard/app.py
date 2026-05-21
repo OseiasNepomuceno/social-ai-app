@@ -632,7 +632,7 @@ def deletar_post(post_id):
         print("POST ID:")
         print(post_id)
 
-        response = supabase.table(
+        supabase.table(
             "posts"
         ).delete().eq(
             "id",
@@ -914,9 +914,13 @@ def webhook_mercadopago():
                 "success": False
             }, 400
 
-        payment_type = data.get(
-            "type"
+        payment_type = (
+            data.get("type")
+            or data.get("topic")
         )
+
+        print("PAYMENT TYPE:")
+        print(payment_type)
 
         if payment_type != "payment":
 
@@ -924,11 +928,29 @@ def webhook_mercadopago():
                 "success": True
             }, 200
 
-        payment_id = data[
-            "data"
-        ][
-            "id"
-        ]
+        payment_id = None
+
+        if "data" in data:
+
+            payment_id = (
+                data["data"].get("id")
+            )
+
+        elif "id" in data:
+
+            payment_id = data.get(
+                "id"
+            )
+
+        if not payment_id:
+
+            print(
+                "❌ PAYMENT ID NÃO ENCONTRADO"
+            )
+
+            return {
+                "success": False
+            }, 400
 
         print("PAYMENT ID:")
         print(payment_id)
@@ -943,7 +965,10 @@ def webhook_mercadopago():
             "response"
         ]
 
-        print("PAYMENT:")
+        print("\n========================")
+        print("💰 PAYMENT COMPLETO")
+        print("========================")
+
         print(payment)
 
         status = payment.get(
@@ -954,6 +979,10 @@ def webhook_mercadopago():
         print(status)
 
         if status != "approved":
+
+            print(
+                "⚠️ PAGAMENTO NÃO APROVADO"
+            )
 
             return {
                 "success": True
@@ -967,6 +996,10 @@ def webhook_mercadopago():
         print(user_id)
 
         if not user_id:
+
+            print(
+                "❌ USER ID NÃO ENCONTRADO"
+            )
 
             return {
                 "success": False
@@ -987,7 +1020,9 @@ def webhook_mercadopago():
 
         ).execute()
 
-        print("✅ PLANO PRO ATIVADO")
+        print(
+            "✅ PLANO PRO ATIVADO"
+        )
 
         return {
             "success": True
@@ -995,13 +1030,18 @@ def webhook_mercadopago():
 
     except Exception as e:
 
+        print("\n========================")
         print("❌ WEBHOOK ERROR")
+        print("========================")
 
         print(str(e))
 
         return {
+
             "success": False,
+
             "error": str(e)
+
         }, 500
 
 # =========================
