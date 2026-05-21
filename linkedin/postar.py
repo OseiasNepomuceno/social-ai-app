@@ -8,15 +8,23 @@ from supabase import create_client
 # ENV
 # =========================
 
-SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_URL = os.getenv(
+    "SUPABASE_URL"
+)
 
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+SUPABASE_KEY = os.getenv(
+    "SUPABASE_KEY"
+)
 
 print("POSTAR SUPABASE URL:")
 print(SUPABASE_URL)
 
 print("POSTAR SUPABASE KEY:")
 print(bool(SUPABASE_KEY))
+
+# =========================
+# SUPABASE
+# =========================
 
 supabase = create_client(
     SUPABASE_URL,
@@ -25,42 +33,74 @@ supabase = create_client(
 
 print("🚀 LinkedIn Poster iniciado")
 
-
 # =========================
 # DOWNLOAD IMAGEM
 # =========================
 
 def baixar_imagem(image_url):
 
-    response = requests.get(image_url)
+    try:
 
-    if response.status_code != 200:
+        print("⬇️ Download imagem:")
+
+        print(image_url)
+
+        response = requests.get(
+            image_url
+        )
+
+        print("STATUS DOWNLOAD:")
+        print(response.status_code)
+
+        if response.status_code != 200:
+
+            return None
+
+        temp = tempfile.NamedTemporaryFile(
+
+            delete=False,
+
+            suffix=".jpg"
+
+        )
+
+        temp.write(
+            response.content
+        )
+
+        temp.close()
+
+        print("✅ IMAGEM BAIXADA")
+
+        print(temp.name)
+
+        return temp.name
+
+    except Exception as e:
+
+        print("❌ ERRO DOWNLOAD:")
+
+        print(str(e))
 
         return None
 
-    temp = tempfile.NamedTemporaryFile(
-        delete=False,
-        suffix=".jpg"
-    )
-
-    temp.write(response.content)
-
-    temp.close()
-
-    return temp.name
-
-
 # =========================
-# PUBLICAR
+# PUBLICAR LINKEDIN
 # =========================
 
 def publicar_linkedin(
+
     user_id,
+
     conteudo,
+
     image_url=None
+
 ):
 
     try:
+
+        print("\n🚀 INICIANDO PUBLICAÇÃO")
 
         # =========================
         # USER
@@ -91,8 +131,10 @@ def publicar_linkedin(
 
             return False
 
+        print("✅ TOKEN OK")
+
         # =========================
-        # USER INFO
+        # HEADERS
         # =========================
 
         headers = {
@@ -102,6 +144,10 @@ def publicar_linkedin(
 
         }
 
+        # =========================
+        # PROFILE
+        # =========================
+
         profile_response = requests.get(
 
             "https://api.linkedin.com/v2/userinfo",
@@ -110,32 +156,40 @@ def publicar_linkedin(
 
         )
 
+        print("PROFILE STATUS:")
+        print(profile_response.status_code)
+
         profile_data = profile_response.json()
+
+        print("\n===== PROFILE =====")
+
+        print(profile_data)
 
         if "sub" not in profile_data:
 
             print("❌ Token inválido")
 
-            print(profile_data)
-
             return False
 
         person_id = profile_data["sub"]
 
-        person_urn = f"urn:li:person:{person_id}"
+        person_urn = (
+            f"urn:li:person:{person_id}"
+        )
 
-        print("\n===== PERFIL =====")
-
-        print(profile_data)
+        print("PERSON URN:")
+        print(person_urn)
 
         # =========================
-        # SEM IMAGEM
+        # PAYLOAD BASE
         # =========================
 
         media_payload = {
 
             "shareCommentary": {
+
                 "text": conteudo
+
             },
 
             "shareMediaCategory": "NONE"
@@ -148,7 +202,7 @@ def publicar_linkedin(
 
         if image_url:
 
-            print("🖼️ Baixando imagem...")
+            print("\n🖼️ PROCESSANDO IMAGEM")
 
             image_path = baixar_imagem(
                 image_url
@@ -176,7 +230,8 @@ def publicar_linkedin(
 
                             {
 
-                                "relationshipType": "OWNER",
+                                "relationshipType":
+                                "OWNER",
 
                                 "identifier":
                                 "urn:li:userGeneratedContent"
@@ -202,6 +257,8 @@ def publicar_linkedin(
 
                 }
 
+                print("\n🚀 REGISTRANDO ASSET")
+
                 register_response = requests.post(
 
                     "https://api.linkedin.com/v2/assets?action=registerUpload",
@@ -212,11 +269,24 @@ def publicar_linkedin(
 
                 )
 
-                register_data = register_response.json()
+                print("REGISTER STATUS:")
+                print(register_response.status_code)
+
+                register_data = (
+                    register_response.json()
+                )
 
                 print("\n===== REGISTER =====")
 
                 print(register_data)
+
+                if "value" not in register_data:
+
+                    print(
+                        "❌ Erro register upload"
+                    )
+
+                    return False
 
                 upload_url = register_data[
                     "value"
@@ -234,11 +304,22 @@ def publicar_linkedin(
                     "asset"
                 ]
 
+                print("UPLOAD URL:")
+                print(upload_url)
+
+                print("ASSET:")
+                print(asset)
+
                 # =========================
                 # UPLOAD BINÁRIO
                 # =========================
 
-                with open(image_path, "rb") as img:
+                print("\n⬆️ ENVIANDO BINÁRIO")
+
+                with open(
+                    image_path,
+                    "rb"
+                ) as img:
 
                     upload_response = requests.put(
 
@@ -247,15 +328,18 @@ def publicar_linkedin(
                         data=img,
 
                         headers={
+
                             "Authorization":
                             f"Bearer {access_token}"
+
                         }
 
                     )
 
-                print("\n===== UPLOAD =====")
-
+                print("UPLOAD STATUS:")
                 print(upload_response.status_code)
+
+                print(upload_response.text)
 
                 # =========================
                 # PAYLOAD MEDIA
@@ -264,10 +348,13 @@ def publicar_linkedin(
                 media_payload = {
 
                     "shareCommentary": {
+
                         "text": conteudo
+
                     },
 
-                    "shareMediaCategory": "IMAGE",
+                    "shareMediaCategory":
+                    "IMAGE",
 
                     "media": [
 
@@ -283,6 +370,20 @@ def publicar_linkedin(
 
                 }
 
+                print(
+                    "✅ PAYLOAD IMAGE OK"
+                )
+
+            else:
+
+                print(
+                    "❌ Falha download imagem"
+                )
+
+        else:
+
+            print("⚠️ SEM IMAGEM")
+
         # =========================
         # PAYLOAD FINAL
         # =========================
@@ -291,7 +392,8 @@ def publicar_linkedin(
 
             "author": person_urn,
 
-            "lifecycleState": "PUBLISHED",
+            "lifecycleState":
+            "PUBLISHED",
 
             "specificContent": {
 
@@ -308,6 +410,10 @@ def publicar_linkedin(
             }
 
         }
+
+        print("\n===== PAYLOAD FINAL =====")
+
+        print(payload)
 
         headers_post = {
 
@@ -326,6 +432,8 @@ def publicar_linkedin(
         # PUBLICAR
         # =========================
 
+        print("\n🚀 PUBLICANDO")
+
         response = requests.post(
 
             "https://api.linkedin.com/v2/ugcPosts",
@@ -342,9 +450,16 @@ def publicar_linkedin(
 
         print(response.text)
 
-        if response.status_code in [200, 201]:
+        if response.status_code in [
 
-            print("✅ PUBLICADO COM SUCESSO")
+            200,
+            201
+
+        ]:
+
+            print(
+                "✅ PUBLICADO COM SUCESSO"
+            )
 
             return True
 
@@ -354,7 +469,9 @@ def publicar_linkedin(
 
     except Exception as e:
 
-        print("❌ ERRO POSTAR LINKEDIN:")
+        print(
+            "❌ ERRO POSTAR LINKEDIN:"
+        )
 
         print(str(e))
 
