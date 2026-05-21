@@ -23,6 +23,10 @@ from dashboard.ia_engine import (
     gerar_conteudo
 )
 
+from apscheduler.schedulers.background import (
+    BackgroundScheduler
+)
+
 # =========================
 # FLASK
 # =========================
@@ -102,6 +106,212 @@ PLANOS = {
     }
 
 }
+
+# =========================
+# FUNÇÃO: VERIFICAR PAGAMENTOS
+# =========================
+
+def verificar_e_atualizar_pagamento(user_id):
+    """
+    Verifica pagamentos pendentes no Mercado Pago
+    e atualiza o plano do usuário se aprovado.
+    
+    Args:
+        user_id (str): ID do usuário
+        
+    Returns:
+        dict: {'success': bool, 'message': str}
+    """
+    
+    try:
+
+        print("\n========================")
+        print(f"🔎 VERIFICANDO PAGAMENTOS - USER: {user_id}")
+        print("========================")
+
+        if not mp:
+
+            print("❌ MERCADO PAGO NÃO CONFIGURADO")
+
+            return {
+                "success": False,
+                "message": "Mercado Pago não configurado"
+            }
+
+        # =========================
+        # BUSCAR PAGAMENTOS
+        # =========================
+
+        pagamentos_response = (
+            mp.payment().search({
+
+                "external_reference": user_id
+
+            })
+        )
+
+        results = pagamentos_response.get(
+            "response",
+            {}
+        ).get(
+            "results",
+            []
+        )
+
+        print(f"PAGAMENTOS ENCONTRADOS: {len(results)}")
+
+        if not results:
+
+            print("⚠️ NENHUM PAGAMENTO ENCONTRADO")
+
+            return {
+                "success": False,
+                "message": "Nenhum pagamento encontrado"
+            }
+
+        # =========================
+        # VERIFICAR STATUS
+        # =========================
+
+        for pagamento in results:
+
+            status = pagamento.get("status")
+
+            payment_id = pagamento.get("id")
+
+            print(f"PAGAMENTO ID: {payment_id} | STATUS: {status}")
+
+            if status == "approved":
+
+                print(f"✅ PAGAMENTO APROVADO - {payment_id}")
+
+                # =========================
+                # ATUALIZAR PLANO
+                # =========================
+
+                supabase.table(
+                    "users"
+                ).update({
+
+                    "plano": "pro",
+
+                    "posts_limite": 999999
+
+                }).eq(
+
+                    "id",
+                    user_id
+
+                ).execute()
+
+                print(f"🚀 PLANO PRO ATIVADO - {user_id}")
+
+                return {
+                    "success": True,
+                    "message": "Plano atualizado com sucesso",
+                    "payment_id": payment_id
+                }
+
+        print("⚠️ NENHUM PAGAMENTO APROVADO")
+
+        return {
+            "success": False,
+            "message": "Nenhum pagamento em status aprovado"
+        }
+
+    except Exception as e:
+
+        print(f"❌ ERRO NA VERIFICAÇÃO: {str(e)}")
+
+        return {
+            "success": False,
+            "message": str(e)
+        }
+
+# =========================
+# TAREFA AGENDADA: VERIFICAR PAGAMENTOS
+# =========================
+
+def verificar_pagamentos_todos_usuarios():
+    """
+    Verifica pagamentos pendentes de TODOS os usuários.
+    Executada automaticamente a cada X minutos.
+    """
+
+    try:
+
+        print("\n" + "="*50)
+        print("🔄 VERIFICAÇÃO AUTOMÁTICA DE PAGAMENTOS")
+        print("="*50)
+
+        # Buscar usuários com plano "free"
+        usuarios_free = supabase.table(
+            "users"
+        ).select("id").eq(
+            "plano",
+            "free"
+        ).execute()
+
+        usuarios = usuarios_free.data
+
+        print(f"USUÁRIOS FREE: {len(usuarios)}")
+
+        if not usuarios:
+
+            print("✅ NENHUM USUÁRIO PARA VERIFICAR")
+
+            return
+
+        # Verificar cada usuário
+        for usuario in usuarios:
+
+            user_id = usuario["id"]
+
+            resultado = verificar_e_atualizar_pagamento(
+                user_id
+            )
+
+            if resultado["success"]:
+
+                print(
+                    f"✅ {user_id}: {resultado['message']}"
+                )
+
+            else:
+
+                print(
+                    f"⚠️ {user_id}: {resultado['message']}"
+                )
+
+    except Exception as e:
+
+        print(f"❌ ERRO NA TAREFA AGENDADA: {str(e)}")
+
+# =========================
+# CONFIGURAR SCHEDULER
+# =========================
+
+scheduler = BackgroundScheduler()
+
+scheduler.add_job(
+
+    func=verificar_pagamentos_todos_usuarios,
+
+    trigger="interval",
+
+    minutes=15,  # A cada 15 minutos
+
+    id="verificar_pagamentos",
+
+    name="Verificar pagamentos pendentes",
+
+    replace_existing=True
+
+)
+
+scheduler.start()
+
+print("✅ SCHEDULER INICIADO - Verificação a cada 15 minutos")
 
 # =========================
 # HOME
@@ -783,13 +993,38 @@ def planos():
 
         return redirect("/login")
 
-    return render_template(
+    try:
 
-        "planos.html",
+        user_id = session["user_id"]
 
-        planos=PLANOS
+        # =========================
+        # VERIFICAR PAGAMENTO MANUAL
+        # =========================
 
-    )
+        resultado = verificar_e_atualizar_pagamento(
+            user_id
+        )
+
+        if resultado["success"]:
+
+            print(
+                f"✅ PAGAMENTO RECUPERADO: {resultado['message']}"
+            )
+
+        return render_template(
+
+            "planos.html",
+
+            planos=PLANOS
+
+        )
+
+    except Exception as e:
+
+        print("PLANOS ERROR:")
+        print(str(e))
+
+        return str(e)
 
 # =========================
 # CHECKOUT PRO
