@@ -9,6 +9,8 @@ from flask import (
 import os
 import mercadopago
 
+from datetime import timedelta
+
 from supabase import create_client
 
 from services.supabase_storage import upload_image
@@ -35,6 +37,12 @@ app.secret_key = os.getenv(
     "SECRET_KEY",
     "social_ai_secret"
 )
+
+# =========================
+# SESSÃO
+# =========================
+
+app.permanent_session_lifetime = timedelta(days=30)
 
 # =========================
 # SUPABASE
@@ -198,6 +206,12 @@ def login():
             )
 
             user = resposta.user
+
+            # =========================
+            # SESSION PERMANENTE
+            # =========================
+
+            session.permanent = True
 
             session["user_id"] = user.id
 
