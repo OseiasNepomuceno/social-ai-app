@@ -8,7 +8,9 @@ from flask import (
     request,
     session,
     jsonify,
-    send_from_directory  # <-- Certifique-se de que o send_from_directory está importado aqui
+    send_from_directory,
+    flash,
+    url_for
 )
 from supabase import create_client
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -44,7 +46,7 @@ app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SECURE'] = True     
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  
 
-# 🚀 AQUI É O LUGAR CORRETO PARA A ROTA DO FAVICON (ABAIXO DO APP DEFINIDO):
+# ROTA DO FAVICON:
 @app.route('/favicon.ico')
 def favicon():
     return send_from_directory(
@@ -93,22 +95,18 @@ PLANOS = {
 # MONITORAMENTO
 # =========================
 
-# Definindo o e-mail master do administrador
-ADMIN_EMAIL = "oseiasnepom@gmail.com" # Ajuste para o e-mail exato do seu login se necessário
+ADMIN_EMAIL = "oseiasnepom@gmail.com"
 
 @app.route('/monitoramento')
 def monitoramento():
-    # 1. Trava de segurança contra acessos deslogados
     if "user_id" not in session:
         return redirect("/login")
         
-    # 2. Verificação de Admin Blindada (Bloqueia outros usuários)
     if session.get("email") != ADMIN_EMAIL:
         print(f"🚨 Tentativa de acesso não autorizado ao monitoramento por: {session.get('email')}")
         return redirect("/")
 
     try:
-        # Gera o relatório completo dos agentes internos
         relatorio = gerar_relatorio_completo()
     except Exception as e:
         print("Erro ao gerar relatório do monitoramento:", str(e))
@@ -217,18 +215,15 @@ def home():
         return redirect("/login")
 
     try:
-        # Busca os posts do usuário logado
         posts = supabase.table("posts").select("*").eq(
             "user_id", session["user_id"]
         ).order("id", desc=True).limit(6).execute().data
 
-        # Cálculos exatos para alimentar os blocos de cards visuais
         total_posts = len(posts)
         executados = len([p for p in posts if p.get("status") == "executado"])
         pendentes = len([p for p in posts if p.get("status") == "pendente"])
         erros = len([p for p in posts if p.get("status") == "erro"])
 
-        # Retorna o template index.html passando as variáveis que os cards precisam para renderizar
         return render_template(
             "index.html",
             posts=posts,
@@ -254,8 +249,6 @@ def login():
             })
             
             user = resposta.user
-            
-            # AJUSTE: Garante explicitamente que a sessão herde a configuração de 4 horas
             session.permanent = True
             session["user_id"] = user.id
             session["email"] = user.email
@@ -312,7 +305,6 @@ def register():
                 "posts_usados": 0
             }).execute()
 
-            # AJUSTE: Garante o cookie permanente de 4 horas no registro também
             session.permanent = True
             session["user_id"] = user.id
             session["email"] = email
@@ -333,7 +325,7 @@ def logout():
     return redirect("/login")
 
 # =========================
-# OUTRAS DIRETRIZES DA PLATAFORMA (IA, AGENDAMENTOS)
+# GERADOR INTELIGENTE DE POSTS (IA)
 # =========================
 
 @app.route("/ia", methods=["GET", "POST"])
@@ -343,32 +335,44 @@ def ia():
 
     if request.method == "POST":
         try:
-            tema = request.form["tema"]
-            rede = request.form["rede"]
-            modo = request.form["modo"]
-            nicho = request.form["nicho"]
-            data_postagem = request.form["data"]
-            hora_postagem = request.form["hora"]
+            # Captura mapeada perfeitamente com os 'name' do novo arquivo ia.html
+            tema = request.form.get("tema")
+            rede = request.form.get("rede_social")
+            modo = request.form.get("modo")
+            nicho = request.form.get("nicho")
+            data_postagem = request.form.get("data_postagem")
+            hora_postagem = request.form.get("horario")
 
-            status_post = "pronto_instagram" if rede == "instagram" else "pendente"
+            print(f"🚀 EXECUTOR IA ACIONADO: Tema='{tema}' | Rede='{rede}' | Modo='{modo}'")
+
+            status_post = "pronto_instagram" if (rede and rede.lower() == "instagram") else "pendente"
             imagem_url = None
 
-            file = request.files.get("image")
+            # 🛠️ Validação e Upload da Imagem Própria
+            file = request.files.get("imagem")
             if file and file.filename != "":
+                print(f"📸 Imagem manual detectada: {file.filename}. Iniciando upload...")
                 upload_result = upload_image(file)
-                if upload_result["success"]:
-                    imagem_url = upload_result["public_url"]
+                if upload_result.get("success"):
+                    imagem_url = upload_result.get("public_url")
+                    print(f"✅ Upload concluído com sucesso. URL: {imagem_url}")
 
+            # 🏢 Estratégia de Fallback: Se não mandou foto, busca do banco de mídias (Supabase)
             if not imagem_url:
+                print("📂 Nenhuma imagem enviada. Buscando na Media Library do Supabase...")
                 imagem_url = selecionar_imagem(nicho=nicho, rede=rede, estilo="premium")
+                print(f"🎯 Imagem selecionada do banco: {imagem_url}")
 
+            # Geração da Copy via IA Engine
             resultado = gerar_conteudo(tema, rede, modo, nicho)
 
-            if not resultado["success"]:
-                return render_template("ia.html", erro=resultado["erro"])
+            if not resultado.get("success"):
+                flash(f"Erro na inteligência artificial: {resultado.get('erro')}", "error")
+                return redirect(url_for("ia"))
 
             conteudo = resultado["conteudo"]
 
+            # Montagem estruturada para persistência no banco de dados do Portal
             payload = {
                 "tema": tema,
                 "rede": rede,
@@ -382,10 +386,11 @@ def ia():
                 "user_id": session["user_id"]
             }
 
-            # Insere a postagem
+            # Salvando o registro na tabela de posts
             supabase.table("posts").insert(payload).execute()
+            print("💾 Post inserido com sucesso na tabela 'posts' do Supabase.")
 
-            # Incrementar dinamicamente o contador posts_usados na tabela users
+            # Incrementando o contador de posts utilizados do usuário
             user_data = supabase.table("users").select("posts_usados").eq("id", session["user_id"]).execute()
             if user_data.data:
                 atual_usados = user_data.data[0].get("posts_usados", 0)
@@ -394,15 +399,22 @@ def ia():
                 supabase.table("users").update({
                     "posts_usados": novo_total
                 }).eq("id", session["user_id"]).execute()
-                print(f"📈 Contador incrementado! User: {session['user_id']} | Posts Usados: {novo_total}")
+                print(f"增 Contador atualizado! Total usado: {novo_total}")
 
-            return render_template("ia.html", sucesso=True, conteudo=conteudo, imagem_url=imagem_url)
+            # Dispara a mensagem flash de sucesso de volta para a view
+            flash("Postagem criada e enviada para agendamentos com sucesso!", "success")
+            return redirect(url_for("ia"))
 
         except Exception as e:
-            print("ERRO IA:", str(e))
-            return render_template("ia.html", erro=str(e))
+            print("❌ EXCEÇÃO DISPARADA NO EXECUTOR IA:", str(e))
+            flash(f"Ocorreu um erro interno no processo: {str(e)}", "error")
+            return redirect(url_for("ia"))
 
     return render_template("ia.html")
+
+# =========================
+# OUTRAS DIRETRIZES DA PLATAFORMA
+# =========================
 
 @app.route("/agendamentos")
 def agendamentos():
@@ -434,7 +446,6 @@ def publicacoes():
     except Exception as e:
         return render_template("publicacoes.html", erro=str(e), posts=[])
 
-# 🛠️ ROTA DE CONFIGURAÇÕES BLINDADA CONTRA ERROS DE TELA
 @app.route("/configuracoes")
 def configuracoes():
     if "user_id" not in session:
@@ -442,7 +453,6 @@ def configuracoes():
     try:
         usuario = supabase.table("users").select("*").eq("id", session["user_id"]).execute()
         
-        # AJUSTE: Se o banco falhar ou demorar para retornar a linha, criamos um dicionário de fallback limpo
         if not usuario.data:
             user_backup = {
                 "email": session.get("email", "E-mail na Sessão"),
@@ -455,7 +465,6 @@ def configuracoes():
         return render_template("configuracoes.html", user=user, linkedin_conectado=linkedin_conectado)
     except Exception as e:
         print("CONFIG ERROR BACKUP ACTIVE:", str(e))
-        # Backup ativo caso dispare qualquer exceção de conexão
         user_backup = {"email": session.get("email", "E-mail na Sessão"), "plano": "free"}
         return render_template("configuracoes.html", user=user_backup, linkedin_conectado=False)
 
