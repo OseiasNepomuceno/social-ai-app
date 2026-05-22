@@ -19,7 +19,7 @@ from dashboard.agents.media_selector import selecionar_imagem
 from dashboard.ia_engine import gerar_conteudo
 
 # =========================
-# CONFIGURAÇÃO UNIFICADA DO FLASK
+# CONFIGURAÇÃO UNIFICADA E BLINDADA DO FLASK
 # =========================
 
 app = Flask(
@@ -28,13 +28,21 @@ app = Flask(
     template_folder="templates"
 )
 
-# A chave secreta DEVE existir para a sessão manter o usuário logado
+# AJUSTE: Forçando uma chave estática padrão caso a env mude ou suma no reboot do Render.
+# Isso impede a invalidação instantânea dos cookies dos usuários logados.
 app.secret_key = os.getenv(
     "SECRET_KEY",
-    "social_ai_secret"
+    "social_ai_chave_mestra_estatica_coregov_2026"
 )
 
-app.permanent_session_lifetime = timedelta(days=30)
+# AJUSTE: Definindo o tempo de vida máximo de inatividade para 4 horas exatas
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=4)
+
+# AJUSTE: Parâmetros de segurança e persistência dos cookies de navegação
+app.config['SESSION_COOKIE_NAME'] = 'social_ai_session'
+app.config['SESSION_COOKIE_HTTPONLY'] = True   # Impede leitura via scripts maliciosos (XSS)
+app.config['SESSION_COOKIE_SECURE'] = True     # Exige conexão HTTPS obrigatória (Produção no Render)
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Evita que navegadores modernos descartem o cookie à toa
 
 # =========================
 # SUPABASE
@@ -68,7 +76,7 @@ PLANOS = {
     "pro": {
         "nome": "Pro",
         "preco": 49.90,
-        "limite": 60  # CORREÇÃO: Alinhado com 30 posts + 30 stories descritos na UI
+        "limite": 60  # Alinhado com 30 posts + 30 stories descritos na UI
     }
 }
 
@@ -121,7 +129,6 @@ def verificar_e_atualizar_pagamento(user_id):
             if status == "approved":
                 print(f"✅ PAGAMENTO APROVADO - {payment_id}")
 
-                # CORREÇÃO: Mudado limite de 999999 para 60
                 supabase.table("users").update({
                     "plano": "pro",
                     "posts_limite": 60
@@ -225,6 +232,8 @@ def login():
             })
             
             user = resposta.user
+            
+            # AJUSTE: Garante explicitamente que a sessão herde a configuração de 4 horas
             session.permanent = True
             session["user_id"] = user.id
             session["email"] = user.email
@@ -281,6 +290,7 @@ def register():
                 "posts_usados": 0
             }).execute()
 
+            # AJUSTE: Garante o cookie permanente de 4 horas no registro também
             session.permanent = True
             session["user_id"] = user.id
             session["email"] = email
@@ -353,7 +363,7 @@ def ia():
             # Insere a postagem
             supabase.table("posts").insert(payload).execute()
 
-            # CORREÇÃO: Incrementar dinamicamente o contador posts_usados na tabela users
+            # Incrementar dinamicamente o contador posts_usados na tabela users
             user_data = supabase.table("users").select("posts_usados").eq("id", session["user_id"]).execute()
             if user_data.data:
                 atual_usados = user_data.data[0].get("posts_usados", 0)
@@ -476,7 +486,6 @@ def webhook_mercadopago():
         if not user_id:
             return {"success": False}, 400
 
-        # CORREÇÃO: Mudado limite de 999999 para 60 no webhook também
         supabase.table("users").update({"plano": "pro", "posts_limite": 60}).eq("id", user_id).execute()
         return {"success": True}, 200
     except Exception as e:
