@@ -1,24 +1,81 @@
-<div class="container">
-    <h1>📊 Monitoramento de Mídia</h1>
+{% extends "base.html" %}
+
+{% block title %}Monitoramento de Agentes - Social AI{% endblock %}
+
+{% block content %}
+<div class="space-y-6 max-w-5xl mx-auto">
     
-    <div class="row">
-        <div class="col-md-4">
-            <div class="card bg-primary text-white">
-                <div class="card-body">
-                    <h5>Total de Imagens</h5>
-                    <h2>{{ data.total_geral }}</h2>
-                </div>
-            </div>
+    <div class="border-b border-gray-800 pb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-white tracking-wide">📊 Monitoramento do Sistema</h1>
+            <p class="text-sm text-gray-400 mt-1">Visão interna em tempo real sobre a saúde dos agentes de IA e requisições.</p>
+        </div>
+        <div class="bg-blue-500/10 border border-blue-500/30 px-3 py-1.5 rounded-lg flex items-center space-x-2">
+            <span class="h-2 w-2 rounded-full bg-blue-500 animate-pulse"></span>
+            <span class="text-xs font-mono font-semibold text-blue-400 uppercase tracking-wider">Modo Administrador</span>
         </div>
     </div>
 
-    <h3 class="mt-4">Cobertura por Nicho</h3>
-    <ul class="list-group">
-        {% for nicho, qtd in data.por_nicho.items() %}
-        <li class="list-group-item d-flex justify-content-between">
-            {{ nicho }}
-            <span class="badge bg-success">{{ qtd }}</span>
-        </li>
-        {% endfor %}
-    </ul>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        
+        <div class="bg-gray-800 border border-gray-700 rounded-xl p-5 shadow-xl flex items-center justify-between">
+            <div class="space-y-1">
+                <span class="text-xs font-medium text-gray-400 uppercase tracking-wider">Agente Pexels</span>
+                <h3 class="text-lg font-bold text-white">Coletor de Mídia</h3>
+            </div>
+            <div class="bg-green-500/10 p-3 rounded-xl text-green-400 border border-green-500/20">
+                <i class="fa-solid fa-circle-check text-xl"></i>
+            </div>
+        </div>
+
+        <div class="bg-gray-800 border border-gray-700 rounded-xl p-5 shadow-xl flex items-center justify-between">
+            <div class="space-y-1">
+                <span class="text-xs font-medium text-gray-400 uppercase tracking-wider">Agente Pixabay</span>
+                <h3 class="text-lg font-bold text-white">Coletor de Mídia</h3>
+            </div>
+            <div class="bg-green-500/10 p-3 rounded-xl text-green-400 border border-green-500/20">
+                <i class="fa-solid fa-circle-check text-xl"></i>
+            </div>
+        </div>
+
+        <div class="bg-gray-800 border border-gray-700 rounded-xl p-5 shadow-xl flex items-center justify-between">
+            <div class="space-y-1">
+                <span class="text-xs font-medium text-gray-400 uppercase tracking-wider">Analisador Central</span>
+                <h3 class="text-lg font-bold text-white">Motor de Métricas</h3>
+            </div>
+            <div class="bg-indigo-500/10 p-3 rounded-xl text-indigo-400 border border-indigo-500/20">
+                <i class="fa-solid fa-brain text-xl"></i>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="bg-gray-800 border border-gray-700 rounded-xl shadow-xl overflow-hidden">
+        <div class="p-5 border-b border-gray-700/60 bg-gray-800/50 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-terminal text-gray-400 font-mono"></i>
+                <h2 class="text-base font-bold text-white tracking-tight">Logs e Payload de Diagnóstico</h2>
+            </div>
+            <button onclick="window.location.reload();" class="text-xs bg-gray-700 hover:bg-gray-600 border border-gray-600 text-gray-200 px-3 py-1.5 rounded-lg font-medium transition-all flex items-center space-x-1">
+                <i class="fa-solid fa-rotate"></i>
+                <span>Atualizar Logs</span>
+            </button>
+        </div>
+        
+        <div class="p-6 space-y-4">
+            {% if data %}
+            <div class="bg-gray-900 border border-gray-700/60 rounded-xl p-4 font-mono text-xs text-emerald-400 overflow-x-auto max-h-96 space-y-2">
+                <p class="text-gray-500">// Objeto retornado via analisador_media.py:</p>
+                <pre class="text-gray-200">{{ data | tojson(indent=4) }}</pre>
+            </div>
+            {% else %}
+            <div class="text-center py-8 text-gray-500 space-y-2">
+                <i class="fa-solid fa-triangle-exclamation text-3xl text-gray-600"></i>
+                <p class="text-sm">Nenhum log ativo ou payload vazio reportado pelos agentes neste minuto.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
 </div>
+{% endblock %}
