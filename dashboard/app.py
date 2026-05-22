@@ -207,15 +207,18 @@ def home():
         return redirect("/login")
 
     try:
+        # Busca os posts do usuário logado
         posts = supabase.table("posts").select("*").eq(
             "user_id", session["user_id"]
         ).order("id", desc=True).limit(6).execute().data
 
+        # Cálculos exatos para alimentar os blocos de cards visuais
         total_posts = len(posts)
-        executados = len([p for p in posts if p["status"] == "executado"])
-        pendentes = len([p for p in posts if p["status"] == "pendente"])
-        erros = len([p for p in posts if p["status"] == "erro"])
+        executados = len([p for p in posts if p.get("status") == "executado"])
+        pendentes = len([p for p in posts if p.get("status") == "pendente"])
+        erros = len([p for p in posts if p.get("status") == "erro"])
 
+        # Retorna o template index.html passando as variáveis que os cards precisam para renderizar
         return render_template(
             "index.html",
             posts=posts,
@@ -226,8 +229,7 @@ def home():
         )
     except Exception as e:
         print("HOME ERROR:", str(e))
-        return str(e)
-
+        return render_template("index.html", posts=[], total_posts=0, executados=0, pendentes=0, erros=0, erro=str(e))
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
