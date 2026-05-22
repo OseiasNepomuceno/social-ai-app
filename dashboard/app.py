@@ -60,7 +60,7 @@ app = Flask(__name__)
 @app.route('/monitoramento')
 def monitoramento():
     # Chama o agente de análise
-    relatorio = gerar_relatorio_dados()
+    relatorio = gerar_relatorio_completo()
     return render_template('monitoramento.html', data=relatorio)
 
 # Rota para executar via botão (AJAX) sem dar refresh na página
