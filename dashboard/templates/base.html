@@ -47,10 +47,14 @@
                     <i class="fa-solid fa-gear w-5 text-center"></i>
                     <span>Configurações</span>
                 </a>
-                <a href="/monitoramento" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
-                    <i class="fa-solid fa-gauge-high w-5 text-center"></i>
-                    <span>Monitoramento</span>
+                
+                {# 🔒 TRAVA DE SEGURANÇA EXCLUSIVA PARA O SEU LOGIN #}
+                {% if session.get('email') == 'oseiasnepom@gmail.com' %}
+                <a href="/monitoramento" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all border border-blue-500/10 bg-blue-500/5">
+                    <i class="fa-solid fa-gauge-high w-5 text-center text-blue-400"></i>
+                    <span class="text-blue-200 font-medium">Monitoramento</span>
                 </a>
+                {% endif %}
             </nav>
         </div>
 
