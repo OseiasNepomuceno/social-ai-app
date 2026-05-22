@@ -18,6 +18,23 @@ from services.supabase_storage import upload_image
 from dashboard.agents.media_selector import selecionar_imagem
 from dashboard.ia_engine import gerar_conteudo
 
+from flask import send_from_directory
+
+# =========================
+# CONFIGURAÇÃO UNIFICADA E BLINDADA DO FLASK
+# =========================
+# ... (suas configurações atuais de app, secret_key e cookies) ...
+
+
+# 🚀 ADICIONE ESTA ROTA AQUI:
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(
+        os.path.join(app.root_path, 'static'),
+        'favicon.ico',
+        mimetype='image/vnd.microsoft.icon'
+    )
+
 # =========================
 # CONFIGURAÇÃO UNIFICADA E BLINDADA DO FLASK
 # =========================
