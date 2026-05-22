@@ -18,7 +18,7 @@
             </h1>
             <p class="text-sm text-gray-400 mt-1">
                 {% if request.path == '/publicacoes' %}
-                    Histórico de posts executados. Baixe a mídia ideal para feeds, stories ou status.
+                    Histórico de posts executados. Baixe a mídia diretamente com 1 clique.
                 {% else %}
                     Gerencie as postagens programadas para suas redes sociais.
                 {% endif %}
@@ -80,12 +80,12 @@
                             </button>
                             
                             {% if post.imagem_url %}
-                                <a href="{{ post.imagem_url }}" download="social_ai_feed_{{ post.id }}.png" target="_blank" 
-                                   class="bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center space-x-1" 
-                                   title="Medidas quadradas ideais para Feeds">
-                                    <i class="fa-solid fa-square"></i>
+                                <button onclick="baixarDireto('{{ post.imagem_url }}', 'feed_post_{{ post.id }}.png', this)" 
+                                        class="bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center space-x-1 btn-download-acao" 
+                                        title="Baixar imagem direto para o dispositivo">
+                                    <i class="fa-solid fa-square shadow-sm"></i>
                                     <span>Baixar Feed (1:1)</span>
-                                </a>
+                                </button>
 
                                 <button onclick="abrirModalStories('{{ post.imagem_url }}')" 
                                         class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center space-x-1" 
@@ -146,11 +146,11 @@
         </div>
 
         <div class="relative z-10 w-full pt-2">
-            <a id="btnDownloadStory" href="#" target="_blank" download 
+            <button id="btnDownloadStory" onclick="executarDownloadStory(this)" data-url="" data-filename=""
                class="w-full flex items-center justify-center space-x-2 py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold shadow-lg shadow-indigo-600/30 transition-all uppercase tracking-wider">
-                <i class="fa-solid fa-cloud-arrow-down text-base animate-bounce"></i>
-                <span>Salvar Mídia Vertical</span>
-            </a>
+                <i class="fa-solid fa-cloud-arrow-down text-base"></i>
+                <span id="textoBotaoStory">Salvar Mídia Vertical</span>
+            </button>
         </div>
     </div>
 </div>
@@ -165,25 +165,97 @@ function copiarTexto(idElemento) {
     });
 }
 
+// 🎛️ FUNÇÃO DE DOWNLOAD SILENCIOSO DO FEED (1:1)
+function baixarDireto(url, filename, elementoBotao) {
+    if (!url) return;
+    
+    const textoOriginal = elementoBotao.innerHTML;
+    elementoBotao.disabled = true;
+    elementoBotao.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> <span>Baixando...</span>`;
+
+    fetch(url)
+        .then(response => {
+            if (!response.ok) throw new Error('Erro na resposta do servidor');
+            return response.blob();
+        })
+        .then(blob => {
+            const blobUrl = window.URL.createObjectURL(blob);
+            const linkTemporario = document.createElement('a');
+            linkTemporario.href = blobUrl;
+            linkTemporario.download = filename;
+            document.body.appendChild(linkTemporario);
+            linkTemporario.click();
+            document.body.removeChild(linkTemporario);
+            window.URL.revokeObjectURL(blobUrl);
+        })
+        .catch(err => {
+            console.error('Erro ao realizar download forçado:', err);
+            // Fallback caso dê erro de CORS restrito na rota direta externa
+            window.open(url, '_blank');
+        })
+        .finally(() => {
+            elementoBotao.disabled = false;
+            elementoBotao.innerHTML = textoOriginal;
+        });
+}
+
+// 🎛️ CONTROLE DO MODAL DE STORIES (9:16)
 function abrirModalStories(imageUrl) {
     if (!imageUrl) return;
+    
     document.getElementById('imgStoryPreview').src = imageUrl;
     document.getElementById('fallbackBlur').style.backgroundImage = `url('${imageUrl}')`;
-    document.getElementById('btnDownloadStory').href = imageUrl;
     
-    // Configura o nome do arquivo dinâmico de download
     const timestamp = new Date().getTime();
-    document.getElementById('btnDownloadStory').setAttribute('download', `stories_status_${timestamp}.png`);
+    const botao = document.getElementById('btnDownloadStory');
     
-    // Remove a classe hidden para exibir o modal com animação
+    // Armazena temporariamente os atributos nos metadados do botão do modal
+    botao.setAttribute('data-url', imageUrl);
+    botao.setAttribute('data-filename', `stories_status_${timestamp}.png`);
+    
     document.getElementById('modalStories').classList.remove('hidden');
 }
 
 function fecharModalStories() {
     document.getElementById('modalStories').classList.add('hidden');
+    // Restaura estado inicial caso o modal feche no meio de uma requisição
+    document.getElementById('textoBotaoStory').innerText = "Salvar Mídia Vertical";
 }
 
-// Fecha o modal caso o usuário clique na área preta de fundo
+// 🎛️ ATUADOR DO DOWNLOAD DE STORIES SEM ABRIR NOVA PÁGINA
+function executarDownloadStory(botao) {
+    const url = botao.getAttribute('data-url');
+    const filename = botao.getAttribute('data-filename');
+    const textoBotao = document.getElementById('textoBotaoStory');
+    
+    if (!url) return;
+    
+    botao.disabled = true;
+    textoBotao.innerText = "Processando arquivo...";
+
+    fetch(url)
+        .then(response => response.blob())
+        .then(blob => {
+            const blobUrl = window.URL.createObjectURL(blob);
+            const linkTemporario = document.createElement('a');
+            linkTemporario.href = blobUrl;
+            linkTemporario.download = filename;
+            document.body.appendChild(linkTemporario);
+            linkTemporario.click();
+            document.body.removeChild(linkTemporario);
+            window.URL.revokeObjectURL(blobUrl);
+            fecharModalStories();
+        })
+        .catch(err => {
+            console.error('Erro no download do Story:', err);
+            window.open(url, '_blank');
+        })
+        .finally(() => {
+            botao.disabled = false;
+        });
+}
+
+// Fecha o modal caso o usuário clique na área preta de fundo externa
 document.getElementById('modalStories').addEventListener('click', function(e) {
     if (e.target === this) {
         fecharModalStories();
