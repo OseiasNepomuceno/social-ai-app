@@ -203,23 +203,55 @@ def gerar_conteudo(
             prompt_nicho = file.read()
 
         # =========================
-        # LOGICA DO CTA DINÂMICO
+        # LÓGICA DO CTA E PERSONA POR REDE
         # =========================
-        if modo_nome in ["autoridade", "viral"]:
-            cta_instrucao = (
-                "Crie um fechamento estimulando o engajamento direto na publicação. "
-                "Termine obrigatoriamente a última linha do texto com a frase exata: "
-                "'Quer aprender como acelerar esse processo? Comente \"EU QUERO\" abaixo que te envio o material completo!'"
+        rede_valida = str(rede).lower()
+        
+        if "instagram" in rede_valida:
+            # Regras específicas para Instagram
+            persona_regra = f"Você é um especialista em Instagram, engajamento e viralização profissional. Crie um post altamente envolvente para o nicho de {nicho_nome}."
+            diretrizes_rede = (
+                "- Use frases mais curtas, dinâmicas e de forte apelo emocional.\n"
+                "- Foque em gerar salvamentos, compartilhamentos e alta retenção.\n"
+                "- A estrutura deve focar em: Gancho Viral -> Dor Clara -> Solução Rápida."
             )
+            
+            if modo_nome in ["autoridade", "viral"]:
+                cta_instrucao = (
+                    "Crie uma chamada voltada para a automação de comentários (padrão ManyChat). "
+                    "Termine obrigatoriamente a última linha do texto com a frase exata: "
+                    "'Quer aprender como acelerar esse processo? Comente \"EU QUERO\" abaixo que te envio o material completo direto no seu direct!'"
+                )
+            else:
+                cta_instrucao = (
+                    "Direcione o leitor para tomar uma ação na biografia do perfil. "
+                    "Termine obrigatoriamente a última linha do texto com a frase exata: "
+                    "'Quer aprender como aplicar isso no seu cenário? O link está na minha bio, clica lá para saber mais!'"
+                )
+                
         else:
-            cta_instrucao = (
-                "Direcione o leitor para tomar uma ação imediata de contato. "
-                "Termine obrigatoriamente a última linha do texto com a frase exata: "
-                "'Quer entender como aplicar isso no seu cenário? Clique no link da minha bio ou me envie uma mensagem no inbox para conversarmos!'"
+            # Regras padrão para LinkedIn (Mantido o seu padrão premium)
+            persona_regra = f"Você é um especialista em LinkedIn e copywriting profissional de alta conversão. Seu objetivo é criar um post adaptado exatamente para o nicho de: {nicho_nome}."
+            diretrizes_rede = (
+                "- Use linguagem natural, gere conexão emocional e construa autoridade.\n"
+                "- Use storytelling curto e espaçamento profissional corporativo."
             )
+            
+            if modo_nome in ["autoridade", "viral"]:
+                cta_instrucao = (
+                    "Crie um fechamento estimulando o engajamento direto na publicação. "
+                    "Termine obrigatoriamente a última linha do texto com a frase exata: "
+                    "'Quer aprender como acelerar esse processo? Comente \"EU QUERO\" abaixo que te envio o material completo!'"
+                )
+            else:
+                cta_instrucao = (
+                    "Direcione o leitor para tomar uma ação imediata de contato. "
+                    "Termine obrigatoriamente a última linha do texto com a frase exata: "
+                    "'Quer entender como aplicar isso no seu cenário? Clique no link da minha bio ou me envie uma mensagem no inbox para conversarmos!'"
+                )
 
         # =========================
-        # PROMPT FINAL OTIMIZADO
+        # PROMPT FINAL COMPARTILHADO
         # =========================
 
         prompt = f"""
@@ -229,25 +261,23 @@ def gerar_conteudo(
 
 {prompt_nicho}
 
-Você é um especialista em {rede.capitalize()} e copywriting profissional de alta conversão.
-Seu objetivo é criar um post HUMANIZADO, moderno, persuasivo e adaptado exatamente para o nicho de: {nicho_nome}.
+{persona_regra}
 
 REGRAS OBRIGATÓRIAS E ESTRITAS:
 - NÃO explique o que está fazendo, não dê introduções nem conclusões textuais adicionais.
-- NUNCA use rótulos explicativos como "Título:", "Desenvolvimento:", "CTA:" ou "Hashtags:".
+- NUNCA use rótulos explicativos como "Título:", "Desenvolvimento:", "CTA:", "Dor:", "Solução:" ou "Hashtags:".
 - Entregue apenas o texto final do post pronto para copiar e colar.
-- Texto humano, natural, gerando conexão emocional e foco em autoridade.
-- Use storytelling curto e espaçamento profissional (linhas em branco entre parágrafos curtos para leitura escaneável).
-- NÃO criar textos longos demais, respeite o limite técnico da rede social.
-- Inserir emojis relacionados ao tema de forma sutil e corporativa.
+- Texto humanizado, moderno e persuasivo. Sem parecer robótico.
+{diretrizes_rede}
+- NÃO criar textos longos demais, respeite os limites visuais e técnicos da rede social selecionada.
+- Inserir emojis relacionados ao tema de forma sutil e estratégica.
 - O texto deve parecer escrito por um especialista humano e nativo da área de {nicho_nome}.
 
 ESTRUTURA DO POST:
-1. Gancho Forte: Uma frase impactante na primeira linha que gere curiosidade ou toque numa dor do segmento.
-2. Desenvolvimento: História curta, dado relevante ou reflexão prática sobre o tema: {tema}.
-3. Autoridade: Posicionamento que demonstre domínio técnico sobre o assunto.
-4. Chamada para Ação (CTA) Obrigatória: {cta_instrucao}
-5. Hashtags: Insira de 3 a 5 hashtags altamente estratégicas e contextualizadas, separadas por espaço simples.
+1. Gancho Inicial Forte e Chamativo (Frase impactante logo na primeira linha).
+2. Desenvolvimento focado em gerar valor, tocar na dor e apresentar uma solução limpa sobre o tema: {tema}.
+3. Chamada para Ação (CTA) Obrigatória: {cta_instrucao}
+4. Hashtags: Insira de 3 a 5 hashtags altamente estratégicas e contextualizadas com o nicho do cliente, separadas por espaço simples.
 
 REGRAS DA IMAGEM:
 - A imagem deve ser totalmente relacionada ao tema
@@ -259,13 +289,10 @@ REGRAS DA IMAGEM:
 - NÃO reutilizar estilo visual
 - NÃO reutilizar elementos gráficos
 - Estilo premium corporativo
-- Visual moderno
-- Alta qualidade
-- Formato ideal para LinkedIn
-- Sem textos na imagem
-- Aparência cinematográfica
-- Aparência profissional
-- Visual de marketing empresarial
+- Visual moderno e de alta qualidade
+- Formato ideal para a rede social: {rede}
+- Sem textos inseridos na imagem
+- Aparência cinematográfica e profissional de marketing empresarial
 
 Tema do conteúdo:
 {tema}
