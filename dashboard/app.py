@@ -93,18 +93,28 @@ PLANOS = {
 # MONITORAMENTO
 # =========================
 
+# Definindo o e-mail master do administrador
+ADMIN_EMAIL = "oseiasnepom@gmail.com" # Ajuste para o e-mail exato do seu login se necessário
+
 @app.route('/monitoramento')
 def monitoramento():
-    relatorio = gerar_relatorio_completo()
-    return render_template('monitoramento.html', data=relatorio)
+    # 1. Trava de segurança contra acessos deslogados
+    if "user_id" not in session:
+        return redirect("/login")
+        
+    # 2. Verificação de Admin Blindada (Bloqueia outros usuários)
+    if session.get("email") != ADMIN_EMAIL:
+        print(f"🚨 Tentativa de acesso não autorizado ao monitoramento por: {session.get('email')}")
+        return redirect("/")
 
-@app.route('/api/executar-analise')
-def api_analise():
     try:
-        resultado = gerar_relatorio_completo()
-    except Exception:
-        resultado = {}
-    return jsonify(resultado)
+        # Gera o relatório completo dos agentes internos
+        relatorio = gerar_relatorio_completo()
+    except Exception as e:
+        print("Erro ao gerar relatório do monitoramento:", str(e))
+        relatorio = {}
+        
+    return render_template('monitoramento.html', data=relatorio)
 
 # =========================
 # FUNÇÕES DE PAGAMENTO & SCHEDULER
