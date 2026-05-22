@@ -12,7 +12,7 @@ import mercadopago
 
 from datetime import timedelta
  
-from dashboard.agents.analisador_media import gerar_relatorio_dados
+from dashboard.agents.analisador_media import gerar_relatorio_completo
 
 from supabase import create_client
 
