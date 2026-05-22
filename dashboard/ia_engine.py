@@ -58,7 +58,8 @@ def gerar_conteudo(
             "1": "viral",
             "2": "autoridade",
             "3": "vendas",
-            "4": "storytelling"
+            "4": "storytelling",
+            "5": "educacional"
         }
 
         modo_nome = modos.get(
@@ -98,7 +99,8 @@ def gerar_conteudo(
                 "- Adote o tom ideal para o modo selecionado: um estilo que seja dinâmico e focado no comportamento do usuário do Instagram."
             )
             
-            if modo_nome in ["autoridade", "viral"]:
+            # Condicional estrita: apenas o modo educacional entrega material
+            if modo_nome == "educacional":
                 cta_instrucao = (
                     "Crie uma chamada voltada para a automação de comentários (padrão ManyChat). "
                     "Termine obrigatoriamente a última linha do texto com a frase exata: "
@@ -120,7 +122,8 @@ def gerar_conteudo(
                 "- Adapte o vocabulário para o ecossistema corporativo B2B."
             )
             
-            if modo_nome in ["autoridade", "viral"]:
+            # Condicional estrita: apenas o modo educacional entrega material
+            if modo_nome == "educacional":
                 cta_instrucao = (
                     "Crie um fechamento estimulando o engajamento direto na publicação. "
                     "Termine obrigatoriamente a última linha do texto com a frase exata: "
