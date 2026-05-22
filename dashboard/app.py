@@ -3,15 +3,15 @@ from flask import (
     render_template,
     redirect,
     request,
-    session
+    session,
+    jsonify
 )
 
 import os
 import mercadopago
 
 from datetime import timedelta
-
-from flask import Flask, render_template, jsonify
+ 
 from dashboard.agents.analisador_media import gerar_relatorio_dados
 
 from supabase import create_client
