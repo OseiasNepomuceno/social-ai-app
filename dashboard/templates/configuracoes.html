@@ -1,148 +1,149 @@
 {% extends "base.html" %}
 
-{% block title %}
-Configurações
-{% endblock %}
-
-{% block extra_css %}
-
-<style>
-
-    .config-box {
-
-        background: white;
-
-        padding: 20px;
-
-        border-radius: 12px;
-
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-
-        max-width: 500px;
-
-        margin-top: 20px;
-
-    }
-
-    .status-ok {
-
-        color: green;
-
-        font-weight: bold;
-
-    }
-
-    .status-off {
-
-        color: red;
-
-        font-weight: bold;
-
-    }
-
-    .btn {
-
-        display: inline-block;
-
-        margin-top: 15px;
-
-        padding: 10px 15px;
-
-        border-radius: 8px;
-
-        text-decoration: none;
-
-        background: #0077ff;
-
-        color: white;
-
-    }
-
-</style>
-
-{% endblock %}
+{% block title %}Configurações - Social AI{% endblock %}
 
 {% block content %}
-
-<h1>⚙️ Configurações</h1>
-
-{% if erro %}
-
-    <div class="error">
-
-        {{ erro }}
-
+<div class="space-y-6 max-w-5xl mx-auto">
+    
+    <div class="border-b border-gray-800 pb-4">
+        <h1 class="text-2xl font-bold text-white tracking-wide">⚙️ Configurações da Conta</h1>
+        <p class="text-sm text-gray-400 mt-1">Gerencie suas conexões de redes sociais, informações de perfil e nível de assinatura.</p>
     </div>
 
-{% endif %}
-
-<div class="config-box">
-
-    <h2>👤 Usuário</h2>
-
-    <p>
-
-        <strong>Email:</strong>
-
-        {{ user.email if user else "Usuário não encontrado" }}
-
-    </p>
-
-</div>
-
-<div class="config-box">
-
-    <h2>🔗 LinkedIn</h2>
-
-    {% if linkedin_conectado %}
-
-        <p class="status-ok">
-
-            ✅ LinkedIn conectado
-
-        </p>
-
-    {% else %}
-
-        <p class="status-off">
-
-            ❌ LinkedIn desconectado
-
-        </p>
-
-        <a
-            href="/linkedin/login"
-            class="btn"
-        >
-            Conectar LinkedIn
-        </a>
-
+    {% if erro %}
+    <div class="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl text-sm flex items-center space-x-2">
+        <i class="fa-solid fa-circle-exclamation text-base"></i>
+        <span>{{ erro }}</span>
+    </div>
     {% endif %}
 
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <div class="bg-gray-800 border border-gray-700 rounded-xl p-5 shadow-xl flex flex-col justify-between">
+            <div class="space-y-4">
+                <div class="flex items-center space-x-2.5 border-b border-gray-700/50 pb-3">
+                    <div class="bg-blue-500/10 p-2 rounded-lg text-blue-500">
+                        <i class="fa-solid fa-user text-lg"></i>
+                    </div>
+                    <h2 class="text-base font-bold text-white tracking-tight">Perfil de Acesso</h2>
+                </div>
+                
+                <div class="space-y-3 pt-1">
+                    <div class="flex flex-col space-y-1">
+                        <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">E-mail Vinculado</span>
+                        <div class="bg-gray-900 border border-gray-700/60 rounded-lg px-3 py-2 text-sm text-gray-200 font-mono">
+                            {# Ajustado para não exibir "Usuário não encontrado" na tela #}
+                            {{ user.email if user else session.get('email', 'Acessando via Token') }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="pt-4 text-xs text-gray-500 flex items-center space-x-1">
+                <i class="fa-solid fa-shield-halved text-gray-600"></i>
+                <span>Sua conta está autenticada e protegida.</span>
+            </div>
+        </div>
+
+        <div class="bg-gray-800 border border-gray-700 rounded-xl p-5 shadow-xl flex flex-col justify-between">
+            <div class="space-y-4">
+                <div class="flex items-center space-x-2.5 border-b border-gray-700/50 pb-3">
+                    <div class="bg-amber-500/10 p-2 rounded-lg text-amber-500">
+                        <i class="fa-solid fa-gem text-lg"></i>
+                    </div>
+                    <h2 class="text-base font-bold text-white tracking-tight">Assinatura Atual</h2>
+                </div>
+
+                <div class="flex items-center space-x-4 pt-2">
+                    <div class="bg-gray-700 px-4 py-3 rounded-xl text-center min-w-[90px] border border-gray-600">
+                        <span class="block text-2xl font-bold text-gray-200 uppercase tracking-tight">FREE</span>
+                    </div>
+                    <div class="space-y-0.5">
+                        <h3 class="text-sm font-bold text-gray-200">Plano de Entrada</h3>
+                        <p class="text-xs text-gray-400">Gerações básicas e agendamentos padrão ativos.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-5 flex items-center justify-end">
+                <a href="/planos" class="bg-gray-700 hover:bg-gray-600 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-all flex items-center space-x-1.5">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    <span>Ver detalhes dos planos</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="bg-gray-800 border border-gray-700 rounded-xl p-5 shadow-xl flex flex-col justify-between">
+            <div class="space-y-4">
+                <div class="flex items-center space-x-2.5 border-b border-gray-700/50 pb-3">
+                    <div class="bg-[#0077B5]/10 p-2 rounded-lg text-[#0077B5]">
+                        <i class="fa-brands fa-linkedin text-lg"></i>
+                    </div>
+                    <h2 class="text-base font-bold text-white tracking-tight">Integração LinkedIn</h2>
+                </div>
+
+                <div class="flex items-center justify-between p-3 bg-gray-900/50 border border-gray-700/50 rounded-lg">
+                    {% if linkedin_conectado %}
+                    <div class="flex items-center space-x-2">
+                        <span class="flex h-2.5 w-2.5 relative">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+                        </span>
+                        <span class="text-xs font-semibold text-green-400">Conectado com Sucesso</span>
+                    </div>
+                    {% else %}
+                    <div class="flex items-center space-x-2">
+                        <span class="flex h-2.5 w-2.5 relative">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+                        </span>
+                        <span class="text-xs font-semibold text-red-400">Desconectado</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="pt-5">
+                {% if linkedin_conectado %}
+                <button disabled class="w-full bg-green-600/20 text-green-400 text-xs font-semibold py-2.5 rounded-lg border border-green-500/20 cursor-not-allowed flex items-center justify-center space-x-1.5">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <span>Integração Ativa</span>
+                </button>
+                {% else %}
+                <a href="/linkedin/login" class="w-full bg-[#0077B5] hover:bg-[#006294] text-white text-xs font-semibold py-2.5 rounded-lg transition-all flex items-center justify-center space-x-1.5 shadow-md">
+                    <i class="fa-solid fa-link"></i>
+                    <span>Conectar Conta LinkedIn</span>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="bg-gray-800 border border-gray-700 rounded-xl p-5 shadow-xl flex flex-col justify-between">
+            <div class="space-y-4">
+                <div class="flex items-center space-x-2.5 border-b border-gray-700/50 pb-3">
+                    <div class="bg-pink-500/10 p-2 rounded-lg text-pink-500">
+                        <i class="fa-brands fa-instagram text-lg"></i>
+                    </div>
+                    <h2 class="text-base font-bold text-white tracking-tight">Integração Instagram</h2>
+                </div>
+
+                <div class="flex items-center justify-between p-3 bg-gray-900/50 border border-gray-700/50 rounded-lg">
+                    <div class="flex items-center space-x-1.5 text-xs text-amber-400">
+                        <i class="fa-solid fa-hourglass-half"></i>
+                        <span>Em breve</span>
+                    </div>
+                    <span class="text-[11px] text-gray-500">Integração API Graph</span>
+                </div>
+            </div>
+
+            <div class="pt-5">
+                <button disabled class="w-full bg-gray-700 text-gray-500 text-xs font-semibold py-2.5 rounded-lg cursor-not-allowed flex items-center justify-center space-x-1.5">
+                    <i class="fa-solid fa-lock"></i>
+                    <span>Indisponível</span>
+                </button>
+            </div>
+        </div>
+
+    </div>
 </div>
-
-<div class="config-box">
-
-    <h2>📸 Instagram</h2>
-
-    <p>
-
-        🚧 Em breve
-
-    </p>
-
-</div>
-
-<div class="config-box">
-
-    <h2>💰 Plano</h2>
-
-    <p>
-
-        Free
-
-    </p>
-
-</div>
-
 {% endblock %}
