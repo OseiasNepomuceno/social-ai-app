@@ -5,143 +5,82 @@ from supabase import create_client
 # ENV
 # =========================
 
-SUPABASE_URL = os.getenv(
-    "SUPABASE_URL"
-)
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
-SUPABASE_KEY = os.getenv(
-    "SUPABASE_KEY"
-)
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-supabase = create_client(
-    SUPABASE_URL,
-    SUPABASE_KEY
-)
+# Lista oficial de nichos para contagem rápida e exata
+NICHOS_ALVO = ["marketing", "tecnologia", "negocios", "financeiro", "vendas", "empreendedorismo"]
+ORIGENS_ALVO = ["pixabay", "pexels", "desconhecida"]
 
 # =========================
-# VERIFICAR TOTAL DE IMAGENS
+# VERIFICAR TOTAL E ORIGEM
 # =========================
 
 def verificar_total_imagens():
     """
-    Verifica o total de imagens coletadas
-    no Supabase (tabela media_library)
+    Verifica o total real de imagens coletadas e filtra por origem
+    usando agregações rápidas do Supabase.
     """
-    
     try:
-
         print("\n" + "="*50)
         print("📊 ANÁLISE DE IMAGENS COLETADAS")
         print("="*50)
 
-        # Total geral
-        resposta_total = supabase.table(
-            "media_library"
-        ).select(
-            "count",
-            count="exact"
-        ).execute()
+        # Total geral ultra rápido
+        resposta_total = supabase.table("media_library").select("*", count="exact").limit(1).execute()
+        total_geral = resposta_total.count if resposta_total.count is not None else 0
 
-        total_geral = resposta_total.count
+        print(f"\n📸 TOTAL GERAL NO BANCO: {total_geral:,} imagens")
 
-        print(f"\n📸 TOTAL GERAL: {total_geral:,} imagens")
-
-        # Por origem
         print("\n" + "="*50)
         print("🏠 IMAGENS POR ORIGEM")
         print("="*50)
 
-        origens = supabase.table(
-            "media_library"
-        ).select(
-            "origem"
-        ).execute()
-
         origem_counts = {}
-
-        for item in origens.data:
-
-            origem = item.get("origem", "desconhecida")
-
-            origem_counts[origem] = (
-                origem_counts.get(origem, 0) + 1
-            )
-
-        for origem, count in sorted(
-            origem_counts.items(),
-            key=lambda x: x[1],
-            reverse=True
-        ):
-
-            print(f"  {origem}: {count:,}")
-
+        for origem in ORIGENS_ALVO:
+            res = supabase.table("media_library").select("*", count="exact").eq("origem", origem).limit(1).execute()
+            if res.count and res.count > 0:
+                origem_counts[origem] = res.count
+                print(f"  {origem}: {res.count:,}")
+        
         return total_geral, origem_counts
 
     except Exception as e:
-
-        print(f"❌ ERRO: {str(e)}")
-
-        return None, None
+        print(f"❌ ERRO TOTAL/ORIGEM: {str(e)}")
+        return 0, {}
 
 # =========================
 # VERIFICAR IMAGENS POR NICHO
 # =========================
 
-def verificar_imagens_por_nicho():
+def verificar_imagens_por_nicho(total_geral):
     """
-    Verifica quantas imagens foram coletadas
-    para cada nicho
+    Verifica quantas imagens foram coletadas para cada nicho real
+    usando contagem exata por agrupamento lógico.
     """
-    
     try:
-
         print("\n" + "="*50)
         print("🎯 IMAGENS POR NICHO")
         print("="*50)
 
-        # Buscar todas as imagens
-        resposta = supabase.table(
-            "media_library"
-        ).select(
-            "nicho"
-        ).execute()
-
         nicho_counts = {}
+        
+        for nicho in NICHOS_ALVO:
+            # Conta exatamente quantas linhas possuem o nicho específico
+            res = supabase.table("media_library").select("*", count="exact").eq("nicho", nicho).limit(1).execute()
+            count = res.count if res.count is not None else 0
+            nicho_counts[nicho] = count
 
-        for item in resposta.data:
-
-            nicho = item.get("nicho", "desconhecido")
-
-            nicho_counts[nicho] = (
-                nicho_counts.get(nicho, 0) + 1
-            )
-
-        # Exibir resultados ordenados
-        print()
-
-        for nicho, count in sorted(
-            nicho_counts.items(),
-            key=lambda x: x[1],
-            reverse=True
-        ):
-
-            percentual = (
-                (count / len(resposta.data)) * 100
-                if resposta.data else 0
-            )
-
-            print(
-                f"  📷 {nicho.upper()}: "
-                f"{count:,} ({percentual:.1f}%)"
-            )
+            percentual = (count / total_geral * 100) if total_geral > 0 else 0
+            print(f"  📷 {nicho.upper()}: {count:,} ({percentual:.1f}%)")
 
         return nicho_counts
 
     except Exception as e:
-
-        print(f"❌ ERRO: {str(e)}")
-
-        return None
+        print(f"❌ ERRO NICHO: {str(e)}")
+        return {}
 
 # =========================
 # VERIFICAR IMAGENS ATIVAS
@@ -149,39 +88,18 @@ def verificar_imagens_por_nicho():
 
 def verificar_imagens_ativas():
     """
-    Verifica quantas imagens estão ativas
+    Verifica a proporção de imagens ativas e inativas.
     """
-    
     try:
-
         print("\n" + "="*50)
         print("✅ STATUS DAS IMAGENS")
         print("="*50)
 
-        ativas = supabase.table(
-            "media_library"
-        ).select(
-            "count",
-            count="exact"
-        ).eq(
-            "ativo",
-            True
-        ).execute()
+        ativas = supabase.table("media_library").select("*", count="exact").eq("ativo", True).limit(1).execute()
+        inativas = supabase.table("media_library").select("*", count="exact").eq("ativo", False).limit(1).execute()
 
-        inativas = supabase.table(
-            "media_library"
-        ).select(
-            "count",
-            count="exact"
-        ).eq(
-            "ativo",
-            False
-        ).execute()
-
-        total_ativas = ativas.count
-
-        total_inativas = inativas.count
-
+        total_ativas = ativas.count if ativas.count is not None else 0
+        total_inativas = inativas.count if inativas.count is not None else 0
         total = total_ativas + total_inativas
 
         print(f"\n  ✅ Ativas: {total_ativas:,}")
@@ -189,23 +107,14 @@ def verificar_imagens_ativas():
         print(f"  📊 Total: {total:,}")
 
         if total > 0:
-
-            pct_ativas = (
-                (total_ativas / total) * 100
-            )
-
-            print(
-                f"  📈 Taxa de atividade: "
-                f"{pct_ativas:.1f}%"
-            )
+            pct_ativas = (total_ativas / total) * 100
+            print(f"  📈 Taxa de atividade: {pct_ativas:.1f}%")
 
         return total_ativas, total_inativas
 
     except Exception as e:
-
-        print(f"❌ ERRO: {str(e)}")
-
-        return None, None
+        print(f"❌ ERRO STATUS: {str(e)}")
+        return 0, 0
 
 # =========================
 # RELATÓRIO COMPLETO
@@ -213,54 +122,32 @@ def verificar_imagens_ativas():
 
 def gerar_relatorio_completo():
     """
-    Gera um relatório completo de todas
-    as imagens coletadas
+    Gera a carga de dados unificada consumida pela rota Flask.
     """
-    
     print("\n" + "="*60)
     print("🔍 RELATÓRIO COMPLETO DE MÍDIA")
     print("="*60)
 
-    total_geral, origem_counts = (
-        verificar_total_imagens()
-    )
-
-    nicho_counts = verificar_imagens_por_nicho()
-
+    total_geral, origem_counts = verificar_total_imagens()
+    nicho_counts = verificar_imagens_por_nicho(total_geral)
     ativas, inativas = verificar_imagens_ativas()
 
-    # Recomendações
     print("\n" + "="*60)
     print("💡 RECOMENDAÇÕES")
     print("="*60)
 
     if nicho_counts:
-
-        nichos_baixos = [
-            (n, c) for n, c in nicho_counts.items()
-            if c < 50
-        ]
-
+        nichos_baixos = [(n, c) for n, c in nicho_counts.items() if c < 500]
         if nichos_baixos:
-
-            print("\n⚠️ Nichos com poucas imagens (<50):")
-
+            print("\n⚠️ Nichos precisando de atenção (<500 imagens):")
             for nicho, count in nichos_baixos:
+                print(f"  - {nicho}: apenas {count:,}")
 
-                print(f"  - {nicho}: apenas {count}")
-
-        nichos_altos = [
-            (n, c) for n, c in nicho_counts.items()
-            if c > 300
-        ]
-
+        nichos_altos = [(n, c) for n, c in nicho_counts.items() if c >= 5000]
         if nichos_altos:
-
-            print("\n✅ Nichos bem preenchidos (>300):")
-
+            print("\n✅ Nichos robustos (>5.000 imagens):")
             for nicho, count in nichos_altos:
-
-                print(f"  - {nicho}: {count}")
+                print(f"  - {nicho}: {count:,}")
 
     print("\n" + "="*60 + "\n")
 
@@ -272,10 +159,5 @@ def gerar_relatorio_completo():
         "inativas": inativas
     }
 
-# =========================
-# MAIN
-# =========================
-
 if __name__ == "__main__":
-
     relatorio = gerar_relatorio_completo()
