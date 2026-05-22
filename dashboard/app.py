@@ -68,7 +68,7 @@ PLANOS = {
     "pro": {
         "nome": "Pro",
         "preco": 49.90,
-        "limite": 999999
+        "limite": 60  # CORREÇÃO: Alinhado com 30 posts + 30 stories descritos na UI
     }
 }
 
@@ -78,13 +78,11 @@ PLANOS = {
 
 @app.route('/monitoramento')
 def monitoramento():
-    # Chama o agente de análise corrigido
     relatorio = gerar_relatorio_completo()
     return render_template('monitoramento.html', data=relatorio)
 
 @app.route('/api/executar-analise')
 def api_analise():
-    # Fallback caso a função interna use outro nome
     try:
         resultado = gerar_relatorio_completo()
     except Exception:
@@ -123,9 +121,10 @@ def verificar_e_atualizar_pagamento(user_id):
             if status == "approved":
                 print(f"✅ PAGAMENTO APROVADO - {payment_id}")
 
+                # CORREÇÃO: Mudado limite de 999999 para 60
                 supabase.table("users").update({
                     "plano": "pro",
-                    "posts_limite": 999999
+                    "posts_limite": 60
                 }).eq("id", user_id).execute()
 
                 print(f"🚀 PLANO PRO ATIVADO - {user_id}")
@@ -230,11 +229,9 @@ def login():
             session["user_id"] = user.id
             session["email"] = user.email
 
-            # CORREÇÃO CRUCIAL: Verificar se o perfil já existe antes de fazer upsert para NÃO resetar o plano Pro
             checar_usuario = supabase.table("users").select("plano").eq("id", user.id).execute()
             
             if not checar_usuario.data:
-                # Se for um usuário completamente novo na tabela pública, cria como free
                 supabase.table("users").insert({
                     "id": user.id,
                     "email": user.email,
@@ -243,7 +240,6 @@ def login():
                     "posts_usados": 0
                 }).execute()
             else:
-                # Se já existe, apenas atualiza o e-mail se necessário, sem tocar na coluna do plano
                 supabase.table("users").update({
                     "email": user.email
                 }).eq("id", user.id).execute()
@@ -354,7 +350,20 @@ def ia():
                 "user_id": session["user_id"]
             }
 
+            # Insere a postagem
             supabase.table("posts").insert(payload).execute()
+
+            # CORREÇÃO: Incrementar dinamicamente o contador posts_usados na tabela users
+            user_data = supabase.table("users").select("posts_usados").eq("id", session["user_id"]).execute()
+            if user_data.data:
+                atual_usados = user_data.data[0].get("posts_usados", 0)
+                novo_total = atual_usados + 1
+                
+                supabase.table("users").update({
+                    "posts_usados": novo_total
+                }).eq("id", session["user_id"]).execute()
+                print(f"📈 Contador incrementado! User: {session['user_id']} | Posts Usados: {novo_total}")
+
             return render_template("ia.html", sucesso=True, conteudo=conteudo, imagem_url=imagem_url)
 
         except Exception as e:
@@ -413,14 +422,11 @@ def planos():
     if "user_id" not in session:
         return redirect("/login")
     try:
-        # 1. Executa a checagem no Mercado Pago antes de abrir a página
         verificar_e_atualizar_pagamento(session["user_id"])
         
-        # 2. Busca o registro ATUALIZADO direto do Supabase
         busca_user = supabase.table("users").select("*").eq("id", session["user_id"]).execute()
         usuario_atual = busca_user.data[0] if busca_user.data else None
         
-        # 3. CORREÇÃO: Passa o dicionário do usuário para o template renderizar os botões dinamicamente
         return render_template("planos.html", planos=PLANOS, usuario=usuario_atual)
     except Exception as e:
         print("ERRO ROTA PLANOS:", str(e))
@@ -470,7 +476,8 @@ def webhook_mercadopago():
         if not user_id:
             return {"success": False}, 400
 
-        supabase.table("users").update({"plano": "pro", "posts_limite": 999999}).eq("id", user_id).execute()
+        # CORREÇÃO: Mudado limite de 999999 para 60 no webhook também
+        supabase.table("users").update({"plano": "pro", "posts_limite": 60}).eq("id", user_id).execute()
         return {"success": True}, 200
     except Exception as e:
         return {"success": False, "error": str(e)}, 500
