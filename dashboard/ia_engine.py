@@ -203,7 +203,23 @@ def gerar_conteudo(
             prompt_nicho = file.read()
 
         # =========================
-        # PROMPT FINAL
+        # LOGICA DO CTA DINÂMICO
+        # =========================
+        if modo_nome in ["autoridade", "viral"]:
+            cta_instrucao = (
+                "Crie um fechamento estimulando o engajamento direto na publicação. "
+                "Termine obrigatoriamente a última linha do texto com a frase exata: "
+                "'Quer aprender como acelerar esse processo? Comente \"EU QUERO\" abaixo que te envio o material completo!'"
+            )
+        else:
+            cta_instrucao = (
+                "Direcione o leitor para tomar uma ação imediata de contato. "
+                "Termine obrigatoriamente a última linha do texto com a frase exata: "
+                "'Quer entender como aplicar isso no seu cenário? Clique no link da minha bio ou me envie uma mensagem no inbox para conversarmos!'"
+            )
+
+        # =========================
+        # PROMPT FINAL OTIMIZADO
         # =========================
 
         prompt = f"""
@@ -213,39 +229,27 @@ def gerar_conteudo(
 
 {prompt_nicho}
 
-REGRAS OBRIGATÓRIAS:
+Você é um especialista em {rede.capitalize()} e copywriting profissional de alta conversão.
+Seu objetivo é criar um post HUMANIZADO, moderno, persuasivo e adaptado exatamente para o nicho de: {nicho_nome}.
 
-- Criar conteúdo profissional para LinkedIn
-- Máximo de 2 parágrafos curtos
-- Texto humano e persuasivo
-- Linguagem natural
-- NÃO criar textos longos
-- NÃO ultrapassar 1200 caracteres
-- Inserir emojis relacionados ao tema
-- Criar título forte e chamativo
-- Adicionar CTA curto no final
-- Adicionar hashtags relevantes
-- Separar bem os blocos do texto
-- Aparência premium de marketing
-- Foco em engajamento
-- Foco em autoridade profissional
-- Foco em conversão
-- O texto deve parecer escrito por especialista humano
+REGRAS OBRIGATÓRIAS E ESTRITAS:
+- NÃO explique o que está fazendo, não dê introduções nem conclusões textuais adicionais.
+- NUNCA use rótulos explicativos como "Título:", "Desenvolvimento:", "CTA:" ou "Hashtags:".
+- Entregue apenas o texto final do post pronto para copiar e colar.
+- Texto humano, natural, gerando conexão emocional e foco em autoridade.
+- Use storytelling curto e espaçamento profissional (linhas em branco entre parágrafos curtos para leitura escaneável).
+- NÃO criar textos longos demais, respeite o limite técnico da rede social.
+- Inserir emojis relacionados ao tema de forma sutil e corporativa.
+- O texto deve parecer escrito por um especialista humano e nativo da área de {nicho_nome}.
 
-ESTRUTURA OBRIGATÓRIA:
-
-[TÍTULO]
-
-Parágrafo curto 1
-
-Parágrafo curto 2
-
-CTA curto
-
-Hashtags
+ESTRUTURA DO POST:
+1. Gancho Forte: Uma frase impactante na primeira linha que gere curiosidade ou toque numa dor do segmento.
+2. Desenvolvimento: História curta, dado relevante ou reflexão prática sobre o tema: {tema}.
+3. Autoridade: Posicionamento que demonstre domínio técnico sobre o assunto.
+4. Chamada para Ação (CTA) Obrigatória: {cta_instrucao}
+5. Hashtags: Insira de 3 a 5 hashtags altamente estratégicas e contextualizadas, separadas por espaço simples.
 
 REGRAS DA IMAGEM:
-
 - A imagem deve ser totalmente relacionada ao tema
 - SEMPRE gerar uma imagem diferente
 - NÃO reutilizar layouts
@@ -277,7 +281,7 @@ Nicho:
 """
 
         # =========================
-        # IA
+        # IA (LLAMA 3.3 VIA GROQ)
         # =========================
 
         response = client.chat.completions.create(
