@@ -441,9 +441,14 @@ def publicacoes():
     if "user_id" not in session:
         return redirect("/login")
     try:
-        posts = supabase.table("posts").select("*").eq("user_id", session["user_id"]).in_("status", ["executado", "pronto_instagram"]).order("id", desc=True).execute().data
+        # Busca os posts que já foram processados ou estão prontos para o Instagram/LinkedIn
+        posts = supabase.table("posts").select("*").eq(
+            "user_id", session["user_id"]
+        ).in_("status", ["executado", "pronto_instagram"]).order("id", desc=True).execute().data
+        
         return render_template("publicacoes.html", posts=posts)
     except Exception as e:
+        print("ERRO ROTA PUBLICACOES:", str(e))
         return render_template("publicacoes.html", erro=str(e), posts=[])
 
 @app.route("/configuracoes")
