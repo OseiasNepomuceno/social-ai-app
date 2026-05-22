@@ -11,6 +11,9 @@ import mercadopago
 
 from datetime import timedelta
 
+from flask import Flask, render_template, jsonify
+from dashboard.agents.analisador_media import gerar_relatorio_dados
+
 from supabase import create_client
 
 from services.supabase_storage import upload_image
@@ -47,6 +50,24 @@ app.secret_key = os.getenv(
 # =========================
 
 app.permanent_session_lifetime = timedelta(days=30)
+
+# =========================
+# MONITORAMENTO
+# =========================
+
+app = Flask(__name__)
+
+@app.route('/monitoramento')
+def monitoramento():
+    # Chama o agente de análise
+    relatorio = gerar_relatorio_dados()
+    return render_template('monitoramento.html', data=relatorio)
+
+# Rota para executar via botão (AJAX) sem dar refresh na página
+@app.route('/api/executar-analise')
+def api_analise():
+    resultado = gerar_relatorio_dados()
+    return jsonify(resultado)
 
 # =========================
 # SUPABASE
