@@ -1,0 +1,24 @@
+<div class="container">
+    <h1>📊 Monitoramento de Mídia</h1>
+    
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5>Total de Imagens</h5>
+                    <h2>{{ data.total_geral }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h3 class="mt-4">Cobertura por Nicho</h3>
+    <ul class="list-group">
+        {% for nicho, qtd in data.por_nicho.items() %}
+        <li class="list-group-item d-flex justify-content-between">
+            {{ nicho }}
+            <span class="badge bg-success">{{ qtd }}</span>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
