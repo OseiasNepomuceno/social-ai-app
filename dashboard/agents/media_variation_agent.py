@@ -1,96 +1,87 @@
 import os
-import random
-from PIL import Image, ImageEnhance, ImageFilter
+import io
+from PIL import Image, ImageEnhance
+from supabase import create_client
 
-def criar_variacoes_imagem(caminho_original, pasta_destino, multiplicador=3):
-    """
-    Pega uma imagem original e gera variações únicas baseadas no multiplicador.
-    Salva as novas imagens na pasta de destino.
-    """
-    if not os.path.exists(pasta_destino):
-        os.makedirs(pasta_destino)
-        
+# Configurações do Supabase obtidas do ambiente
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+def upload_variacao_para_supabase(buffer_imagem, nome_arquivo_variacao):
+    """Envia o arquivo diretamente da memória para o Supabase Storage"""
     try:
-        nome_arquivo = os.path.basename(caminho_original)
-        nome_base, ext = os.path.splitext(nome_arquivo)
+        # Envia para o bucket que você já usa para guardar as mídias (ex: 'midias_ia' ou 'public')
+        bucket_name = "media_library_bucket" 
         
-        # Garante que extensões sejam compatíveis com o Pillow
-        if ext.lower() not in ['.jpg', '.jpeg', '.png', '.webp']:
-            return 0
-
-        # Abre a imagem original
-        img = Image.open(caminho_original)
-        variacoes_geradas = 0
-
-        # --- Variação 1: Espelhamento Horizontal (Flip) ---
-        if multiplicador >= 1:
-            img_flip = img.transpose(Image.FLIP_LEFT_RIGHT)
-            caminho_salvar = os.path.join(pasta_destino, f"{nome_base}_v1_flip{ext}")
-            img_flip.save(caminho_salvar, quality=85, optimize=True)
-            variacoes_geradas += 1
-
-        # --- Variação 2: Ajuste de Tonalidade/Brilho (Filtro Premium) ---
-        if multiplicador >= 2:
-            # Melhora o contraste de leve (1.2) e reduz um pouquinho o brilho para dar tom dramático/premium
-            enhancer_contrast = ImageEnhance.Contrast(img)
-            img_filter = enhancer_contrast.enhance(1.15)
-            enhancer_brightness = ImageEnhance.Brightness(img_filter)
-            img_filter = enhancer_brightness.enhance(0.95)
-            
-            caminho_salvar = os.path.join(pasta_destino, f"{nome_base}_v2_filter{ext}")
-            img_filter.save(caminho_salvar, quality=85, optimize=True)
-            variacoes_geradas += 1
-
-        # --- Variação 3: Crop Inteligente ou Zoom de Foco ---
-        if multiplicador >= 3:
-            largura, altura = img.size
-            # Recorta 5% das bordas para criar um enquadramento ligeiramente diferente (efeito zoom)
-            margem_x = int(largura * 0.05)
-            margem_y = int(altura * 0.05)
-            
-            img_cropped = img.crop((margem_x, margem_y, largura - margem_x, altura - margem_y))
-            # Redimensiona de volta para o tamanho original para não perder resolução
-            img_cropped = img_cropped.resize((largura, altura), Image.Resampling.LANCZOS)
-            
-            caminho_salvar = os.path.join(pasta_destino, f"{nome_base}_v3_zoom{ext}")
-            img_cropped.save(caminho_salvar, quality=85, optimize=True)
-            variacoes_geradas += 1
-
-        return variacoes_geradas
-
+        # Faz o upload dos bytes da imagem
+        supabase.storage.from_(bucket_name).upload(
+            path=f"variacoes/{nome_arquivo_variacao}",
+            file=buffer_imagem.getvalue(),
+            file_options={"content-type": "image/jpeg"}
+        )
+        
+        # Pega a URL pública gerada
+        public_url = supabase.storage.from_(bucket_name).get_public_url(f"variacoes/{nome_arquivo_variacao}")
+        return public_url
     except Exception as e:
-        print(f"❌ Erro ao processar variações para {caminho_original}: {str(e)}")
-        return 0
+        print(f"❌ Erro no upload da variação para o Storage: {str(e)}")
+        return None
 
-
-def executar_pipeline_variacao(pasta_origem="downloads/originais", pasta_saida="downloads/banco_proprio"):
+def criar_e_salvar_variacoes_no_supabase(imagem_original_banco):
     """
-    Função principal que será chamada pelo seu executor geral.
-    Varre a pasta de imagens baixadas e processa a multiplicação.
+    Pega o registro de uma imagem original vinda do banco, baixa,
+    gera as variações e insere os novos links na mesma tabela.
     """
-    print("\n" + "="*50)
-    print("🤖 INICIANDO AGENTE DE VARIAÇÃO DE MÍDIA (DATA AUGMENTATION)")
-    print("="*50)
-    
-    if not os.path.exists(pasta_origem):
-        print(f"⚠️ Pasta de origem '{pasta_origem}' não encontrada. Nenhum download prévio detectado.")
-        return
-
-    arquivos = [os.path.join(pasta_origem, f) for f in os.listdir(pasta_origem) if os.path.isfile(os.path.join(pasta_origem, f))]
-    total_imagens = len(arquivos)
-    total_novas_imagens = 0
-
-    print(f"📸 Encontradas {total_imagens} imagens originais para processamento.")
-
-    for i, caminho_img in enumerate(arquivos, 1):
-        # Chama a função para criar as 3 variações
-        geradas = criar_variacoes_imagem(caminho_img, pasta_saida, multiplicador=3)
-        total_novas_imagens += geradas
+    try:
+        id_pai = imagem_original_banco["id"]
+        url_original = imagem_original_banco["imagem_url"]
+        nicho = imagem_original_banco["nicho"]
+        rede = imagem_original_banco["rede"]
         
-        if i % 100 == 0 or i == total_imagens:
-            print(f"⚙️ Progresso: [{i}/{total_imagens}] imagens originais processadas...")
-
-    print("\n" + "="*50)
-    print(f"✅ SUCESSO: O agente gerou {total_novas_imagens} novas variações!")
-    print(f"📂 Seu banco próprio agora conta com {total_imagens + total_novas_imagens} imagens prontas.")
-    print("="*50 + "\n")
+        # Como o Pillow precisa abrir a imagem, você pode baixá-la usando a URL
+        import requests
+        response = requests.get(url_original)
+        if response.status_code != 200:
+            return 0
+            
+        img_original = Image.open(io.BytesIO(response.content))
+        nome_base = f"img_{id_pai}"
+        ext = ".jpg"
+        
+        variacoes = [
+            {"tipo": "variacao_flip", "transform": lambda img: img.transpose(Image.FLIP_LEFT_RIGHT)},
+            {"tipo": "variacao_filtro", "transform": lambda img: ImageEnhance.Contrast(img).enhance(1.15)},
+        ]
+        
+        geradas = 0
+        for i, var in enumerate(variacoes, 1):
+            # Aplica a transformação de IA/Mídia
+            img_alterada = var["transform"](img_original)
+            
+            # Salva o resultado em um buffer de memória (sem ocupar espaço no Render)
+            buffer = io.BytesIO()
+            img_alterada.convert('RGB').save(buffer, format="JPEG", quality=85)
+            buffer.seek(0)
+            
+            # Envia para o Storage
+            nome_arquivo = f"{nome_base}_v{i}_{var['tipo']}{ext}"
+            url_publica_nova = upload_variacao_para_supabase(buffer, nome_arquivo)
+            
+            if url_publica_nova:
+                # Salva o novo registro na MESMA tabela do banco de dados
+                payload = {
+                    "tema": imagem_original_banco.get("tema", "Variação Automatizada"),
+                    "rede": rede,
+                    "nicho": nicho,
+                    "imagem_url": url_publica_nova,
+                    "tipo_midia": var["tipo"],
+                    "id_imagem_pai": id_pai
+                }
+                supabase.table("media_library").insert(payload).execute()
+                geradas += 1
+                
+        return geradas
+    except Exception as e:
+        print(f"❌ Erro ao processar variações para ID {imagem_original_banco.get('id')}: {str(e)}")
+        return 0
