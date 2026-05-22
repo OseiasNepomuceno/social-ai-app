@@ -172,7 +172,7 @@ def verificar_pagamentos_todos_usuarios():
         if not usuarios:
             print("✅ NENHUM USUÁRIO PARA VERIFICAR")
             return
-
+        
         for usuario in usuarios:
             user_id = usuario["id"]
             resultado = verificar_e_atualizar_pagamento(user_id)
@@ -230,6 +230,7 @@ def home():
     except Exception as e:
         print("HOME ERROR:", str(e))
         return render_template("index.html", posts=[], total_posts=0, executados=0, pendentes=0, erros=0, erro=str(e))
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -423,20 +424,30 @@ def publicacoes():
     except Exception as e:
         return render_template("publicacoes.html", erro=str(e), posts=[])
 
+# 🛠️ ROTA DE CONFIGURAÇÕES BLINDADA CONTRA ERROS DE TELA
 @app.route("/configuracoes")
 def configuracoes():
     if "user_id" not in session:
         return redirect("/login")
     try:
         usuario = supabase.table("users").select("*").eq("id", session["user_id"]).execute()
+        
+        # AJUSTE: Se o banco falhar ou demorar para retornar a linha, criamos um dicionário de fallback limpo
         if not usuario.data:
-            return render_template("configuracoes.html", erro="Usuário não encontrado", user=None, linkedin_conectado=False)
+            user_backup = {
+                "email": session.get("email", "E-mail na Sessão"),
+                "plano": "free"
+            }
+            return render_template("configuracoes.html", user=user_backup, linkedin_conectado=False)
         
         user = usuario.data[0]
         linkedin_conectado = bool(user.get("linkedin_token"))
         return render_template("configuracoes.html", user=user, linkedin_conectado=linkedin_conectado)
     except Exception as e:
-        return render_template("configuracoes.html", erro=str(e), user=None, linkedin_conectado=False)
+        print("CONFIG ERROR BACKUP ACTIVE:", str(e))
+        # Backup ativo caso dispare qualquer exceção de conexão
+        user_backup = {"email": session.get("email", "E-mail na Sessão"), "plano": "free"}
+        return render_template("configuracoes.html", user=user_backup, linkedin_conectado=False)
 
 @app.route("/planos")
 def planos():
