@@ -18,7 +18,7 @@
             </h1>
             <p class="text-sm text-gray-400 mt-1">
                 {% if request.path == '/publicacoes' %}
-                    Histórico de posts executados. Baixe os arquivos para publicação no Instagram.
+                    Histórico de posts executados. Baixe a mídia ideal para feeds, stories ou status.
                 {% else %}
                     Gerencie as postagens programadas para suas redes sociais.
                 {% endif %}
@@ -38,7 +38,7 @@
                 <div class="space-y-3">
                     <div class="flex flex-wrap items-center gap-2">
                         <span class="px-2.5 py-1 text-xs font-semibold uppercase bg-blue-500/10 text-blue-400 rounded-md border border-blue-500/20">
-                            <i class="fa-brands fa-{{ post.rede }} mr-1"></i> {{ post.rede }}
+                            <i class="fa-brands fa-{{ post.rede|lower }} mr-1"></i> {{ post.rede }}
                         </span>
                         <span class="px-2.5 py-1 text-xs font-semibold bg-purple-500/10 text-purple-400 rounded-md border border-purple-500/20">
                             <i class="fa-solid fa-tags mr-1"></i> {{ post.nicho|capitalize }}
@@ -72,18 +72,27 @@
                         <span><i class="fa-solid fa-clock text-purple-400 mr-1"></i> {{ post.hora_postagem }}</span>
                     </div>
                     
-                    <div class="flex items-center space-x-2 self-end sm:self-auto">
+                    <div class="flex flex-wrap items-center gap-2 self-end sm:self-auto">
                         {% if request.path == '/publicacoes' %}
-                            <button onclick="copiarTexto('texto-{{ post.id }}')" class="bg-gray-700 hover:bg-gray-600 text-gray-200 px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center space-x-1" title="Copiar legenda para o Instagram">
+                            <button onclick="copiarTexto('texto-{{ post.id }}')" class="bg-gray-700 hover:bg-gray-600 text-gray-200 px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center space-x-1" title="Copiar legenda para as Redes">
                                 <i class="fa-solid fa-copy"></i>
                                 <span>Copiar Texto</span>
                             </button>
                             
                             {% if post.imagem_url %}
-                            <a href="{{ post.imagem_url }}" download="social_ai_post_{{ post.id }}.png" target="_blank" class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center space-x-1" title="Baixar Imagem do Post">
-                                <i class="fa-solid fa-download"></i>
-                                <span>Baixar Mídia</span>
-                            </a>
+                                <a href="{{ post.imagem_url }}" download="social_ai_feed_{{ post.id }}.png" target="_blank" 
+                                   class="bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center space-x-1" 
+                                   title="Medidas quadradas ideais para Feeds">
+                                    <i class="fa-solid fa-square"></i>
+                                    <span>Baixar Feed (1:1)</span>
+                                </a>
+
+                                <button onclick="abrirModalStories('{{ post.imagem_url }}')" 
+                                        class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center space-x-1" 
+                                        title="Formato vertical para Status e Stories sem cortes">
+                                    <i class="fa-solid fa-mobile-screen-button"></i>
+                                    <span>Baixar Stories (9:16)</span>
+                                </button>
                             {% endif %}
                         {% else %}
                             <a href="/deletar/{{ post.id }}" 
@@ -119,14 +128,66 @@
     </div>
 </div>
 
+<div id="modalStories" class="hidden fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in">
+    <div class="relative w-full max-w-sm aspect-[9/16] bg-gray-950 rounded-2xl overflow-hidden shadow-2xl border border-gray-800 flex flex-col justify-between p-5">
+        
+        <div id="fallbackBlur" class="absolute inset-0 bg-cover bg-center blur-2xl opacity-35 scale-110 pointer-events-none"></div>
+
+        <div class="relative z-10 flex justify-between items-center text-white">
+            <div class="flex items-center space-x-2 bg-black/40 backdrop-blur-md px-3 py-1 rounded-full border border-white/5">
+                <i class="fa-solid fa-mobile-retro text-purple-400 text-xs"></i>
+                <span class="text-[11px] font-bold tracking-wider uppercase text-gray-300">Medida Stories/Status</span>
+            </div>
+            <button onclick="fecharModalStories()" class="w-8 h-8 rounded-full bg-black/50 hover:bg-red-500/20 hover:text-red-400 text-gray-400 text-xl flex items-center justify-center transition-all shadow-md">&times;</button>
+        </div>
+
+        <div class="relative z-10 flex-1 flex items-center justify-center my-3">
+            <img id="imgStoryPreview" src="" class="max-w-full max-h-[75%] object-contain rounded-xl shadow-2xl border border-white/10" alt="Midia Centralizada">
+        </div>
+
+        <div class="relative z-10 w-full pt-2">
+            <a id="btnDownloadStory" href="#" target="_blank" download 
+               class="w-full flex items-center justify-center space-x-2 py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold shadow-lg shadow-indigo-600/30 transition-all uppercase tracking-wider">
+                <i class="fa-solid fa-cloud-arrow-down text-base animate-bounce"></i>
+                <span>Salvar Mídia Vertical</span>
+            </a>
+        </div>
+    </div>
+</div>
+
 <script>
 function copiarTexto(idElemento) {
     const texto = document.getElementById(idElemento).innerText;
     navigator.clipboard.writeText(texto).then(() => {
-        alert("Legenda copiada com sucesso! Pronto para colar no Instagram. 🚀");
+        alert("Legenda copiada com sucesso! Pronto para colar nas suas redes sociais. 🚀");
     }).catch(err => {
         console.error('Erro ao copiar texto: ', err);
     });
 }
+
+function abrirModalStories(imageUrl) {
+    if (!imageUrl) return;
+    document.getElementById('imgStoryPreview').src = imageUrl;
+    document.getElementById('fallbackBlur').style.backgroundImage = `url('${imageUrl}')`;
+    document.getElementById('btnDownloadStory').href = imageUrl;
+    
+    // Configura o nome do arquivo dinâmico de download
+    const timestamp = new Date().getTime();
+    document.getElementById('btnDownloadStory').setAttribute('download', `stories_status_${timestamp}.png`);
+    
+    // Remove a classe hidden para exibir o modal com animação
+    document.getElementById('modalStories').classList.remove('hidden');
+}
+
+function fecharModalStories() {
+    document.getElementById('modalStories').classList.add('hidden');
+}
+
+// Fecha o modal caso o usuário clique na área preta de fundo
+document.getElementById('modalStories').addEventListener('click', function(e) {
+    if (e.target === this) {
+        fecharModalStories();
+    }
+});
 </script>
 {% endblock %}
