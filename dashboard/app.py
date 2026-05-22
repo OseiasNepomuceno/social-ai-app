@@ -230,14 +230,23 @@ def login():
             session["user_id"] = user.id
             session["email"] = user.email
 
-            # Cria ou atualiza o perfil na tabela pública corporativa
-            supabase.table("users").upsert({
-                "id": user.id,
-                "email": user.email,
-                "plano": "free",
-                "posts_limite": 10,
-                "posts_usados": 0
-            }).execute()
+            # CORREÇÃO CRUCIAL: Verificar se o perfil já existe antes de fazer upsert para NÃO resetar o plano Pro
+            checar_usuario = supabase.table("users").select("plano").eq("id", user.id).execute()
+            
+            if not checar_usuario.data:
+                # Se for um usuário completamente novo na tabela pública, cria como free
+                supabase.table("users").insert({
+                    "id": user.id,
+                    "email": user.email,
+                    "plano": "free",
+                    "posts_limite": 10,
+                    "posts_usados": 0
+                }).execute()
+            else:
+                # Se já existe, apenas atualiza o e-mail se necessário, sem tocar na coluna do plano
+                supabase.table("users").update({
+                    "email": user.email
+                }).eq("id", user.id).execute()
 
             return redirect("/")
 
@@ -404,9 +413,17 @@ def planos():
     if "user_id" not in session:
         return redirect("/login")
     try:
+        # 1. Executa a checagem no Mercado Pago antes de abrir a página
         verificar_e_atualizar_pagamento(session["user_id"])
-        return render_template("planos.html", planos=PLANOS)
+        
+        # 2. Busca o registro ATUALIZADO direto do Supabase
+        busca_user = supabase.table("users").select("*").eq("id", session["user_id"]).execute()
+        usuario_atual = busca_user.data[0] if busca_user.data else None
+        
+        # 3. CORREÇÃO: Passa o dicionário do usuário para o template renderizar os botões dinamicamente
+        return render_template("planos.html", planos=PLANOS, usuario=usuario_atual)
     except Exception as e:
+        print("ERRO ROTA PLANOS:", str(e))
         return str(e)
 
 @app.route("/checkout/pro")
