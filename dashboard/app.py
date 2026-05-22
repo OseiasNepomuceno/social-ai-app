@@ -7,7 +7,8 @@ from flask import (
     redirect,
     request,
     session,
-    jsonify
+    jsonify,
+    send_from_directory  # <-- Certifique-se de que o send_from_directory está importado aqui
 )
 from supabase import create_client
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -17,23 +18,6 @@ from dashboard.agents.analisador_media import gerar_relatorio_completo
 from services.supabase_storage import upload_image
 from dashboard.agents.media_selector import selecionar_imagem
 from dashboard.ia_engine import gerar_conteudo
-
-from flask import send_from_directory
-
-# =========================
-# CONFIGURAÇÃO UNIFICADA E BLINDADA DO FLASK
-# =========================
-# ... (suas configurações atuais de app, secret_key e cookies) ...
-
-
-# 🚀 ADICIONE ESTA ROTA AQUI:
-@app.route('/favicon.ico')
-def favicon():
-    return send_from_directory(
-        os.path.join(app.root_path, 'static'),
-        'favicon.ico',
-        mimetype='image/vnd.microsoft.icon'
-    )
 
 # =========================
 # CONFIGURAÇÃO UNIFICADA E BLINDADA DO FLASK
@@ -46,7 +30,6 @@ app = Flask(
 )
 
 # AJUSTE: Forçando uma chave estática padrão caso a env mude ou suma no reboot do Render.
-# Isso impede a invalidação instantânea dos cookies dos usuários logados.
 app.secret_key = os.getenv(
     "SECRET_KEY",
     "social_ai_chave_mestra_estatica_coregov_2026"
@@ -57,9 +40,18 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=4)
 
 # AJUSTE: Parâmetros de segurança e persistência dos cookies de navegação
 app.config['SESSION_COOKIE_NAME'] = 'social_ai_session'
-app.config['SESSION_COOKIE_HTTPONLY'] = True   # Impede leitura via scripts maliciosos (XSS)
-app.config['SESSION_COOKIE_SECURE'] = True     # Exige conexão HTTPS obrigatória (Produção no Render)
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Evita que navegadores modernos descartem o cookie à toa
+app.config['SESSION_COOKIE_HTTPONLY'] = True   
+app.config['SESSION_COOKIE_SECURE'] = True     
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  
+
+# 🚀 AQUI É O LUGAR CORRETO PARA A ROTA DO FAVICON (ABAIXO DO APP DEFINIDO):
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(
+        os.path.join(app.root_path, 'static'),
+        'favicon.ico',
+        mimetype='image/vnd.microsoft.icon'
+    )
 
 # =========================
 # SUPABASE
