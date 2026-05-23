@@ -219,7 +219,6 @@ def home():
             "user_id", session["user_id"]
         ).order("id", desc=True).limit(6).execute().data
 
-        # 🛠️ CORREÇÃO DEFINITIVA DA ROTA HOME: Contagem linear e segura contra SyntaxError
         total_posts = len(posts) if posts else 0
         executados = 0
         pendentes = 0
