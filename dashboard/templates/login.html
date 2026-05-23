@@ -2,288 +2,226 @@
 <html lang="pt-br">
 
 <head>
-
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>
-Login | SOCIAL COREGOV
-</title>
-
-<link
-rel="icon"
-href="{{ url_for('static', filename='logo.png') }}"
->
-
-<style>
-
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-}
-
-body{
-
-    font-family:Arial, Helvetica, sans-serif;
-
-    background:
-    linear-gradient(
-        135deg,
-        #111827,
-        #1f2937
-    );
-
-    height:100vh;
-
-    display:flex;
-    justify-content:center;
-    align-items:center;
-
-    padding:20px;
-}
-
-.login-container{
-
-    width:100%;
-    max-width:420px;
-
-    background:white;
-
-    padding:40px;
-
-    border-radius:20px;
-
-    box-shadow:
-    0 10px 40px rgba(0,0,0,0.2);
-}
-
-.logo{
-
-    text-align:center;
-    margin-bottom:25px;
-}
-
-.logo img{
-
-    width:90px;
-    margin-bottom:15px;
-}
-
-.logo h1{
-
-    color:#111827;
-    font-size:32px;
-    margin-bottom:10px;
-}
-
-.logo p{
-
-    color:#6b7280;
-    font-size:15px;
-}
-
-.form-group{
-
-    margin-bottom:20px;
-}
-
-.form-group label{
-
-    display:block;
-
-    margin-bottom:8px;
-
-    font-weight:bold;
-
-    color:#111827;
-}
-
-.form-group input{
-
-    width:100%;
-
-    padding:14px;
-
-    border:1px solid #d1d5db;
-
-    border-radius:12px;
-
-    font-size:15px;
-
-    outline:none;
-
-    transition:0.3s;
-}
-
-.form-group input:focus{
-
-    border-color:#111827;
-
-    box-shadow:
-    0 0 0 3px rgba(17,24,39,0.1);
-}
-
-.btn-login{
-
-    width:100%;
-
-    padding:15px;
-
-    border:none;
-
-    border-radius:12px;
-
-    background:#111827;
-
-    color:white;
-
-    font-size:16px;
-
-    font-weight:bold;
-
-    cursor:pointer;
-
-    transition:0.3s;
-}
-
-.btn-login:hover{
-
-    opacity:0.9;
-}
-
-.links{
-
-    margin-top:25px;
-
-    text-align:center;
-}
-
-.links a{
-
-    text-decoration:none;
-
-    color:#111827;
-
-    font-weight:bold;
-}
-
-.links a:hover{
-
-    opacity:0.8;
-}
-
-.alert{
-
-    background:#fee2e2;
-
-    color:#991b1b;
-
-    padding:12px;
-
-    border-radius:10px;
-
-    margin-bottom:20px;
-
-    text-align:center;
-
-    font-size:14px;
-}
-
-</style>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | SOCIAL COREGOV</title>
+    <link rel="icon" href="{{ url_for('static', filename='logo.png') }}">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: linear-gradient(135deg, #111827, #1f2937);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 420px;
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .logo img {
+            width: 90px;
+            margin-bottom: 15px;
+        }
+
+        .logo h1 {
+            color: #111827;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .logo p {
+            color: #6b7280;
+            font-size: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #111827;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 12px;
+            font-size: 15px;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        .form-group input:focus {
+            border-color: #111827;
+            box-shadow: 0 0 0 3px rgba(17,24,39,0.1);
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            background: #111827;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn-login:hover {
+            opacity: 0.9;
+        }
+
+        /* Estilos para o Botão do Google e Divisória */
+        .divider {
+            text-align: center;
+            margin: 20px 0;
+            color: #6b7280;
+            font-size: 14px;
+            position: relative;
+        }
+
+        .divider::before, .divider::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            width: 40%;
+            height: 1px;
+            background: #e5e7eb;
+        }
+
+        .divider::before { left: 0; }
+        .divider::after { right: 0; }
+
+        .btn-google {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            width: 100%;
+            padding: 14px;
+            background: #ffffff;
+            color: #374151;
+            border: 1px solid #d1d5db;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: bold;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background 0.2s, box-shadow 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .btn-google:hover {
+            background: #f9fafb;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.08);
+            border-color: #9ca3af;
+        }
+
+        .btn-google img {
+            width: 20px;
+            height: 20px;
+        }
+
+        .links {
+            margin-top: 25px;
+            text-align: center;
+        }
+
+        .links a {
+            text-decoration: none;
+            color: #111827;
+            font-weight: bold;
+        }
+
+        .links a:hover {
+            opacity: 0.8;
+        }
+
+        .alert {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 14px;
+        }
+    </style>
 </head>
 
 <body>
 
-<div class="login-container">
+    <div class="login-container">
 
-<div class="logo">
+        <div class="logo">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="SOCIAL COREGOV">
+            <h1>SOCIAL COREGOV</h1>
+            <p>Automação Inteligente para Redes Sociais</p>
+        </div>
 
-<img
-src="{{ url_for('static', filename='logo.png') }}"
-alt="SOCIAL COREGOV"
->
+        {% if erro %}
+        <div class="alert">
+            {{ erro }}
+        </div>
+        {% endif %}
 
-<h1>
-SOCIAL COREGOV
-</h1>
+        <form method="POST" action="/login">
+            <div class="form-group">
+                <label>E-mail</label>
+                <input type="email" name="email" placeholder="Digite seu e-mail" required>
+            </div>
 
-<p>
-Automação Inteligente para Redes Sociais
-</p>
+            <div class="form-group">
+                <label>Senha</label>
+                <input type="password" name="senha" placeholder="Digite sua senha" required>
+            </div>
 
-</div>
+            <button type="submit" class="btn-login">
+                🚀 Entrar no Sistema
+            </button>
+        </form>
 
-{% if erro %}
+        <div class="divider">ou</div>
 
-<div class="alert">
-{{ erro }}
-</div>
+        <a href="/login/google" class="btn-google">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google Logo">
+            Entrar com o Google
+        </a>
 
-{% endif %}
+        <div class="links">
+            <p>
+                Ainda não possui conta?
+                <a href="/register">Criar conta</a>
+            </p>
+        </div>
 
-<form
-method="POST"
-action="/login"
->
-
-<div class="form-group">
-
-<label>
-E-mail
-</label>
-
-<input
-type="email"
-name="email"
-placeholder="Digite seu e-mail"
-required
->
-
-</div>
-
-<div class="form-group">
-
-<label>
-Senha
-</label>
-
-<input
-type="password"
-name="senha"
-placeholder="Digite sua senha"
-required
->
-
-</div>
-
-<button
-type="submit"
-class="btn-login"
->
-
-🚀 Entrar no Sistema
-
-</button>
-
-</form>
-
-<div class="links">
-
-<p>
-
-Ainda não possui conta?
-
-<a href="/register">
-Criar conta
-</a>
-
-</p>
-
-</div>
-
-</div>
+    </div>
 
 </body>
 </html>
