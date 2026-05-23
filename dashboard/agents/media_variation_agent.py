@@ -12,7 +12,6 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 def upload_variacao_para_supabase(buffer_imagem, nome_arquivo_variacao):
     """Envia a variação processada na memória direto para o Storage do Supabase"""
     try:
-        # Substitua pelo nome do seu Bucket real no Supabase (ex: 'publicacoes', 'midias_ia', etc.)
         bucket_name = "media_library_bucket" 
         
         # Faz o upload direto dos bytes sem salvar nada no Render
@@ -37,9 +36,12 @@ def processar_e_salvar_variacoes(imagem_original):
     """
     try:
         id_pai = imagem_original["id"]
-        url_original = imagem_original["imagem_url"]
+        url_original = imagem_original["image_url"]  # Ajustado para refletir o print real 'image_url'
         nicho = imagem_original["nicho"]
         rede = imagem_original["rede"]
+        categoria = imagem_original.get("categoria", "corporativo")
+        estilo = imagem_original.get("estilo", "premium")
+        formato = imagem_original.get("formato", "quadrado")
         tema_original = imagem_original.get("tema", "Variação de Imagem Própria")
 
         # 1. Baixa a imagem atual direto pela URL pública
@@ -50,7 +52,7 @@ def processar_e_salvar_variacoes(imagem_original):
         img_original = Image.open(io.BytesIO(response.content))
         nome_base = f"var_origem_{id_pai}"
         
-        # Definimos 2 variações excelentes que mudam a assinatura digital do arquivo para as Redes Sociais
+        # Definimos 2 variações excelentes que mudam a assinatura digital do arquivo
         variacoes_config = [
             {"tipo": "variacao_flip", "acao": lambda img: img.transpose(Image.FLIP_LEFT_RIGHT)},
             {"tipo": "variacao_filtro", "acao": lambda img: ImageEnhance.Contrast(img).enhance(1.20)}
@@ -62,7 +64,7 @@ def processar_e_salvar_variacoes(imagem_original):
             # Executa a transformação na imagem
             img_nova = var["acao"](img_original)
             
-            # Comprime o arquivo em memória como JPEG otimizado (muito leve)
+            # Comprime o arquivo em memória como JPEG otimizado
             buffer = io.BytesIO()
             img_nova.convert('RGB').save(buffer, format="JPEG", quality=85)
             buffer.seek(0)
@@ -74,14 +76,17 @@ def processar_e_salvar_variacoes(imagem_original):
             url_publica_nova = upload_variacao_para_supabase(buffer, nome_arquivo_novo)
             
             if url_publica_nova:
-                # Insere o novo registro clonando as propriedades, mas trocando a URL do arquivo
+                # Insere o novo registro clonando as propriedades estruturais exatas
                 payload = {
                     "tema": tema_original,
                     "rede": rede,
                     "nicho": nicho,
-                    "imagem_url": url_publica_nova,
-                    "tipo_midia": var["tipo"],  -- Identifica que veio do seu multiplicador
-                    "id_imagem_pai": id_pai     -- Mantém o rastreio da imagem mãe
+                    "categoria": categoria,
+                    "estilo": estilo,
+                    "formato": formato,
+                    "image_url": url_publica_nova,
+                    "tipo_midia": var["tipo"],       # Corrigido comentário Python #
+                    "id_imagem_pai": id_pai          # Corrigido comentário Python #
                 }
                 supabase.table("media_library").insert(payload).execute()
                 contador_sucesso += 1
@@ -93,21 +98,20 @@ def processar_e_salvar_variacoes(imagem_original):
         return 0
 
 
-def iniciar_multiplicacao_banco_existente(limite_por_rodada=100):
+def iniciar_multiplicacao_banco_existente(limite_por_rodada=50):
     """
-    Função principal. Ela busca apenas imagens que são 'originais' no banco,
-    garantindo que o script não tente multiplicar uma imagem que já é variação.
+    Função principal. Ela busca imagens originais (onde 'id_imagem_pai' é nulo)
+    para criar os desmembramentos sem gerar loops infinitos.
     """
     print("\n" + "="*60)
     print("🚀 INICIANDO AGENTE MULTIPLICADOR DE IMAGENS DISPONÍVEIS")
     print("="*60)
     
     try:
-        # Busca no banco apenas as imagens marcadas como 'original' e limita o lote
-        # para não estourar o tempo de timeout do Render.
+        # Puxa imagens onde id_imagem_pai é nulo (ou seja, as originais da lista)
         resposta_banco = supabase.table("media_library")\
             .select("*")\
-            .eq("tipo_midia", "original")\
+            .is_("id_imagem_pai", "null")\
             .limit(limite_por_rodada)\
             .execute()
             
@@ -118,19 +122,18 @@ def iniciar_multiplicacao_banco_existente(limite_por_rodada=100):
             return
 
         total_encontrado = len(imagens_originais)
-        print(f"📦 Lote selecionado: Processando {total_encontrado} imagens originais do Supabase.")
+        print(f"📦 Lote selecionado: Processando {total_encontrado} imagens da media_library.")
         
         total_novas_criadas = 0
         for idx, img in enumerate(imagens_originais, 1):
             geradas = processar_e_salvar_variacoes(img)
             total_novas_criadas += geradas
             
-            if idx % 20 == 0 or idx == total_encontrado:
-                print(f"⚙️ Progresso: [{idx}/{total_encontrado}] imagens originais convertidas...")
+            if idx % 10 == 0 or idx == total_encontrado:
+                print(f"⚙️ Progresso: [{idx}/{total_encontrado}] imagens originais processadas...")
 
         print("\n" + "="*60)
         print(f"✅ CONCLUÍDO: O agente adicionou +{total_novas_criadas} variações exclusivas!")
-        print("💡 Imagens salvas diretamente no Storage e catalogadas na mesma tabela.")
         print("="*60 + "\n")
 
     except Exception as e:
