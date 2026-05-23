@@ -297,10 +297,15 @@ def register():
         senha = request.form["senha"]
 
         try:
-            # Envia dados para o serviço Auth do Supabase
+            # ⚙️ Passando o nome diretamente dentro dos metadados nativos do Supabase Auth
             resposta = supabase.auth.sign_up({
                 "email": email,
-                "password": senha
+                "password": senha,
+                "options": {
+                    "data": {
+                        "display_name": nome
+                    }
+                }
             })
             
             user = resposta.user
@@ -313,21 +318,25 @@ def register():
                     sucesso="📬 Quase lá! Enviamos um e-mail de ativação para você. Acesse sua caixa de entrada (ou spam) e clique no link de validação. Assim que confirmar, seu acesso será liberado na hora! 🚀"
                 )
 
-            # Se o Supabase estiver configurado para auto-confirmar, ele executa o upsert direto
-            supabase.table("users").upsert({
-                "id": user.id,
-                "nome": nome,
-                "email": email,
-                "plano": "free",
-                "posts_limite": 10,
-                "posts_usados": 0
-            }).execute()
+            # 🛠️ BLOCO BLINDADO: Salva o usuário no banco, sem quebrar o fluxo se houver erro de coluna/permissão
+            try:
+                dados_usuario = {
+                    "id": user.id,
+                    "email": email,
+                    "plano": "free",
+                    "posts_limite": 10,
+                    "posts_usados": 0
+                }
+                supabase.table("users").upsert(dados_usuario).execute()
+                print(f"✅ Usuário salvo na tabela pública 'users': {email}")
+            except Exception as table_err:
+                print(f"⚠️ Alerta ao salvar na tabela 'users' (pode ser coluna ausente ou RLS): {str(table_err)}")
 
             session.permanent = True
             session["user_id"] = user.id
             session["email"] = email
 
-            print(f"✅ USUÁRIO CRIADO E SALVO DIRETAMENTE: {email}")
+            print(f"✅ USUÁRIO CRIADO E LOGADO DIRETAMENTE: {email}")
             return redirect("/")
 
         except Exception as e:
