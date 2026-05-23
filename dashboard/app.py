@@ -1,5 +1,5 @@
 import os
-from datetime import timedelta
+from datetime import datetime, timedelta
 import mercadopago
 from flask import (
     Flask,
@@ -93,6 +93,40 @@ PLANOS = {
 }
 
 # =========================
+# MIDDLEWARE: MONITORAMENTO DE TRÁFEGO (SÉRIE TEMPORAL)
+# =========================
+
+@app.before_request
+def rastrear_atividade_usuario():
+    # Ignora checagem para arquivos estáticos e favicon para não sobrecarregar o banco
+    if request.path.startswith('/static') or request.path == '/favicon.ico':
+        return
+
+    if "user_id" in session:
+        user_id = session["user_id"]
+        agora_iso = datetime.utcnow().isoformat()
+        hoje_str = datetime.utcnow().strftime("%Y-%m-%d")
+
+        try:
+            # 1. Atualiza o timestamp de última atividade em tempo real na tabela de usuários
+            supabase.table("users").update({
+                "ultima_atividade": agora_iso
+            }).eq("id", user_id).execute()
+
+            # 2. Registra a presença diária única para geração do histórico/gráficos
+            # Usamos uma estratégia de upsert combinando user_id e data_acesso para evitar duplicados no mesmo dia
+            id_registro_unico = f"{user_id}_{hoje_str}"
+            supabase.table("analytics_acessos").upsert({
+                "id_composto": id_registro_unico,
+                "user_id": user_id,
+                "data_acesso": hoje_str
+            }).execute()
+
+        except Exception as e:
+            # Silencioso no console para não quebrar a experiência do usuário se o banco oscilar
+            print(f"⚠️ Erro ao registrar tracking de analytics: {str(e)}")
+
+# =========================
 # MONITORAMENTO
 # =========================
 
@@ -107,13 +141,63 @@ def monitoramento():
         print(f"🚨 Tentativa de acesso não autorizado ao monitoramento por: {session.get('email')}")
         return redirect("/")
 
+    # --- 1. CÁLCULO DE MÉTRICAS VIA SUPABASE ---
+    usuarios_online = 0
+    usuarios_hoje = 0
+    usuarios_mes = 0
+    grafico_labels = []
+    grafico_dados = []
+
+    try:
+        agora = datetime.utcnow()
+        
+        # Tempo Real: Usuários que interagiram nos últimos 5 minutos
+        cinco_minutos_atras = (agora - timedelta(minutes=5)).isoformat()
+        res_online = supabase.table("users").select("id", count="exact").gte("ultima_atividade", cinco_minutos_atras).execute()
+        usuarios_online = res_online.count if res_online.count is not None else 0
+
+        # Histórico: Hoje
+        hoje_str = agora.strftime("%Y-%m-%d")
+        res_hoje = supabase.table("analytics_acessos").select("user_id", count="exact").eq("data_acesso", hoje_str).execute()
+        usuarios_hoje = res_hoje.count if res_hoje.count is not None else 0
+
+        # Histórico: Últimos 30 dias (Mês)
+        trinta_dias_atras = (agora - timedelta(days=30)).strftime("%Y-%m-%d")
+        res_mes = supabase.table("analytics_acessos").select("user_id", count="exact").gte("data_acesso", trinta_dias_atras).execute()
+        usuarios_mes = res_mes.count if res_mes.count is not None else 0
+
+        # --- 2. CONSTRUÇÃO DO GRÁFICO (ÚLTIMOS 7 DIAS) ---
+        for i in range(6, -1, -1):
+            dia_alvo = agora - timedelta(days=i)
+            dia_alvo_str = dia_alvo.strftime("%Y-%m-%d")
+            dia_exibicao = dia_alvo.strftime("%d/%m")
+            
+            # Busca contagem de acessos específicos daquele dia
+            res_dia = supabase.table("analytics_acessos").select("user_id", count="exact").eq("data_acesso", dia_alvo_str).execute()
+            total_dia = res_dia.count if res_dia.count is not None else 0
+            
+            grafico_labels.append(dia_exibicao)
+            grafico_dados.append(total_dia)
+
+    except Exception as err_metrics:
+        print(f"⚠️ Falha ao computar métricas de usuários: {str(err_metrics)}")
+
+    # --- 3. SAÚDE DOS AGENTES (LOGS) ---
     try:
         relatorio = gerar_relatorio_completo()
     except Exception as e:
         print("Erro ao gerar relatório do monitoramento:", str(e))
         relatorio = {}
         
-    return render_template('monitoramento.html', data=relatorio)
+    return render_template(
+        'monitoramento.html', 
+        data=relatorio,
+        usuarios_online=usuarios_online,
+        usuarios_hoje=usuarios_hoje,
+        usuarios_mes=usuarios_mes,
+        grafico_labels=grafico_labels,
+        grafico_dados=grafico_dados
+    )
 
 # =========================
 # FUNÇÕES DE PAGAMENTO & SCHEDULER
@@ -428,7 +512,7 @@ def register():
                     "posts_usados": 0
                 }
                 supabase.table("users").upsert(dados_usuario).execute()
-                print(f"✅ Usuário salvo na tabela pública 'users': {email}")
+                print(f"✅ Usuário saved na tabela pública 'users': {email}")
             except Exception as table_err:
                 print(f"⚠️ Alerta ao salvar na tabela 'users': {str(table_err)}")
 
