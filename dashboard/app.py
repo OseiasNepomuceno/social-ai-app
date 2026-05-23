@@ -10,7 +10,8 @@ from flask import (
     jsonify,
     send_from_directory,
     flash,
-    url_for
+    url_for,
+    render_template_string  # Adicionado para suportar a tela de transição do Google
 )
 from supabase import create_client
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -203,7 +204,7 @@ scheduler.add_job(
     replace_existing=True
 )
 scheduler.start()
-print("✅ SCHEDULER INICIADO - Verificação a cada 15 minutos")
+print("✅ SCHEDULER INICIADO - Verificação a cada 15 minutes")
 
 # =========================
 # ROTAS DE HOME E AUTENTICAÇÃO
@@ -293,7 +294,6 @@ def login():
 @app.route("/login/google")
 def login_google():
     try:
-        # Gera a URL de redirecionamento seguro da API do Google
         dados_auth = supabase.auth.sign_in_with_oauth({
             "provider": "google",
             "options": {
@@ -305,24 +305,31 @@ def login_google():
         print(f"❌ ERRO AO INICIAR FLUXO GOOGLE OAUTH: {str(e)}")
         return redirect("/login")
 
-# 🌐 INTEGRADO: Rota de Retorno (Callback) após Autenticação bem-sucedida no Google
+# 🌐 RESOLVIDO: Rota de Retorno (Callback) Inteligente e Resiliente do Google OAuth
 @app.route("/auth/callback")
 def auth_callback():
     try:
-        # Captura os dados da sessão retornada pelo redirecionamento do Google
-        resposta = supabase.auth.get_session()
+        # Captura os tokens se vierem mapeados direto como Query Params pela interceptação JS
+        access_token = request.args.get("access_token")
+        refresh_token = request.args.get("refresh_token")
+        
+        if access_token:
+            supabase.auth.set_session(access_token, refresh_token)
+        
+        # Recupera os dados do usuário autenticado no cliente Supabase atual
+        resposta = supabase.auth.get_user()
         
         if resposta and hasattr(resposta, 'user') and resposta.user:
             user = resposta.user
             
-            # Inicializa a sessão segura do Flask
+            # Inicializa de forma segura e perene a sessão criptografada do Flask
             session.permanent = True
             session["user_id"] = user.id
             session["email"] = user.email
 
-            print(f"🌐 LOGIN SOCIAL GOOGLE EFETUADO: {user.email}")
+            print(f"🌐 LOGIN SOCIAL GOOGLE DETERMINADO COM SUCESSO: {user.email}")
 
-            # Sincroniza e cria o perfil na tabela 'users' se for a primeira vez
+            # Sincroniza e cria o perfil na tabela pública 'users' se for a primeira vez
             try:
                 supabase.table("users").upsert({
                     "id": user.id,
@@ -333,12 +340,41 @@ def auth_callback():
                 }).execute()
                 print(f"✅ Usuário Google sincronizado com sucesso na tabela pública 'users'.")
             except Exception as table_err:
-                print(f"⚠️ Nota de tabela: Usuário já existente ou ignorado por restrição: {str(table_err)}")
+                print(f"⚠️ Nota de tabela: {str(table_err)}")
 
             return redirect("/")
             
-        # Redirecionamento de segurança preventiva
-        return redirect("/")
+        # Caso os dados estejam mascarados no fragmento '#' da URL (padrão implícito do OAuth), 
+        # renderiza uma view ultra-rápida em JS para converter para Query Parameters legíveis.
+        return render_template_string('''
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Autenticando...</title>
+                <script>
+                    window.onload = function() {
+                        var hash = window.location.hash.substring(1);
+                        if (hash.length > 0) {
+                            var params = new URLSearchParams(hash);
+                            var accessToken = params.get("access_token");
+                            var refreshToken = params.get("refresh_token");
+                            if (accessToken) {
+                                window.location.href = "/auth/callback?access_token=" + accessToken + "&refresh_token=" + refreshToken;
+                                return;
+                            }
+                        }
+                        window.location.href = "/";
+                    };
+                </script>
+            </head>
+            <body style="background:#111827; color:#fff; font-family:sans-serif; display:flex; justify-content:center; align-items:center; height:100vh;">
+                <div style="text-align:center;">
+                    <h2 style="margin-bottom:8px;">Conectando com o Google...</h2>
+                    <p style="color:#9ca3af; font-size:14px;">Validando credenciais com segurança de ponta.</p>
+                </div>
+            </body>
+            </html>
+        ''')
         
     except Exception as e:
         print(f"❌ ERRO CRÍTICO NO CALLBACK DO GOOGLE: {str(e)}")
@@ -352,7 +388,6 @@ def register():
         senha = request.form["senha"]
 
         try:
-            # Passando o nome diretamente dentro dos metadados nativos do Supabase Auth
             resposta = supabase.auth.sign_up({
                 "email": email,
                 "password": senha,
@@ -365,7 +400,6 @@ def register():
             
             user = resposta.user
             
-            # CASO EXIJA CONFIRMAÇÃO POR E-MAIL (OU INSTABILIDADE):
             if not user or not hasattr(user, 'id') or user.id is None:
                 print("⚠️ Pré-cadastro efetuado. Aguardando validação de e-mail.")
                 return render_template(
@@ -373,7 +407,6 @@ def register():
                     sucesso="📬 Quase lá! Enviamos um e-mail de ativação para você. Acesse sua caixa de entrada (ou spam) e clique no link de validação. Assim que confirmar, seu acesso será liberado na hora! 🚀"
                 )
 
-            # BLOCO BLINDADO: Salva o usuário no banco, sem quebrar o fluxo se houver erro de coluna/permissão
             try:
                 dados_usuario = {
                     "id": user.id,
@@ -385,7 +418,7 @@ def register():
                 supabase.table("users").upsert(dados_usuario).execute()
                 print(f"✅ Usuário salvo na tabela pública 'users': {email}")
             except Exception as table_err:
-                print(f"⚠️ Alerta ao salvar na tabela 'users' (pode ser coluna ausente ou RLS): {str(table_err)}")
+                print(f"⚠️ Alerta ao salvar na tabela 'users': {str(table_err)}")
 
             session.permanent = True
             session["user_id"] = user.id
@@ -438,7 +471,6 @@ def ia():
             status_post = "pronto_instagram" if (rede and rede.lower() == "instagram") else "pendente"
             imagem_url = None
 
-            # 🛠️ Validação e Upload da Imagem Própria
             file = request.files.get("imagem")
             if file and file.filename != "":
                 print(f"📸 Imagem manual detectada: {file.filename}. Iniciando upload...")
@@ -447,13 +479,11 @@ def ia():
                     imagem_url = upload_result.get("public_url")
                     print(f"✅ Upload concluído com sucesso. URL: {imagem_url}")
 
-            # 🏢 Estratégia de Fallback: Se não mandou foto, busca do banco de mídias (Supabase)
             if not imagem_url:
                 print("📂 Nenhuma imagem enviada. Buscando na Media Library do Supabase...")
                 imagem_url = selecionar_imagem(nicho=nicho, rede=rede, estilo="premium")
                 print(f"🎯 Imagem selecionada do banco: {imagem_url}")
 
-            # Geração da Copy via IA Engine
             resultado = gerar_conteudo(tema, rede, modo, nicho)
 
             if not resultado.get("success"):
@@ -462,7 +492,6 @@ def ia():
 
             conteudo = resultado["conteudo"]
 
-            # Montagem estruturada para persistência no banco de dados do Portal
             payload = {
                 "tema": tema,
                 "rede": rede,
@@ -476,11 +505,9 @@ def ia():
                 "user_id": session["user_id"]
             }
 
-            # Salvando o registro na tabela de posts
             supabase.table("posts").insert(payload).execute()
             print("💾 Post inserido com sucesso na tabela 'posts' do Supabase.")
 
-            # Incrementando o contador de posts utilizados do usuário
             user_data = supabase.table("users").select("posts_usados").eq("id", session["user_id"]).execute()
             if user_data.data:
                 atual_usados = user_data.data[0].get("posts_usados", 0)
@@ -491,7 +518,6 @@ def ia():
                 }).eq("id", session["user_id"]).execute()
                 print(f"Contador updated! Total usado: {novo_total}")
 
-            # Dispara a mensagem flash de sucesso de volta para a view
             flash("Postagem criada e enviada para agendamentos com sucesso!", "success")
             return redirect(url_for("ia"))
 
