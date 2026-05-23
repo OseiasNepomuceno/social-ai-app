@@ -11,7 +11,7 @@ from flask import (
     send_from_directory,
     flash,
     url_for,
-    render_template_string  # Adicionado para suportar a tela de transição do Google
+    render_template_string  # Suporte à tela de transição do Google
 )
 from supabase import create_client
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -204,7 +204,7 @@ scheduler.add_job(
     replace_existing=True
 )
 scheduler.start()
-print("✅ SCHEDULER INICIADO - Verificação a cada 15 minutes")
+print("✅ SCHEDULER INICIADO - Verificação a cada 15 minutos")
 
 # =========================
 # ROTAS DE HOME E AUTENTICAÇÃO
@@ -305,24 +305,33 @@ def login_google():
         print(f"❌ ERRO AO INICIAR FLUXO GOOGLE OAUTH: {str(e)}")
         return redirect("/login")
 
-# 🌐 RESOLVIDO: Rota de Retorno (Callback) Inteligente e Resiliente do Google OAuth
+# 🌐 CORREÇÃO DEFINITIVA: Rota de Retorno (Callback) com Dicionário de Sessão e Token Dedicado
 @app.route("/auth/callback")
 def auth_callback():
     try:
-        # Captura os tokens se vierem mapeados direto como Query Params pela interceptação JS
+        # 1. Captura os tokens que a nossa página intermediária em JS jogou na URL
         access_token = request.args.get("access_token")
         refresh_token = request.args.get("refresh_token")
         
-        if access_token:
-            supabase.auth.set_session(access_token, refresh_token)
+        # 2. Se os tokens estão presentes, força a sincronização exata exigida pelo SDK do Supabase
+        if access_token and refresh_token:
+            print("🔑 Tokens detectados na URL. Configurando sessão estruturada no Supabase...")
+            supabase.auth.set_session({
+                "access_token": access_token,
+                "refresh_token": refresh_token
+            })
+            
+            # Recupera o usuário explicitamente usando o token ativo
+            resposta = supabase.auth.get_user(access_token)
+        else:
+            # Fallback local do cliente ativo
+            resposta = supabase.auth.get_user()
         
-        # Recupera os dados do usuário autenticado no cliente Supabase atual
-        resposta = supabase.auth.get_user()
-        
+        # 3. Valida se o Supabase realmente retornou e identificou o usuário
         if resposta and hasattr(resposta, 'user') and resposta.user:
             user = resposta.user
             
-            # Inicializa de forma segura e perene a sessão criptografada do Flask
+            # Inicializa de forma perene a sessão criptografada do Flask
             session.permanent = True
             session["user_id"] = user.id
             session["email"] = user.email
@@ -344,8 +353,8 @@ def auth_callback():
 
             return redirect("/")
             
-        # Caso os dados estejam mascarados no fragmento '#' da URL (padrão implícito do OAuth), 
-        # renderiza uma view ultra-rápida em JS para converter para Query Parameters legíveis.
+        # 4. Caso os dados ainda estejam na '#' da URL, renderiza o conversor em JavaScript
+        print("🔄 Aguardando conversão de fragmento de hash da URL do Google OAuth...")
         return render_template_string('''
             <!DOCTYPE html>
             <html>
@@ -358,12 +367,14 @@ def auth_callback():
                             var params = new URLSearchParams(hash);
                             var accessToken = params.get("access_token");
                             var refreshToken = params.get("refresh_token");
-                            if (accessToken) {
+                            if (accessToken && refreshToken) {
+                                // Força o redirecionamento passando ambos os tokens de forma legível
                                 window.location.href = "/auth/callback?access_token=" + accessToken + "&refresh_token=" + refreshToken;
                                 return;
                             }
                         }
-                        window.location.href = "/";
+                        // Fallback de segurança em caso de timeout
+                        setTimeout(function() { window.location.href = "/"; }, 1500);
                     };
                 </script>
             </head>
@@ -416,7 +427,7 @@ def register():
                     "posts_usados": 0
                 }
                 supabase.table("users").upsert(dados_usuario).execute()
-                print(f"✅ Usuário salvo na tabela pública 'users': {email}")
+                print(f"✅ Usuário保存 na tabela pública 'users': {email}")
             except Exception as table_err:
                 print(f"⚠️ Alerta ao salvar na tabela 'users': {str(table_err)}")
 
