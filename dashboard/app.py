@@ -425,18 +425,27 @@ def auth_callback():
 
             print(f"🌐 LOGIN SOCIAL GOOGLE DETERMINADO COM SUCESSO: {user.email}")
 
-            # Sincroniza e cria o perfil na tabela pública 'users' se for a primeira vez
+            # CORREÇÃO: Sincronização inteligente para proteger o plano PRO existente
             try:
-                supabase.table("users").upsert({
-                    "id": user.id,
-                    "email": user.email,
-                    "plano": "free",
-                    "posts_limite": 10,
-                    "posts_usados": 0
-                }).execute()
-                print(f"✅ Usuário Google sincronizado com sucesso na tabela pública 'users'.")
+                checar_usuario = supabase.table("users").select("plano").eq("id", user.id).execute()
+                if not checar_usuario.data:
+                    # Só insere como free se o registro não existir no banco
+                    supabase.table("users").insert({
+                        "id": user.id,
+                        "email": user.email,
+                        "plano": "free",
+                        "posts_limite": 10,
+                        "posts_usados": 0
+                    }).execute()
+                    print(f"✅ Novo usuário Google criado com sucesso na tabela pública.")
+                else:
+                    # Se já existia, atualiza apenas dados mutáveis (como e-mail), mantendo o plano intacto
+                    supabase.table("users").update({
+                        "email": user.email
+                    }).eq("id", user.id).execute()
+                    print(f"🔄 Usuário recorrente atualizado mantendo o plano original.")
             except Exception as table_err:
-                print(f"⚠️ Nota de tabela: {str(table_err)}")
+                print(f"⚠️ Nota de tabela na sincronização: {str(table_err)}")
 
             return redirect("/")
             
