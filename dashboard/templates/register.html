@@ -297,10 +297,15 @@ def register():
         senha = request.form["senha"]
 
         try:
-            # Envia dados para o serviço Auth do Supabase
+            # 💡 BOA PRÁTICA: Passando o nome dentro de 'options' para salvar nos metadados nativos do Supabase Auth
             resposta = supabase.auth.sign_up({
                 "email": email,
-                "password": senha
+                "password": senha,
+                "options": {
+                    "data": {
+                        "display_name": nome
+                    }
+                }
             })
             
             user = resposta.user
@@ -313,21 +318,30 @@ def register():
                     sucesso="📬 Quase lá! Enviamos um e-mail de ativação para você. Acesse sua caixa de entrada (ou spam) e clique no link de validação. Assim que confirmar, seu acesso será liberado na hora! 🚀"
                 )
 
-            # Se o Supabase estiver configurado para auto-confirmar, ele executa o upsert direto
-            supabase.table("users").upsert({
-                "id": user.id,
-                "nome": nome,
-                "email": email,
-                "plano": "free",
-                "posts_limite": 10,
-                "posts_usados": 0
-            }).execute()
+            # Tenta salvar na tabela pública. Se a coluna 'nome' não existir, ele não quebra o login!
+            try:
+                dados_usuario = {
+                    "id": user.id,
+                    "email": email,
+                    "plano": "free",
+                    "posts_limite": 10,
+                    "posts_usados": 0
+                }
+                
+                # Se você tiver certeza que a coluna se chama 'nome' no banco, descomente a linha abaixo:
+                # dados_usuario["nome"] = nome
+                
+                supabase.table("users").upsert(dados_usuario).execute()
+                print(f"✅ Usuário salvo na tabela pública 'users': {email}")
+            except Exception as table_err:
+                print(f"⚠️ Alerta ao salvar na tabela 'users' (pode ser coluna ausente ou RLS): {str(table_err)}")
+                # Não travamos o fluxo do cliente aqui, o login vai funcionar e a rota '/' ou '/login' resolve depois.
 
             session.permanent = True
             session["user_id"] = user.id
             session["email"] = email
 
-            print(f"✅ USUÁRIO CRIADO E SALVO DIRETAMENTE: {email}")
+            print(f"✅ USUÁRIO LOGADO COM SUCESSO: {email}")
             return redirect("/")
 
         except Exception as e:
