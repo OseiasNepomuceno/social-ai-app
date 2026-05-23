@@ -8,7 +8,7 @@
     <div class="border-b border-gray-800 pb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
             <h1 class="text-2xl font-bold text-white tracking-wide">📊 Monitoramento do Sistema</h1>
-            <p class="text-sm text-gray-400 mt-1">Visão interna em tempo real sobre a saúde dos agentes de IA e requisições.</p>
+            <p class="text-sm text-gray-400 mt-1">Visão interna em tempo real sobre a saúde dos agentes de IA e tráfego de usuários.</p>
         </div>
         <div class="bg-blue-500/10 border border-blue-500/30 px-3 py-1.5 rounded-lg flex items-center space-x-2">
             <span class="h-2 w-2 rounded-full bg-blue-500 animate-pulse"></span>
@@ -17,7 +17,54 @@
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        
+        <div class="bg-gray-800 border border-gray-700 rounded-xl p-5 shadow-xl flex items-center justify-between">
+            <div class="space-y-1">
+                <span class="text-xs font-medium text-gray-400 uppercase tracking-wider">Online Agora</span>
+                <h3 class="text-2xl font-black text-white">{{ usuarios_online | default(0) }}</h3>
+                <p class="text-xs text-gray-500">Ativos nos últimos 5 min</p>
+            </div>
+            <div class="bg-emerald-500/10 p-3 rounded-xl text-emerald-400 border border-emerald-500/20 relative">
+                <span class="absolute top-2 right-2 h-2 w-2 rounded-full bg-emerald-400 animate-ping"></span>
+                <i class="fa-solid fa-users text-xl"></i>
+            </div>
+        </div>
+
+        <div class="bg-gray-800 border border-gray-700 rounded-xl p-5 shadow-xl flex items-center justify-between">
+            <div class="space-y-1">
+                <span class="text-xs font-medium text-gray-400 uppercase tracking-wider">Acessos Hoje</span>
+                <h3 class="text-2xl font-black text-white">{{ usuarios_hoje | default(0) }}</h3>
+                <p class="text-xs text-gray-500">Usuários únicos no dia</p>
+            </div>
+            <div class="bg-blue-500/10 p-3 rounded-xl text-blue-400 border border-blue-500/20">
+                <i class="fa-solid fa-calendar-day text-xl"></i>
+            </div>
+        </div>
+
+        <div class="bg-gray-800 border border-gray-700 rounded-xl p-5 shadow-xl flex items-center justify-between">
+            <div class="space-y-1">
+                <span class="text-xs font-medium text-gray-400 uppercase tracking-wider">Mês Atual</span>
+                <h3 class="text-2xl font-black text-white">{{ usuarios_mes | default(0) }}</h3>
+                <p class="text-xs text-gray-500">Últimos 30 dias acumulados</p>
+            </div>
+            <div class="bg-purple-500/10 p-3 rounded-xl text-purple-400 border border-purple-500/20">
+                <i class="fa-solid fa-chart-line text-xl"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-gray-800 border border-gray-700 rounded-xl shadow-xl p-5">
+        <div class="flex items-center justify-between border-b border-gray-700/60 pb-3 mb-4">
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-wave-square text-blue-400"></i>
+                <h2 class="text-base font-bold text-white tracking-tight">Frequência de Acesso (Últimos 7 dias)</h2>
+            </div>
+        </div>
+        <div class="w-full h-64">
+            <canvas id="graficoAcessos"></canvas>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         <div class="bg-gray-800 border border-gray-700 rounded-xl p-5 shadow-xl flex items-center justify-between">
             <div class="space-y-1">
                 <span class="text-xs font-medium text-gray-400 uppercase tracking-wider">Agente Pexels</span>
@@ -47,7 +94,6 @@
                 <i class="fa-solid fa-brain text-xl"></i>
             </div>
         </div>
-
     </div>
 
     <div class="bg-gray-800 border border-gray-700 rounded-xl shadow-xl overflow-hidden">
@@ -78,4 +124,49 @@
     </div>
 
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Puxa as listas enviadas do backend Flask. Caso vazias, assume fallback simulado
+        const labelsDias = {{ grafico_labels | tojson | default(['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']) }};
+        const dadosAcessos = {{ grafico_dados | tojson | default([0, 0, 0, 0, 0, 0, 0]) }};
+
+        const ctx = document.getElementById('graficoAcessos').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labelsDias,
+                datasets: [{
+                    label: 'Usuários Ativos',
+                    data: dadosAcessos,
+                    borderColor: '#3b82f6', // blue-500
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.3,
+                    fill: true,
+                    pointBackgroundColor: '#3b82f6',
+                    pointRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        grid: { color: 'rgba(75, 85, 99, 0.2)' },
+                        ticks: { color: '#9ca3af', font: { family: 'monospace' }, stepSize: 1 }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#9ca3af' }
+                    }
+                }
+            }
+        });
+    });
+</script>
 {% endblock %}
