@@ -287,15 +287,25 @@ def register():
         senha = request.form["senha"]
 
         try:
+            # Envia dados para o serviço Auth do Supabase
             resposta = supabase.auth.sign_up({
                 "email": email,
                 "password": senha
             })
             
             user = resposta.user
-            if not user:
-                return render_template("register.html", erro="Erro ao criar conta.")
+            
+            # 💡 EXPLICAÇÃO DA CORREÇÃO:
+            # Se as configurações do Supabase exigem confirmação por e-mail,
+            # o usuário é criado mas o retorno imediato do ID pode vir vazio até que ele clique no link.
+            if not user or not hasattr(user, 'id') or user.id is None:
+                print("⚠️ Retorno parcial de Auth obtido. Email de confirmação enviado pendente.")
+                return render_template(
+                    "register.html", 
+                    sucesso="Conta pré-registrada! Enviamos um link de confirmação para o seu e-mail. Ative-o para liberar seu acesso."
+                )
 
+            # Se o Supabase estiver configurado para auto-confirmar, ele segue o fluxo abaixo e insere na tabela pública
             supabase.table("users").upsert({
                 "id": user.id,
                 "nome": nome,
@@ -309,12 +319,22 @@ def register():
             session["user_id"] = user.id
             session["email"] = email
 
-            print("✅ USUÁRIO CRIADO VIA AUTH")
+            print(f"✅ USUÁRIO CRIADO E SALVO: {email}")
             return redirect("/")
 
         except Exception as e:
-            print("REGISTER ERROR:", str(e))
-            return render_template("register.html", erro="Erro ao criar conta.")
+            error_msg = str(e)
+            print(f"❌ REGISTER ERROR CAPTURADO NO CONSOLE: {error_msg}")
+            
+            # Tratamento amigável e informativo inteligente para evitar perda de clientes
+            if "User already registered" in error_msg or "already exists" in error_msg:
+                user_friendly_error = "Este e-mail já está cadastrado no sistema. Tente fazer login."
+            elif "should be at least" in error_msg:
+                user_friendly_error = "A senha escolhida é muito fraca. Utilize pelo menos 6 caracteres."
+            else:
+                user_friendly_error = "Houve uma instabilidade temporária ao salvar seus dados. Verifique suas informações e tente novamente."
+                
+            return render_template("register.html", erro=user_friendly_error)
 
     return render_template("register.html")
 
@@ -335,7 +355,6 @@ def ia():
 
     if request.method == "POST":
         try:
-            # Captura mapeada perfeitamente com os 'name' do novo arquivo ia.html
             tema = request.form.get("tema")
             rede = request.form.get("rede_social")
             modo = request.form.get("modo")
@@ -399,7 +418,7 @@ def ia():
                 supabase.table("users").update({
                     "posts_usados": novo_total
                 }).eq("id", session["user_id"]).execute()
-                print(f"增 Contador atualizado! Total usado: {novo_total}")
+                print(f"Contador atualizado! Total usado: {novo_total}")
 
             # Dispara a mensagem flash de sucesso de volta para a view
             flash("Postagem criada e enviada para agendamentos com sucesso!", "success")
@@ -441,7 +460,6 @@ def publicacoes():
     if "user_id" not in session:
         return redirect("/login")
     try:
-        # Busca os posts que já foram processados ou estão prontos para o Instagram/LinkedIn
         posts = supabase.table("posts").select("*").eq(
             "user_id", session["user_id"]
         ).in_("status", ["executado", "pronto_instagram"]).order("id", desc=True).execute().data
@@ -511,6 +529,7 @@ def checkout_pro():
 
 @app.route("/webhook/mercadopago", methods=["POST"])
 def webhook_mercadopago():
+    key_origin = request.headers.get("X-Signature") # Elemento de integridade opcional
     try:
         data = request.json
         if not data:
