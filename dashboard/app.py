@@ -305,33 +305,36 @@ def login_google():
         print(f"❌ ERRO AO INICIAR FLUXO GOOGLE OAUTH: {str(e)}")
         return redirect("/login")
 
-# 🌐 CORREÇÃO DEFINITIVA: Rota de Retorno (Callback) com Dicionário de Sessão e Token Dedicado
+# 🌐 CORREÇÃO DEFINITIVA: Rota de Retorno (Callback) Inteligente para Code Flow (?code=) e Hash Flow
 @app.route("/auth/callback")
 def auth_callback():
     try:
-        # 1. Captura os tokens que a nossa página intermediária em JS jogou na URL
-        access_token = request.args.get("access_token")
-        refresh_token = request.args.get("refresh_token")
+        # 1. Verifica se o Google enviou o código de autenticação limpo (Code Flow)
+        code = request.args.get("code")
         
-        # 2. Se os tokens estão presentes, força a sincronização exata exigida pelo SDK do Supabase
-        if access_token and refresh_token:
-            print("🔑 Tokens detectados na URL. Configurando sessão estruturada no Supabase...")
-            supabase.auth.set_session({
-                "access_token": access_token,
-                "refresh_token": refresh_token
-            })
-            
-            # Recupera o usuário explicitamente usando o token ativo
-            resposta = supabase.auth.get_user(access_token)
+        if code:
+            print(f"🎟️ Código de Autenticação detectado (?code={code[:6]}...). Trocando por sessão...")
+            resposta = supabase.auth.exchange_code_for_session({"auth_code": code})
         else:
-            # Fallback local do cliente ativo
-            resposta = supabase.auth.get_user()
+            # 2. Fallback: Tenta capturar os tokens se eles vieram tratados pelo script JavaScript
+            access_token = request.args.get("access_token")
+            refresh_token = request.args.get("refresh_token")
+            
+            if access_token and refresh_token:
+                print("🔑 Tokens detectados na URL. Configurando sessão estruturada no Supabase...")
+                supabase.auth.set_session({
+                    "access_token": access_token,
+                    "refresh_token": refresh_token
+                })
+                resposta = supabase.auth.get_user(access_token)
+            else:
+                resposta = None
         
-        # 3. Valida se o Supabase realmente retornou e identificou o usuário
+        # 3. Se conseguimos autenticar com sucesso por qualquer uma das vias
         if resposta and hasattr(resposta, 'user') and resposta.user:
             user = resposta.user
             
-            # Inicializa de forma perene a sessão criptografada do Flask
+            # Inicializa de forma estável a sessão do Flask
             session.permanent = True
             session["user_id"] = user.id
             session["email"] = user.email
@@ -353,7 +356,7 @@ def auth_callback():
 
             return redirect("/")
             
-        # 4. Caso os dados ainda estejam na '#' da URL, renderiza o conversor em JavaScript
+        # 4. Caso os dados ainda estejam ocultos atrás do '#' na URL original, aciona o conversor JS
         print("🔄 Aguardando conversão de fragmento de hash da URL do Google OAuth...")
         return render_template_string('''
             <!DOCTYPE html>
@@ -368,17 +371,15 @@ def auth_callback():
                             var accessToken = params.get("access_token");
                             var refreshToken = params.get("refresh_token");
                             if (accessToken && refreshToken) {
-                                // Força o redirecionamento passando ambos os tokens de forma legível
                                 window.location.href = "/auth/callback?access_token=" + accessToken + "&refresh_token=" + refreshToken;
                                 return;
                             }
                         }
-                        // Fallback de segurança em caso de timeout
                         setTimeout(function() { window.location.href = "/"; }, 1500);
                     };
                 </script>
             </head>
-            <body style="background:#111827; color:#fff; font-family:sans-serif; display:flex; justify-content:center; align-items:center; height:100vh;">
+            <body style="background:#111827; color:#fff; font-family:sans-serif; display:flex; justify-content:center; align-items:center; height:100vh; margin:0;">
                 <div style="text-align:center;">
                     <h2 style="margin-bottom:8px;">Conectando com o Google...</h2>
                     <p style="color:#9ca3af; font-size:14px;">Validando credenciais com segurança de ponta.</p>
@@ -427,7 +428,7 @@ def register():
                     "posts_usados": 0
                 }
                 supabase.table("users").upsert(dados_usuario).execute()
-                print(f"✅ Usuário保存 na tabela pública 'users': {email}")
+                print(f"✅ Usuário salvo na tabela pública 'users': {email}")
             except Exception as table_err:
                 print(f"⚠️ Alerta ao salvar na tabela 'users': {str(table_err)}")
 
