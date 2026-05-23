@@ -1,55 +1,223 @@
-@app.route("/register", methods=["GET", "POST"])
-def register():
-    if request.method == "POST":
-        nome = request.form["nome"]
-        email = request.form["email"]
-        senha = request.form["senha"]
+import os
+from datetime import timedelta
+import mercadopago
+from flask import (
+    Flask,
+    render_template,
+    redirect,
+    request,
+    session,
+    jsonify,
+    send_from_directory,
+    flash,
+    url_for
+)
+from supabase import create_client
+from apscheduler.schedulers.background import BackgroundScheduler
 
-        try:
-            # Envia dados para o serviço Auth do Supabase
-            resposta = supabase.auth.sign_up({
-                "email": email,
-                "password": senha
-            })
-            
-            user = resposta.user
-            
-            # 💡 CASO EXIJA CONFIRMAÇÃO POR E-MAIL (Aviso customizado e otimizado):
-            if not user or not hasattr(user, 'id') or user.id is None:
-                print("⚠️ Pré-cadastro efetuado. Aguardando validação de e-mail.")
-                return render_template(
-                    "register.html", 
-                    sucesso="📬 Quase lá! Enviamos um e-mail de ativação para você. Acesse sua caixa de entrada (ou spam) e clique no link de validação. Assim que confirmar, seu acesso será liberado na hora! 🚀"
-                )
+# Importações dos seus agentes internos
+from dashboard.agents.analisador_media import gerar_relatorio_completo
+from services.supabase_storage import upload_image
+from dashboard.agents.media_selector import selecionar_imagem
+from dashboard.ia_engine import gerar_conteudo
 
-            # Se o Supabase estiver configurado para auto-confirmar, insere direto
-            supabase.table("users").upsert({
-                "id": user.id,
-                "nome": nome,
-                "email": email,
-                "plano": "free",
-                "posts_limite": 10,
-                "posts_usados": 0
-            }).execute()
+# =========================
+# CONFIGURAÇÃO UNIFICADA E BLINDADA DO FLASK
+# =========================
 
-            session.permanent = True
-            session["user_id"] = user.id
-            session["email"] = email
+app = Flask(
+    __name__,
+    static_folder="static",
+    template_folder="templates"
+)
 
-            print(f"✅ USUÁRIO CRIADO E SALVO: {email}")
-            return redirect("/")
+# AJUSTE: Forçando uma chave estática padrão caso a env mude ou suma no reboot do Render.
+app.secret_key = os.getenv(
+    "SECRET_KEY",
+    "social_ai_chave_mestra_estatica_coregov_2026"
+)
 
-        except Exception as e:
-            error_msg = str(e)
-            print(f"❌ REGISTER ERROR CAPTURADO: {error_msg}")
-            
-            if "User already registered" in error_msg or "already exists" in error_msg:
-                user_friendly_error = "Este e-mail já está cadastrado no sistema. Tente fazer login."
-            elif "should be at least" in error_msg:
-                user_friendly_error = "A senha escolhida é muito curta. Utilize pelo menos 6 caracteres."
+# AJUSTE: Definindo o tempo de vida máximo de inatividade para 4 horas exatas
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=4)
+
+# AJUSTE: Parâmetros de segurança e persistência dos cookies de navegação
+app.config['SESSION_COOKIE_NAME'] = 'social_ai_session'
+app.config['SESSION_COOKIE_HTTPONLY'] = True   
+app.config['SESSION_COOKIE_SECURE'] = True     
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  
+
+# ROTA DO FAVICON:
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(
+        os.path.join(app.root_path, 'static'),
+        'favicon.ico',
+        mimetype='image/vnd.microsoft.icon'
+    )
+
+# =========================
+# SUPABASE
+# =========================
+
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+
+supabase = create_client(
+    SUPABASE_URL,
+    SUPABASE_KEY
+)
+
+# =========================
+# MERCADO PAGO
+# =========================
+
+MERCADO_PAGO_TOKEN = os.getenv("MERCADO_PAGO_TOKEN")
+mp = mercadopago.SDK(MERCADO_PAGO_TOKEN) if MERCADO_PAGO_TOKEN else None
+
+# =========================
+# PLANOS
+# =========================
+
+PLANOS = {
+    "free": {
+        "nome": "Free",
+        "preco": 0,
+        "limite": 10
+    },
+    "pro": {
+        "nome": "Pro",
+        "preco": 49.90,
+        "limite": 60  # Alinhado com 30 posts + 30 stories descritos na UI
+    }
+}
+
+# =========================
+# MONITORAMENTO
+# =========================
+
+ADMIN_EMAIL = "oseiasnepom@gmail.com"
+
+@app.route('/monitoramento')
+def monitoramento():
+    if "user_id" not in session:
+        return redirect("/login")
+        
+    if session.get("email") != ADMIN_EMAIL:
+        print(f"🚨 Tentativa de acesso não autorizado ao monitoramento por: {session.get('email')}")
+        return redirect("/")
+
+    try:
+        relatorio = gerar_relatorio_completo()
+    except Exception as e:
+        print("Erro ao gerar relatório do monitoramento:", str(e))
+        relatorio = {}
+        
+    return render_template('monitoramento.html', data=relatorio)
+
+# =========================
+# FUNÇÕES DE PAGAMENTO & SCHEDULER
+# =========================
+
+def verificar_e_atualizar_pagamento(user_id):
+    try:
+        print("\n========================")
+        print(f"🔎 VERIFICANDO PAGAMENTOS - USER: {user_id}")
+        print("========================")
+
+        if not mp:
+            print("❌ MERCADO PAGO NÃO CONFIGURADO")
+            return {"success": False, "message": "Mercado Pago não configurado"}
+
+        pagamentos_response = mp.payment().search({"external_reference": user_id})
+        results = pagamentos_response.get("response", {}).get("results", [])
+
+        print(f"PAGAMENTOS ENCONTRADOS: {len(results)}")
+
+        if not results:
+            print("⚠️ NENHUM PAGAMENTO ENCONTRADO")
+            return {"success": False, "message": "Nenhum pagamento encontrado"}
+
+        for pagamento in results:
+            status = pagamento.get("status")
+            payment_id = pagamento.get("id")
+
+            print(f"PAGAMENTO ID: {payment_id} | STATUS: {status}")
+
+            if status == "approved":
+                print(f"✅ PAGAMENTO APROVADO - {payment_id}")
+
+                supabase.table("users").update({
+                    "plano": "pro",
+                    "posts_limite": 60
+                }).eq("id", user_id).execute()
+
+                print(f"🚀 PLANO PRO ATIVADO - {user_id}")
+
+                return {
+                    "success": True,
+                    "message": "Plano updated com sucesso",
+                    "payment_id": payment_id
+                }
+
+        print("⚠️ NENHUM PAGAMENTO APROVADO")
+        return {"success": False, "message": "Nenhum pagamento em status aprovado"}
+
+    except Exception as e:
+        print(f"❌ ERRO NA VERIFICAÇÃO: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+def verificar_pagamentos_todos_usuarios():
+    try:
+        print("\n" + "="*50)
+        print("🔄 VERIFICAÇÃO AUTOMÁTICA DE PAGAMENTOS")
+        print("="*50)
+
+        usuarios_free = supabase.table("users").select("id").eq("plano", "free").execute()
+        usuarios = usuarios_free.data
+
+        print(f"USUÁRIOS FREE: {len(usuarios)}")
+
+        if not usuarios:
+            print("✅ NENHUM USUÁRIO PARA VERIFICAR")
+            return
+        
+        for usuario in usuarios:
+            user_id = usuario["id"]
+            resultado = verificar_e_atualizar_pagamento(user_id)
+            if resultado["success"]:
+                print(f"✅ {user_id}: {resultado['message']}")
             else:
-                user_friendly_error = "Houve uma instabilidade temporária ao salvar seus dados. Verifique suas informações e tente novamente."
-                
-            return render_template("register.html", erro=user_friendly_error)
+                print(f"⚠️ {user_id}: {resultado['message']}")
 
-    return render_template("register.html")
+    except Exception as e:
+        print(f"❌ ERRO NA TAREFA AGENDADA: {str(e)}")
+
+# Inicialização segura do Scheduler
+scheduler = BackgroundScheduler()
+scheduler.add_job(
+    func=verificar_pagamentos_todos_usuarios,
+    trigger="interval",
+    minutes=15,
+    id="verificar_pagamentos",
+    name="Verificar pagamentos pendentes",
+    replace_existing=True
+)
+scheduler.start()
+print("✅ SCHEDULER INICIADO - Verificação a cada 15 minutos")
+
+# =========================
+# ROTAS DE HOME E AUTENTICAÇÃO
+# =========================
+
+@app.route("/")
+def home():
+    if "user_id" not in session:
+        return redirect("/login")
+
+    try:
+        posts = supabase.table("posts").select("*").eq(
+            "user_id", session["user_id"]
+        ).order("id", desc=True).limit(6).execute().data
+
+        total_posts = len(posts)
+        executados = len(
