@@ -284,10 +284,65 @@ def login():
             print("LOGIN ERROR:", str(e))
             return render_template(
                 "login.html",
-                erro="Login inválido. Verifique suas credenciais ou confirme seu e-mail."
+                erro="Login inválido. Verifique suas credenciais ou tente fazer login com o Google."
             )
 
     return render_template("login.html")
+
+# 🌐 INTEGRADO: Rota para Disparar a Autenticação OAuth do Google no Supabase
+@app.route("/login/google")
+def login_google():
+    try:
+        # Gera a URL de redirecionamento seguro da API do Google
+        dados_auth = supabase.auth.sign_in_with_oauth({
+            "provider": "google",
+            "options": {
+                "redirect_to": "https://app.coregov.com.br/auth/callback"
+            }
+        })
+        return redirect(dados_auth.url)
+    except Exception as e:
+        print(f"❌ ERRO AO INICIAR FLUXO GOOGLE OAUTH: {str(e)}")
+        return redirect("/login")
+
+# 🌐 INTEGRADO: Rota de Retorno (Callback) após Autenticação bem-sucedida no Google
+@app.route("/auth/callback")
+def auth_callback():
+    try:
+        # Captura os dados da sessão retornada pelo redirecionamento do Google
+        resposta = supabase.auth.get_session()
+        
+        if resposta and hasattr(resposta, 'user') and resposta.user:
+            user = resposta.user
+            
+            # Inicializa a sessão segura do Flask
+            session.permanent = True
+            session["user_id"] = user.id
+            session["email"] = user.email
+
+            print(f"🌐 LOGIN SOCIAL GOOGLE EFETUADO: {user.email}")
+
+            # Sincroniza e cria o perfil na tabela 'users' se for a primeira vez
+            try:
+                supabase.table("users").upsert({
+                    "id": user.id,
+                    "email": user.email,
+                    "plano": "free",
+                    "posts_limite": 10,
+                    "posts_usados": 0
+                }).execute()
+                print(f"✅ Usuário Google sincronizado com sucesso na tabela pública 'users'.")
+            except Exception as table_err:
+                print(f"⚠️ Nota de tabela: Usuário já existente ou ignorado por restrição: {str(table_err)}")
+
+            return redirect("/")
+            
+        # Redirecionamento de segurança preventiva
+        return redirect("/")
+        
+    except Exception as e:
+        print(f"❌ ERRO CRÍTICO NO CALLBACK DO GOOGLE: {str(e)}")
+        return redirect("/login")
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -297,7 +352,7 @@ def register():
         senha = request.form["senha"]
 
         try:
-            # ⚙️ Passando o nome diretamente dentro dos metadados nativos do Supabase Auth
+            # Passando o nome diretamente dentro dos metadados nativos do Supabase Auth
             resposta = supabase.auth.sign_up({
                 "email": email,
                 "password": senha,
@@ -310,7 +365,7 @@ def register():
             
             user = resposta.user
             
-            # CASO EXIJA CONFIRMAÇÃO POR E-MAIL:
+            # CASO EXIJA CONFIRMAÇÃO POR E-MAIL (OU INSTABILIDADE):
             if not user or not hasattr(user, 'id') or user.id is None:
                 print("⚠️ Pré-cadastro efetuado. Aguardando validação de e-mail.")
                 return render_template(
@@ -318,7 +373,7 @@ def register():
                     sucesso="📬 Quase lá! Enviamos um e-mail de ativação para você. Acesse sua caixa de entrada (ou spam) e clique no link de validação. Assim que confirmar, seu acesso será liberado na hora! 🚀"
                 )
 
-            # 🛠️ BLOCO BLINDADO: Salva o usuário no banco, sem quebrar o fluxo se houver erro de coluna/permissão
+            # BLOCO BLINDADO: Salva o usuário no banco, sem quebrar o fluxo se houver erro de coluna/permissão
             try:
                 dados_usuario = {
                     "id": user.id,
