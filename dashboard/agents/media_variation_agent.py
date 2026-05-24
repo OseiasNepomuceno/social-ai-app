@@ -20,7 +20,7 @@ def upload_variacao_para_supabase(buffer_imagem, nome_arquivo_variacao):
     passando os cabeçalhos administrativos diretos.
     """
     try:
-        bucket_name = "social-ai"
+        bucket_name = "SOCIAL-AI"
         url = f"{SUPABASE_URL}/storage/v1/object/{bucket_name}/variacoes/{nome_arquivo_variacao}"
         
         # Cabeçalhos brutos usando a Service Role Key como master key
