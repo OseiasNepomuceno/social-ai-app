@@ -1,6 +1,7 @@
 import os
 import io
-import time  # 🚀 Adicionado para controlar o fluxo de requisições e evitar o Errno 11
+import time  # Controla o fluxo de requisições e evita o Errno 11
+import uuid  # 🚀 Adicionado para gerar hashes únicos e mitigar erro 409 Duplicate
 import requests
 from PIL import Image, ImageEnhance
 from supabase import create_client
@@ -19,7 +20,10 @@ def upload_variacao_para_supabase(buffer_imagem, nome_arquivo_variacao):
         supabase.storage.from_(bucket_name).upload(
             path=f"variacoes/{nome_arquivo_variacao}",
             file=buffer_imagem.getvalue(),
-            file_options={"content-type": "image/jpeg"}
+            file_options={
+                "content-type": "image/jpeg",
+                "upsert": "true"  # 🚀 Sobrescreve em caso de colisão de nomes idênticos
+            }
         )
         
         # Gera o link público permanente para ser usado na postagem
@@ -52,7 +56,10 @@ def processar_e_salvar_variacoes(imagem_original):
             return 0
             
         img_original = Image.open(io.BytesIO(response.content))
-        nome_base = f"var_origem_{id_pai}"
+        
+        # 🚀 Gera um hash curto exclusivo para esta execução evitar colisões antigas
+        hash_unico = uuid.uuid4().hex[:8]
+        nome_base = f"var_origem_{id_pai}_{hash_unico}"
         
         # Definimos 2 variações excelentes que mudam a assinatura digital do arquivo
         variacoes_config = [
@@ -71,13 +78,13 @@ def processar_e_salvar_variacoes(imagem_original):
             img_nova.convert('RGB').save(buffer, format="JPEG", quality=85)
             buffer.seek(0)
             
-            # Nome único do arquivo transformado
+            # Nome único do arquivo transformado usando o hash
             nome_arquivo_novo = f"{nome_base}_v{i}_{var['tipo']}.jpg"
             
             # Envia para a nuvem
             url_publica_nova = upload_variacao_para_supabase(buffer, nome_arquivo_novo)
             
-            # 🚀 BOA PRÁTICA: Libera o buffer de memória imediatamente
+            # Libera o buffer de memória imediatamente
             buffer.close()
             
             if url_publica_nova:
@@ -98,8 +105,8 @@ def processar_e_salvar_variacoes(imagem_original):
                 supabase.table("media_library").insert(payload).execute()
                 contador_sucesso += 1
                 
-                # 🚀 CADÊNCIA CONTROLADA: Pausa curta de 200ms para não estourar os sockets do Render
-                time.sleep(0.2)
+                # 🚀 CADÊNCIA CONTROLADA: Ajustado para 300ms para evitar estouro de sockets concorrentes
+                time.sleep(0.3)
                 
         return contador_sucesso
 
