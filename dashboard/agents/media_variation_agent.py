@@ -105,8 +105,8 @@ def processar_e_salvar_variacoes(imagem_original):
                 supabase.table("media_library").insert(payload).execute()
                 contador_sucesso += 1
                 
-                # 🚀 CADÊNCIA CONTROLADA: Ajustado para 300ms para evitar estouro de sockets concorrentes
-                time.sleep(0.3)
+                # 🚀 CADÊNCIA CONTROLADA INTERNA: Ajustado de 0.3s para 0.8s para evitar estouro de sockets concorrentes
+                time.sleep(0.8)
                 
         return contador_sucesso
 
@@ -155,6 +155,9 @@ def iniciar_multiplicacao_banco_existente(limite_por_rodada=20):
                 .update({"processado_agente": True})\
                 .eq("id", id_pai)\
                 .execute()
+            
+            # 🚀 CADÊNCIA CONTROLADA EXTERNA: Pausa curta entre imagens do lote para aliviar o contêiner
+            time.sleep(0.5)
             
             if idx % 10 == 0 or idx == total_encontrado:
                 print(f"⚙️ Progresso: [{idx}/{total_encontrado}] imagens originais processadas com sucesso...")
