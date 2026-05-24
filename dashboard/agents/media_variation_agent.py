@@ -86,7 +86,8 @@ def processar_e_salvar_variacoes(imagem_original):
                     "formato": formato,
                     "image_url": url_publica_nova,
                     "tipo_midia": var["tipo"],       
-                    "id_imagem_pai": id_pai          
+                    "id_imagem_pai": id_pai,
+                    "processado_agente": True  # 🌟 GARANTE QUE AS VARIAÇÕES JÁ NASÇAM MARCADAS COMO PROCESSADAS
                 }
                 supabase.table("media_library").insert(payload).execute()
                 contador_sucesso += 1
