@@ -11,6 +11,17 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
+# 🚀 FORÇANDO CABEÇALHOS SEM CONTEXTO DE USUÁRIO COMUM (BYPASS RLS)
+supabase = create_client(
+    SUPABASE_URL, 
+    SUPABASE_KEY,
+    options=ClientOptions(
+        auth_local_storage=None,
+        auto_refresh_token=False,
+        persist_session=False
+    )
+)
+
 def upload_variacao_para_supabase(buffer_imagem, nome_arquivo_variacao):
     """Envia a variação processada na memória direto para o Storage do Supabase"""
     try:
