@@ -23,7 +23,8 @@ from dashboard.agents.media_selector import selecionar_imagem
 from dashboard.ia_engine import gerar_conteudo
 
 # AGENTE DE VARIAÇÃO: Importando o pipeline de multiplicação automática
-from media_variation_agent import iniciar_multiplicacao_banco_existente
+# Altere a linha 26 para incluir o caminho do pacote completo
+from dashboard.agents.media_variation_agent import iniciar_multiplicacao_banco_existente
 
 # =========================
 # CONFIGURAÇÃO UNIFICADA E BLINDADA DO FLASK
