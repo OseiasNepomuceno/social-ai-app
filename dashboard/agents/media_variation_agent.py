@@ -36,7 +36,7 @@ def processar_e_salvar_variacoes(imagem_original):
     """
     try:
         id_pai = imagem_original["id"]
-        url_original = imagem_original["image_url"]  # Ajustado para refletir o print real 'image_url'
+        url_original = imagem_original["image_url"]  
         nicho = imagem_original["nicho"]
         rede = imagem_original["rede"]
         categoria = imagem_original.get("categoria", "corporativo")
@@ -85,8 +85,8 @@ def processar_e_salvar_variacoes(imagem_original):
                     "estilo": estilo,
                     "formato": formato,
                     "image_url": url_publica_nova,
-                    "tipo_midia": var["tipo"],       # Corrigido comentário Python #
-                    "id_imagem_pai": id_pai          # Corrigido comentário Python #
+                    "tipo_midia": var["tipo"],       
+                    "id_imagem_pai": id_pai          
                 }
                 supabase.table("media_library").insert(payload).execute()
                 contador_sucesso += 1
@@ -100,18 +100,19 @@ def processar_e_salvar_variacoes(imagem_original):
 
 def iniciar_multiplicacao_banco_existente(limite_por_rodada=50):
     """
-    Função principal. Ela busca imagens originais (onde 'id_imagem_pai' é nulo)
-    para criar os desmembramentos sem gerar loops infinitos.
+    Função principal. Busca imagens originais não processadas pelo agente
+    para criar variações e evitar loops e redundâncias.
     """
     print("\n" + "="*60)
     print("🚀 INICIANDO AGENTE MULTIPLICADOR DE IMAGENS DISPONÍVEIS")
     print("="*60)
     
     try:
-        # Puxa imagens onde id_imagem_pai é nulo (ou seja, as originais da lista)
+        # Puxa imagens originais que ainda NÃO foram processadas pelo agente
         resposta_banco = supabase.table("media_library")\
             .select("*")\
             .is_("id_imagem_pai", "null")\
+            .eq("processado_agente", False)\
             .limit(limite_por_rodada)\
             .execute()
             
@@ -122,18 +123,27 @@ def iniciar_multiplicacao_banco_existente(limite_por_rodada=50):
             return
 
         total_encontrado = len(imagens_originais)
-        print(f"📦 Lote selecionado: Processando {total_encontrado} imagens da media_library.")
+        print(f"📦 Lote selecionado: Processando {total_encontrado} imagens inéditas da media_library.")
         
         total_novas_criadas = 0
         for idx, img in enumerate(imagens_originais, 1):
+            id_pai = img["id"]
+            
+            # Processa e salva as variações no banco e storage
             geradas = processar_e_salvar_variacoes(img)
             total_novas_criadas += geradas
             
+            # MARCA A IMAGEM COMO PROCESSADA para ela nunca mais voltar na query do limit()
+            supabase.table("media_library")\
+                .update({"processado_agente": True})\
+                .eq("id", id_pai)\
+                .execute()
+            
             if idx % 10 == 0 or idx == total_encontrado:
-                print(f"⚙️ Progresso: [{idx}/{total_encontrado}] imagens originais processadas...")
+                print(f"⚙️ Progresso: [{idx}/{total_encontrado}] imagens originais processadas com sucesso...")
 
         print("\n" + "="*60)
-        print(f"✅ CONCLUÍDO: O agente adicionou +{total_novas_criadas} variações exclusivas!")
+        print(f"✅ CONCLUÍDO: O agente adicionou +{total_novas_criadas} variações exclusivas ao banco de produção!")
         print("="*60 + "\n")
 
     except Exception as e:
