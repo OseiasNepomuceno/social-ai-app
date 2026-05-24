@@ -1,5 +1,6 @@
 import os
 from datetime import datetime, timedelta
+import threading  # 🚀 SOLUÇÃO: Importado para rodar o robô em segundo plano de forma assíncrona
 import mercadopago
 from flask import (
     Flask,
@@ -23,7 +24,6 @@ from dashboard.agents.media_selector import selecionar_imagem
 from dashboard.ia_engine import gerar_conteudo
 
 # AGENTE DE VARIAÇÃO: Importando o pipeline de multiplicação automática
-# Altere a linha 26 para incluir o caminho do pacote completo
 from dashboard.agents.media_variation_agent import iniciar_multiplicacao_banco_existente
 
 # =========================
@@ -42,7 +42,7 @@ app.secret_key = os.getenv(
     "social_ai_chave_mestra_estatica_coregov_2026"
 )
 
-# AJUSTE: Definindo o tempo de vida máximo de inatividade para 4 horas exatas
+# AJUSTE: Definindo o tempo de vida máximo de inatividade para 4 hours exatas
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=4)
 
 # AJUSTE: Parâmetros de segurança e persistência dos cookies de navegação
@@ -118,7 +118,6 @@ def rastrear_atividade_usuario():
             }).eq("id", user_id).execute()
 
             # 2. Registra a presença diária única para geração do histórico/gráficos
-            # Usamos uma estratégia de upsert combinando user_id e data_acesso para evitar duplicados no mesmo dia
             id_registro_unico = f"{user_id}_{hoje_str}"
             supabase.table("analytics_acessos").upsert({
                 "id_composto": id_registro_unico,
@@ -127,11 +126,10 @@ def rastrear_atividade_usuario():
             }).execute()
 
         except Exception as e:
-            # Silencioso no console para não quebrar a experiência do usuário se o banco oscilar
             print(f"⚠️ Erro ao registrar tracking de analytics: {str(e)}")
 
 # =========================
-# MONITORAMENTO
+# MONITORAMENTO (CORRIGIDA COM THREADS)
 # =========================
 
 ADMIN_EMAIL = "oseiasnepom@gmail.com"
@@ -145,12 +143,17 @@ def monitoramento():
         print(f"🚨 Tentativa de acesso não autorizado ao monitoramento por: {session.get('email')}")
         return redirect("/")
 
-    # ⚡ INTEGRAÇÃO ATIVA: Dispara o multiplicador para rodar um lote de 20 imagens sempre que a rota/logs forem atualizados
+    # ⚡ SOLUÇÃO DE TIMEOUT: O robô agora roda em background isolado em uma Thread paralela
     try:
-        print("⚡ Gatilho detectado via Painel Admin: Rodando lote de variação de mídia no Render...")
-        iniciar_multiplicacao_banco_existente(limite_por_rodada=20)
+        print("⚡ Gatilho detectado via Painel Admin: Disparando robô multiplicador em segundo plano...")
+        thread_agente = threading.Thread(
+            target=iniciar_multiplicacao_banco_existente,
+            kwargs={"limite_por_rodada": 20},
+            daemon=True
+        )
+        thread_agente.start()
     except Exception as err_agente:
-        print(f"⚠️ Alerta do agente multiplicador em segundo plano: {str(err_agente)}")
+        print(f"⚠️ Falha ao criar a thread de multiplicação: {str(err_agente)}")
 
     # --- 1. CÁLCULO DE MÉTRICAS VIA SUPABASE ---
     usuarios_online = 0
@@ -183,7 +186,6 @@ def monitoramento():
             dia_alvo_str = dia_alvo.strftime("%Y-%m-%d")
             dia_exibicao = dia_alvo.strftime("%d/%m")
             
-            # Busca contagem de acessos específicos daquele dia
             res_dia = supabase.table("analytics_acessos").select("user_id", count="exact").eq("data_acesso", dia_alvo_str).execute()
             total_dia = res_dia.count if res_dia.count is not None else 0
             
@@ -193,7 +195,7 @@ def monitoramento():
     except Exception as err_metrics:
         print(f"⚠️ Falha ao computar métricas de usuários: {str(err_metrics)}")
 
-    # --- 3. SAÚDE DOS AGENTES (LOGS ATUALIZADOS) ---
+    # --- 3. SAÚDE DOS AGENTES ---
     try:
         relatorio = gerar_relatorio_completo()
     except Exception as e:
@@ -385,7 +387,6 @@ def login():
 
     return render_template("login.html")
 
-# 🌐 INTEGRADO: Rota para Disparar a Autenticação OAuth do Google no Supabase
 @app.route("/login/google")
 def login_google():
     try:
@@ -400,18 +401,15 @@ def login_google():
         print(f"❌ ERRO AO INICIAR FLUXO GOOGLE OAUTH: {str(e)}")
         return redirect("/login")
 
-# 🌐 CORREÇÃO DEFINITIVA: Rota de Retorno (Callback) Inteligente para Code Flow (?code=) e Hash Flow
 @app.route("/auth/callback")
 def auth_callback():
     try:
-        # 1. Verifica se o Google enviou o código de autenticação limpo (Code Flow)
         code = request.args.get("code")
         
         if code:
             print(f"🎟️ Código de Autenticação detectado (?code={code[:6]}...). Trocando por sessão...")
             resposta = supabase.auth.exchange_code_for_session({"auth_code": code})
         else:
-            # 2. Fallback: Tenta capturar os tokens se eles vieram tratados pelo script JavaScript
             access_token = request.args.get("access_token")
             refresh_token = request.args.get("refresh_token")
             
@@ -425,22 +423,18 @@ def auth_callback():
             else:
                 resposta = None
         
-        # 3. Se conseguimos autenticar com sucesso por qualquer uma das vias
         if resposta and hasattr(resposta, 'user') and resposta.user:
             user = resposta.user
             
-            # Inicializa de forma estável a sessão do Flask
             session.permanent = True
             session["user_id"] = user.id
             session["email"] = user.email
 
             print(f"🌐 LOGIN SOCIAL GOOGLE DETERMINADO COM SUCESSO: {user.email}")
 
-            # CORREÇÃO: Sincronização inteligente para proteger o plano PRO existente
             try:
                 checar_usuario = supabase.table("users").select("plano").eq("id", user.id).execute()
                 if not checar_usuario.data:
-                    # Só insere como free se o registro não existir no banco
                     supabase.table("users").insert({
                         "id": user.id,
                         "email": user.email,
@@ -450,7 +444,6 @@ def auth_callback():
                     }).execute()
                     print(f"✅ Novo usuário Google criado com sucesso na tabela pública.")
                 else:
-                    # Se já existia, atualiza apenas dados mutáveis (como e-mail), mantendo o plano intacto
                     supabase.table("users").update({
                         "email": user.email
                     }).eq("id", user.id).execute()
@@ -460,7 +453,6 @@ def auth_callback():
 
             return redirect("/")
             
-        # 4. Caso os dados ainda estejam ocultos atrás do '#' na URL original, aciona o conversor JS
         print("🔄 Aguardando conversão de fragmento de hash da URL do Google OAuth...")
         return render_template_string('''
             <!DOCTYPE html>
