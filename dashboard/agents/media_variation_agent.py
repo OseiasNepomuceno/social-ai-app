@@ -4,14 +4,14 @@ import time  # Controla o fluxo de requisições e evita o Errno 11
 import uuid  # 🚀 Adicionado para gerar hashes únicos e mitigar erro 409 Duplicate
 import requests
 from PIL import Image, ImageEnhance
-from supabase import create_client
+# 🚀 CORREÇÃO AQUI: Importando o ClientOptions corretamente do supabase
+from supabase import create_client, ClientOptions 
 
 # Configurações de ambiente puxadas automaticamente
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# 🚀 FORÇANDO CABEÇALHOS SEM CONTEXTO DE USUÁRIO COMUM (BYPASS RLS)
+# Inicializa o cliente garantindo cabeçalhos limpos de sessão
 supabase = create_client(
     SUPABASE_URL, 
     SUPABASE_KEY,
@@ -21,7 +21,6 @@ supabase = create_client(
         persist_session=False
     )
 )
-
 def upload_variacao_para_supabase(buffer_imagem, nome_arquivo_variacao):
     """Envia a variação processada na memória direto para o Storage do Supabase"""
     try:
