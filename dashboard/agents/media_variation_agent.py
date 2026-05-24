@@ -1,5 +1,6 @@
 import os
 import io
+import time  # 🚀 Adicionado para controlar o fluxo de requisições e evitar o Errno 11
 import requests
 from PIL import Image, ImageEnhance
 from supabase import create_client
@@ -76,6 +77,9 @@ def processar_e_salvar_variacoes(imagem_original):
             # Envia para a nuvem
             url_publica_nova = upload_variacao_para_supabase(buffer, nome_arquivo_novo)
             
+            # 🚀 BOA PRÁTICA: Libera o buffer de memória imediatamente
+            buffer.close()
+            
             if url_publica_nova:
                 # Insere o novo registro clonando as propriedades estruturais exatas existentes no banco
                 payload = {
@@ -94,6 +98,9 @@ def processar_e_salvar_variacoes(imagem_original):
                 supabase.table("media_library").insert(payload).execute()
                 contador_sucesso += 1
                 
+                # 🚀 CADÊNCIA CONTROLADA: Pausa curta de 200ms para não estourar os sockets do Render
+                time.sleep(0.2)
+                
         return contador_sucesso
 
     except Exception as e:
@@ -101,7 +108,7 @@ def processar_e_salvar_variacoes(imagem_original):
         return 0
 
 
-def iniciar_multiplicacao_banco_existente(limite_por_rodada=50):
+def iniciar_multiplicacao_banco_existente(limite_por_rodada=20):
     """
     Função principal. Busca imagens originais não processadas pelo agente
     para criar variações e evitar loops e redundâncias.
