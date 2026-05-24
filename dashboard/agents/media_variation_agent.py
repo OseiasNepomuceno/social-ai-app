@@ -1,7 +1,7 @@
 import os
 import io
 import time  # Controla o fluxo de requisições e evita o Errno 11
-import uuid  # 🚀 Adicionado para gerar hashes únicos e mitigar erro 409 Duplicate
+import uuid  # Gera hashes únicos e mitiga erro 409 Duplicate
 import requests
 from PIL import Image, ImageEnhance
 from supabase import create_client 
@@ -10,35 +10,38 @@ from supabase import create_client
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
-# 🚀 INICIALIZAÇÃO CORRIGIDA: Passando opções limpas compatíveis com a API atual
-supabase = create_client(
-    SUPABASE_URL, 
-    SUPABASE_KEY,
-    options={
-        "persist_session": False,
-        "auto_refresh_token": False
-    }
-)
+# Inicialização padrão do SDK (usado apenas para ler/atualizar dados da tabela)
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
 def upload_variacao_para_supabase(buffer_imagem, nome_arquivo_variacao):
-    """Envia a variação processada na memória direto para o Storage do Supabase"""
+    """
+    🚀 PLANO B ATIVADO: Envia o arquivo diretamente via API REST do Supabase.
+    Ignora completamente bugs de versão de biblioteca e contorna o bloqueio de RLS
+    passando os cabeçalhos administrativos diretos.
+    """
     try:
-        bucket_name = "social-ai" 
+        bucket_name = "social-ai"
+        url = f"{SUPABASE_URL}/storage/v1/object/{bucket_name}/variacoes/{nome_arquivo_variacao}"
         
-        # Faz o upload direto dos bytes sem salvar nada no Render
-        supabase.storage.from_(bucket_name).upload(
-            path=f"variacoes/{nome_arquivo_variacao}",
-            file=buffer_imagem.getvalue(),
-            file_options={
-                "content-type": "image/jpeg",
-                "upsert": "true"  # 🚀 Sobrescreve em caso de colisão de nomes idênticos
-            }
-        )
+        # Cabeçalhos brutos usando a Service Role Key como master key
+        headers = {
+            "Authorization": f"Bearer {SUPABASE_KEY}",
+            "ApiKey": SUPABASE_KEY,
+            "Content-Type": "image/jpeg",
+            "x-upsert": "true"
+        }
         
-        # Gera o link público permanente para ser usado na postagem
-        public_url = supabase.storage.from_(bucket_name).get_public_url(f"variacoes/{nome_arquivo_variacao}")
-        return public_url
+        # Realiza o POST com os bytes brutos da memória do Render
+        response = requests.post(url, headers=headers, data=buffer_imagem.getvalue(), timeout=15)
+        
+        if response.status_code in [200, 201]:
+            # Retorna a URL pública construída
+            return f"{SUPABASE_URL}/storage/v1/object/public/{bucket_name}/variacoes/{nome_arquivo_variacao}"
+        
+        print(f"❌ Erro na API do Storage ({response.status_code}): {response.text}")
+        return None
     except Exception as e:
-        print(f"❌ Erro ao enviar arquivo para o Storage: {str(e)}")
+        print(f"❌ Falha no upload direto via REST: {str(e)}")
         return None
 
 
@@ -65,7 +68,7 @@ def processar_e_salvar_variacoes(imagem_original):
             
         img_original = Image.open(io.BytesIO(response.content))
         
-        # 🚀 Gera um hash curto exclusivo para esta execução evitar colisões antigas
+        # Gera um hash curto exclusivo para esta execução evitar colisões antigas
         hash_unico = uuid.uuid4().hex[:8]
         nome_base = f"var_origem_{id_pai}_{hash_unico}"
         
@@ -78,25 +81,19 @@ def processar_e_salvar_variacoes(imagem_original):
         contador_sucesso = 0
         
         for i, var in enumerate(variacoes_config, 1):
-            # Executa a transformação na imagem
             img_nova = var["acao"](img_original)
             
-            # Comprime o arquivo em memória como JPEG otimizado
             buffer = io.BytesIO()
             img_nova.convert('RGB').save(buffer, format="JPEG", quality=85)
             buffer.seek(0)
             
-            # Nome único do arquivo transformado usando o hash
             nome_arquivo_novo = f"{nome_base}_v{i}_{var['tipo']}.jpg"
             
-            # Envia para a nuvem
+            # Envia usando a nova função via requisição HTTP direta
             url_publica_nova = upload_variacao_para_supabase(buffer, nome_arquivo_novo)
-            
-            # Libera o buffer de memória imediatamente
             buffer.close()
             
             if url_publica_nova:
-                # Insere o novo registro clonando as propriedades estruturais exatas existentes no banco
                 payload = {
                     "rede": rede,
                     "nicho": nicho,
@@ -108,12 +105,12 @@ def processar_e_salvar_variacoes(imagem_original):
                     "image_url": url_publica_nova,
                     "tipo_midia": var["tipo"],       
                     "id_imagem_pai": id_pai,
-                    "processado_agente": True  # Garante que a variação não entre na fila de processamento
+                    "processado_agente": True
                 }
                 supabase.table("media_library").insert(payload).execute()
                 contador_sucesso += 1
                 
-                # 🚀 CADÊNCIA CONTROLADA INTERNA: Ajustado de 0.3s para 0.8s para evitar estouro de sockets concorrentes
+                # Cadência interna controlada
                 time.sleep(0.8)
                 
         return contador_sucesso
@@ -133,7 +130,6 @@ def iniciar_multiplicacao_banco_existente(limite_por_rodada=20):
     print("="*60)
     
     try:
-        # Puxa imagens originais que ainda NÃO foram processadas pelo agente
         resposta_banco = supabase.table("media_library")\
             .select("*")\
             .is_("id_imagem_pai", "null")\
@@ -154,21 +150,20 @@ def iniciar_multiplicacao_banco_existente(limite_por_rodada=20):
         for idx, img in enumerate(imagens_originais, 1):
             id_pai = img["id"]
             
-            # Processa e salva as variações no banco e storage
             geradas = processar_e_salvar_variacoes(img)
             total_novas_criadas += geradas
             
-            # MARCA A IMAGEM COMO PROCESSADA para ela nunca mais voltar na query do limit()
+            # Marca o pai como processado
             supabase.table("media_library")\
                 .update({"processado_agente": True})\
                 .eq("id", id_pai)\
                 .execute()
             
-            # 🚀 CADÊNCIA CONTROLADA EXTERNA: Pausa curta entre imagens do lote para aliviar o contêiner
+            # Cadência externa controlada
             time.sleep(0.5)
             
             if idx % 10 == 0 or idx == total_encontrado:
-                print(f"⚙️ Progresso: [{idx}/{total_encontrado}] imagens originais processadas com sucesso...")
+                print(f"⚙️ Progresso: [{idx}/{total_encontrado}] imagens originais processadas...")
 
         print("\n" + "="*60)
         print(f"✅ CONCLUÍDO: O agente adicionou +{total_novas_criadas} variações exclusivas ao banco de produção!")
