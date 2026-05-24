@@ -22,6 +22,9 @@ from services.supabase_storage import upload_image
 from dashboard.agents.media_selector import selecionar_imagem
 from dashboard.ia_engine import gerar_conteudo
 
+# AGENTE DE VARIAÇÃO: Importando o pipeline de multiplicação automática
+from media_variation_agent import iniciar_multiplicacao_banco_existente
+
 # =========================
 # CONFIGURAÇÃO UNIFICADA E BLINDADA DO FLASK
 # =========================
@@ -141,6 +144,13 @@ def monitoramento():
         print(f"🚨 Tentativa de acesso não autorizado ao monitoramento por: {session.get('email')}")
         return redirect("/")
 
+    # ⚡ INTEGRAÇÃO ATIVA: Dispara o multiplicador para rodar um lote de 20 imagens sempre que a rota/logs forem atualizados
+    try:
+        print("⚡ Gatilho detectado via Painel Admin: Rodando lote de variação de mídia no Render...")
+        iniciar_multiplicacao_banco_existente(limite_por_rodada=20)
+    except Exception as err_agente:
+        print(f"⚠️ Alerta do agente multiplicador em segundo plano: {str(err_agente)}")
+
     # --- 1. CÁLCULO DE MÉTRICAS VIA SUPABASE ---
     usuarios_online = 0
     usuarios_hoje = 0
@@ -182,7 +192,7 @@ def monitoramento():
     except Exception as err_metrics:
         print(f"⚠️ Falha ao computar métricas de usuários: {str(err_metrics)}")
 
-    # --- 3. SAÚDE DOS AGENTES (LOGS) ---
+    # --- 3. SAÚDE DOS AGENTES (LOGS ATUALIZADOS) ---
     try:
         relatorio = gerar_relatorio_completo()
     except Exception as e:
