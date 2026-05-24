@@ -12,7 +12,8 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 def upload_variacao_para_supabase(buffer_imagem, nome_arquivo_variacao):
     """Envia a variação processada na memória direto para o Storage do Supabase"""
     try:
-        bucket_name = "media_library_bucket" 
+        # 🌟 Corrigido para o nome exato do seu bucket público no Supabase
+        bucket_name = "social-ai" 
         
         # Faz o upload direto dos bytes sem salvar nada no Render
         supabase.storage.from_(bucket_name).upload(
@@ -87,7 +88,7 @@ def processar_e_salvar_variacoes(imagem_original):
                     "image_url": url_publica_nova,
                     "tipo_midia": var["tipo"],       
                     "id_imagem_pai": id_pai,
-                    "processado_agente": True  # 🌟 GARANTE QUE AS VARIAÇÕES JÁ NASÇAM MARCADAS COMO PROCESSADAS
+                    "processado_agente": True  # Evita que o agente tente re-processar uma variação criada
                 }
                 supabase.table("media_library").insert(payload).execute()
                 contador_sucesso += 1
@@ -117,7 +118,7 @@ def iniciar_multiplicacao_banco_existente(limite_por_rodada=50):
             .limit(limite_por_rodada)\
             .execute()
             
-        imagens_originais = resposta_banco.data
+        imagens_originais = response_banco = resposta_banco.data
         
         if not imagens_originais:
             print("✨ Nenhuma imagem original pendente de variação encontrada no banco.")
