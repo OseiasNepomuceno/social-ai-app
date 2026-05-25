@@ -9,7 +9,7 @@ from supabase import create_client
 # =========================
 # CONTROLADORES DO COLETOR
 # =========================
-PAUSADO = True  # Altere para False quando quiser que ele volte a rodar
+PAUSADO = False  # Altere para False quando quiser que ele volte a rodar
 
 # =========================
 # ENV
@@ -43,19 +43,24 @@ supabase = create_client(
 
 BUCKET_NAME = "coregov-media"
 
+
 # =========================
 # LIMITES
 # =========================
 
 MAX_IMAGENS_TOTAL = 1000
 
+# Redistribuído: 9 nichos somando exatamente 1000 imagens
 NICHOS = {
-    "marketing": 300,
-    "negocios": 200,
-    "financeiro": 150,
-    "tecnologia": 150,
-    "vendas": 100,
-    "empreendedorismo": 100
+    "marketing": 150,
+    "negocios": 120,
+    "financeiro": 100,
+    "tecnologia": 100,
+    "vendas": 90,
+    "empreendedorismo": 90,
+    "contabilidade": 120,   # Novo nicho
+    "psicologia": 120,      # Novo nicho
+    "engenharia": 110       # Novo nicho
 }
 
 # =========================
@@ -197,7 +202,7 @@ def salvar_database(
             "rede": "linkedin",
             "formato": "quadrado",
             "image_url": image_url,
-            "origem": origins,
+            "origem": origem,
             "tags": nicho,
             "ativo": True
         }).execute()
