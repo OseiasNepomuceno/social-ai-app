@@ -129,7 +129,7 @@ def rastrear_atividade_usuario():
             print(f"⚠️ Erro ao registrar tracking de analytics: {str(e)}")
 
 # =========================
-# MONITORAMENTO (CORRIGIDA COM THREADS)
+# MONITORAMENTO (CORRIGIDA WITH THREADS)
 # =========================
 
 ADMIN_EMAIL = "oseiasnepom@gmail.com"
@@ -211,6 +211,42 @@ def monitoramento():
         grafico_labels=grafico_labels,
         grafico_dados=grafico_dados
     )
+
+# =========================
+# CONEXÃO OAUTH LINKEDIN (CORREÇÃO DE BUG 404)
+# =========================
+
+@app.route("/linkedin/login", methods=["GET", "POST"])
+def linkedin_login():
+    """
+    Rota adicionada para tratar a conexão com o LinkedIn e mitigar o erro 404 em produção.
+    Redireciona o usuário para a tela de permissões OAuth do LinkedIn.
+    """
+    if "user_id" not in session:
+        return redirect("/login")
+        
+    CLIENT_ID = os.getenv("LINKEDIN_CLIENT_ID")
+    REDIRECT_URI = "https://app.coregov.com.br/linkedin/callback"
+    
+    if not CLIENT_ID:
+        print("❌ Erro: LINKEDIN_CLIENT_ID não configurado no ambiente.")
+        flash("A integração com o LinkedIn está em manutenção temporária. Contate o suporte.", "danger")
+        return redirect(url_for("configuracoes"))
+        
+    # Escopos essenciais para postagem de mídia e perfil
+    scope = "w_member_social%20profile%20openid%20email"
+    
+    linkedin_auth_url = (
+        f"https://www.linkedin.com/oauth/v2/authorization"
+        f"?response_type=code"
+        f"&client_id={CLIENT_ID}"
+        f"&redirect_uri={REDIRECT_URI}"
+        f"&state={session['user_id']}"
+        f"&scope={scope}"
+    )
+    
+    print(f"🔗 Redirecionando Usuário {session['user_id']} para o fluxo do LinkedIn OAuth.")
+    return redirect(linkedin_auth_url)
 
 # =========================
 # FUNÇÕES DE PAGAMENTO & SCHEDULER
