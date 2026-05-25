@@ -301,7 +301,7 @@ scheduler.add_job(
     replace_existing=True
 )
 scheduler.start()
-print("✅ SCHEDULER INICIADO - Verificação a cada 15 minutos")
+print("✅ SCHEDULER INICIADO - Verificação a cada 15 minutes")
 
 # =========================
 # ROTAS DE HOME E AUTENTICAÇÃO
@@ -674,6 +674,7 @@ def publicacoes():
         print("ERRO ROTA PUBLICACOES:", str(e))
         return render_template("publicacoes.html", erro=str(e), posts=[])
 
+# 🔒 REVISADO: ROTA DE CONFIGURAÇÕES AGORA CARREGA OS CANAIS SOCIAIS EXCLUSIVOS
 @app.route("/configuracoes")
 def configuracoes():
     if "user_id" not in session:
@@ -681,20 +682,85 @@ def configuracoes():
     try:
         usuario = supabase.table("users").select("*").eq("id", session["user_id"]).execute()
         
+        # Inicia variáveis vazias de canais sociais para passar ao HTML
+        instagram_cadastro = ""
+        linkedin_cadastro = ""
+        
+        # Busca os canais exclusivos deste usuário na tabela nova
+        canais_data = supabase.table("user_social_channels").select("*").eq("user_id", session["user_id"]).execute().data
+        if canais_data:
+            for canal in canais_data:
+                if canal.get("platform") == "instagram":
+                    instagram_cadastro = canal.get("channel_exclusive_id", "")
+                elif canal.get("platform") == "linkedin":
+                    linkedin_cadastro = canal.get("channel_exclusive_id", "")
+        
         if not usuario.data:
             user_backup = {
                 "email": session.get("email", "E-mail na Sessão"),
                 "plano": "free"
             }
-            return render_template("configuracoes.html", user=user_backup, linkedin_conectado=False)
+            return render_template("configuracoes.html", user=user_backup, linkedin_conectado=False, instagram_valer=instagram_cadastro, linkedin_valer=linkedin_cadastro)
         
         user = usuario.data[0]
         linkedin_conectado = bool(user.get("linkedin_token"))
-        return render_template("configuracoes.html", user=user, linkedin_conectado=linkedin_conectado)
+        
+        return render_template(
+            "configuracoes.html", 
+            user=user, 
+            linkedin_conectado=linkedin_conectado,
+            instagram_valer=instagram_cadastro,
+            linkedin_valer=linkedin_cadastro
+        )
     except Exception as e:
         print("CONFIG ERROR BACKUP ACTIVE:", str(e))
         user_backup = {"email": session.get("email", "E-mail na Sessão"), "plano": "free"}
-        return render_template("configuracoes.html", user=user_backup, linkedin_conectado=False)
+        return render_template("configuracoes.html", user=user_backup, linkedin_conectado=False, instagram_valer="", linkedin_valer="")
+
+# 🔒 NOVA ROTA: RECEBE OS DADOS DO FORMULÁRIO E APLICA A BARREIRA UNIQUE DO SUPABASE
+@app.route("/salvar-canais", methods=["POST"])
+def salvar_canais():
+    if "user_id" not in session:
+        return redirect("/login")
+        
+    user_id_atual = session["user_id"]
+    
+    # Captura os dados do formulário limpando os espaços e tirando o @
+    instagram_input = request.form.get("instagram", "").strip().lower().replace("@", "")
+    linkedin_input = request.form.get("linkedin", "").strip().lower()
+    
+    canais_para_salvar = [
+        {"platform": "instagram", "value": instagram_input},
+        {"platform": "linkedin", "value": linkedin_input}
+    ]
+    
+    try:
+        for canal in canais_para_salvar:
+            # Só executa a operação se o campo foi preenchido pelo usuário
+            if canal["value"]:
+                payload = {
+                    "user_id": user_id_atual,
+                    "platform": canal["platform"],
+                    "channel_exclusive_id": canal["value"]
+                }
+                # Faz o upsert baseado na chave única do usuário + plataforma
+                supabase.table("user_social_channels").upsert(payload, on_conflict="user_id,platform").execute()
+            else:
+                # Se o usuário deixou o campo em branco, remove o vínculo antigo caso exista
+                supabase.table("user_social_channels").delete().eq("user_id", user_id_atual).eq("platform", canal["platform"]).execute()
+                
+        flash("Canais sociais salvos e vinculados com exclusividade!", "success")
+    except Exception as e:
+        error_msg = str(e)
+        print(f"❌ ERRO AO SALVAR CANAIS EXCLUSIVOS: {error_msg}")
+        
+        # Intercepta a violação de chave única gerada pelo Supabase
+        if "unique_channel_per_platform" in error_msg or "violates unique constraint" in error_msg:
+            flash("Erro: Este perfil do Instagram ou LinkedIn já está sendo usado por outro usuário na nossa plataforma.", "danger")
+        else:
+            flash(f"Não foi possível salvar os canais: {error_msg}", "danger")
+            
+    return redirect(url_for("configuracoes"))
 
 @app.route("/planos")
 def planos():
