@@ -1,6 +1,7 @@
 import os
 from datetime import datetime, timedelta
 import threading  # 🚀 SOLUÇÃO: Importado para rodar o robô em segundo plano de forma assíncrona
+import requests   # 🔗 ADICIONADO: Necessário para a troca de tokens na rota de callback do LinkedIn
 import mercadopago
 from flask import (
     Flask,
@@ -42,7 +43,7 @@ app.secret_key = os.getenv(
     "social_ai_chave_mestra_estatica_coregov_2026"
 )
 
-# AJUSTE: Definindo o tempo de vida máximo de inatividade para 4 hours exatas
+# AJUSTE: Definindo o tempo de vida máximo de inatividade para 4 horas exatas
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=4)
 
 # AJUSTE: Parâmetros de segurança e persistência dos cookies de navegação
@@ -129,7 +130,7 @@ def rastrear_atividade_usuario():
             print(f"⚠️ Erro ao registrar tracking de analytics: {str(e)}")
 
 # =========================
-# MONITORAMENTO (CORRIGIDA WITH THREADS)
+# MONITORAMENTO (CORRIGIDA COM THREADS)
 # =========================
 
 ADMIN_EMAIL = "oseiasnepom@gmail.com"
@@ -213,13 +214,12 @@ def monitoramento():
     )
 
 # =========================
-# CONEXÃO OAUTH LINKEDIN (CORREÇÃO DE BUG 404)
+# CONEXÃO OAUTH LINKEDIN (LOGIN E CALLBACK)
 # =========================
 
-@app.route("/linkedin/login", methods=["GET", "POST"])
+@app.route("/linkedin/login", methods=["GET"])
 def linkedin_login():
     """
-    Rota adicionada para tratar a conexão com o LinkedIn e mitigar o erro 404 em produção.
     Redireciona o usuário para a tela de permissões OAuth do LinkedIn.
     """
     if "user_id" not in session:
@@ -229,11 +229,10 @@ def linkedin_login():
     REDIRECT_URI = "https://app.coregov.com.br/linkedin/callback"
     
     if not CLIENT_ID:
-        print("❌ Erro: LINKEDIN_CLIENT_ID não configurado no ambiente.")
+        print("❌ Erro: LINKEDIN_CLIENT_ID não configurado no ambiente do Render.")
         flash("A integração com o LinkedIn está em manutenção temporária. Contate o suporte.", "danger")
         return redirect(url_for("configuracoes"))
         
-    # Escopos essenciais para postagem de mídia e perfil
     scope = "w_member_social%20profile%20openid%20email"
     
     linkedin_auth_url = (
@@ -247,6 +246,76 @@ def linkedin_login():
     
     print(f"🔗 Redirecionando Usuário {session['user_id']} para o fluxo do LinkedIn OAuth.")
     return redirect(linkedin_auth_url)
+
+
+@app.route("/linkedin/callback", methods=["GET"])
+def linkedin_callback():
+    """
+    Recebe o 'code' temporário enviado pelo LinkedIn, faz a troca pelo Access Token
+    definitivo via chamada HTTP externa e persiste as credenciais no Supabase.
+    """
+    code = request.args.get("code")
+    state = request.args.get("state")  # Contém o user_id passado no state do login
+    error = request.args.get("error")
+    
+    if error:
+        print(f"❌ Autorização recusada ou cancelada: {error}")
+        flash("Autorização cancelada ou negada.", "warning")
+        return redirect(url_for("configuracoes"))
+        
+    if not code:
+        flash("Código de autenticação ausente ou inválido.", "danger")
+        return redirect(url_for("configuracoes"))
+        
+    user_id = state if state else session.get("user_id")
+    if not user_id:
+        print("❌ Erro: Callback do LinkedIn sem identificador de usuário válido.")
+        return redirect("/login")
+
+    CLIENT_ID = os.getenv("LINKEDIN_CLIENT_ID")
+    CLIENT_SECRET = os.getenv("LINKEDIN_CLIENT_SECRET")
+    REDIRECT_URI = "https://app.coregov.com.br/linkedin/callback"
+
+    try:
+        print(f"🎟️ Trocando código por token de acesso definitivo para o User {user_id}...")
+        
+        token_data = {
+            "grant_type": "authorization_code",
+            "code": code,
+            "redirect_uri": REDIRECT_URI,
+            "client_id": CLIENT_ID,
+            "client_secret": CLIENT_SECRET
+        }
+        
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+        
+        # Realiza a chamada POST externa de forma segura usando a biblioteca 'requests'
+        response = requests.post(
+            "https://www.linkedin.com/oauth/v2/accessToken",
+            data=token_data,
+            headers=headers
+        )
+        
+        token_json = response.json()
+        
+        if "access_token" in token_json:
+            access_token = token_json["access_token"]
+            print(f"✅ Token do LinkedIn gerado com sucesso. Salvando no Supabase...")
+            
+            supabase.table("users").update({
+                "linkedin_token": access_token
+            }).eq("id", user_id).execute()
+            
+            flash("Sua conta do LinkedIn foi conectada com sucesso! 🚀", "success")
+        else:
+            print(f"❌ Erro retornado pela API do LinkedIn: {token_json}")
+            flash("Não foi possível validar as credenciais junto ao LinkedIn.", "danger")
+            
+    except Exception as e:
+        print(f"❌ ERRO CRÍTICO NO CALLBACK DO LINKEDIN: {str(e)}")
+        flash(f"Instabilidade temporária ao conectar com o LinkedIn: {str(e)}", "danger")
+        
+    return redirect(url_for("configuracoes"))
 
 # =========================
 # FUNÇÕES DE PAGAMENTO & SCHEDULER
@@ -337,7 +406,7 @@ scheduler.add_job(
     replace_existing=True
 )
 scheduler.start()
-print("✅ SCHEDULER INICIADO - Verificação a cada 15 minutes")
+print("✅ SCHEDULER INICIADO - Verificação a cada 15 minutos")
 
 # =========================
 # ROTAS DE HOME E AUTENTICAÇÃO
