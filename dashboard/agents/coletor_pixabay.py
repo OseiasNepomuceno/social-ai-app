@@ -9,7 +9,7 @@ from supabase import create_client
 # =========================
 # CONTROLADORES DO COLETOR
 # =========================
-PAUSADO = False  # Altere para False quando quiser que ele volte a rodar
+PAUSADO = True  # Altere para False quando quiser que ele volte a rodar
 
 # =========================
 # ENV
