@@ -10,8 +10,19 @@ SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# Lista oficial de nichos para contagem rápida e exata
-NICHOS_ALVO = ["marketing", "tecnologia", "negocios", "financeiro", "vendas", "empreendedorismo"]
+# 🎯 LISTA ATUALIZADA: Incluindo os 4 novos nichos para monitoramento em tempo real
+NICHOS_ALVO = [
+    "marketing", 
+    "tecnologia", 
+    "negocios", 
+    "financeiro", 
+    "vendas", 
+    "empreendedorismo",
+    "contabilidade",
+    "psicologia",
+    "engenharia",
+    "saude"
+]
 ORIGENS_ALVO = ["pixabay", "pexels", "desconhecida"]
 
 # =========================
