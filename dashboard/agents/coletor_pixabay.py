@@ -203,7 +203,7 @@ def salvar_database(
             "rede": "linkedin",
             "formato": "quadrado",
             "image_url": image_url,
-            "origem": origin := origem,
+            "origem": origem,
             "tags": nicho,
             "ativo": True
         }).execute()
