@@ -261,7 +261,7 @@ def processar_imagem(
 # EXECUTAR NICHO
 # =========================
 
-def ejecutar_nicho(
+def executar_nicho(
     nicho,
     total_desejado
 ):
