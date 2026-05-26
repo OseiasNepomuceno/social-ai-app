@@ -50,18 +50,18 @@ BUCKET_NAME = "coregov-media"
 
 MAX_IMAGENS_TOTAL = 1000
 
-# Redistribuído: 10 nichos somando exatamente 1000 imagens
+# 🔥 REBALANCEMENTO: Zerado os cheios e focado 100% no nicho de saúde para reequilibrar
 NICHOS = {
     "marketing": 0,
     "negocios": 0,
     "financeiro": 0,
     "tecnologia": 0,
-    "vendas": 0,
-    "empreendedorismo": 30,
-    "contabilidade": 120,   # Novo nicho
-    "psicologia": 300,      # Novo nicho
-    "engenharia": 250,       # Novo nicho
-    "saude": 300       # Novo nicho
+    "vendas": 200,
+    "empreendedorismo": 0,
+    "contabilidade": 0,   
+    "psicologia": 0,      
+    "engenharia": 0,       
+    "saude": 800           # 🚀 Alvo agressivo focado no crescimento deste nicho
 }
 
 # =========================
@@ -86,7 +86,7 @@ def buscar_imagens_pixabay(
 
     try:
         print("\n🔎 BUSCANDO IMAGENS PIXABAY")
-        print("NICHO:")
+        print("TERMO ENVIADO À API:")
         print(termo)
 
         print("PÁGINA:")
@@ -203,7 +203,7 @@ def salvar_database(
             "rede": "linkedin",
             "formato": "quadrado",
             "image_url": image_url,
-            "origem": origem,
+            "origem": origin := origem,
             "tags": nicho,
             "ativo": True
         }).execute()
@@ -261,7 +261,7 @@ def processar_imagem(
 # EXECUTAR NICHO
 # =========================
 
-def executar_nicho(
+def ejecutar_nicho(
     nicho,
     total_desejado
 ):
@@ -272,12 +272,16 @@ def executar_nicho(
     processadas = 0
     pagina = 1
 
+    # 🔥 TRUQUE DE MESTRE: Se o nicho for "saude", busca em inglês na API global do Pixabay
+    # Isso multiplica por 50x a quantidade de imagens encontradas, mas salva como "saude" no banco!
+    termo_busca = "health, medical" if nicho == "saude" else nicho
+
     while processadas < total_desejado:
         restantes = total_desejado - processadas
         quantidade = min(restantes, 20)
 
         imagens = buscar_imagens_pixabay(
-            termo=nicho,
+            termo=termo_busca,
             quantidade=quantidade,
             pagina=pagina
         )
@@ -286,7 +290,7 @@ def executar_nicho(
         if not imagens:
             if PAUSADO:
                 break
-            print("❌ SEM IMAGENS")
+            print("❌ SEM MAIS IMAGENS DISPONÍVEIS NA API")
             break
 
         for item in imagens:
@@ -317,7 +321,7 @@ def executar_nicho(
         # =========================
         # RATE LIMIT SAFETY
         # =========================
-        print("⏳ AGUARDANDO...")
+        print("⏳ AGUARDANDO PRÓXIMA PÁGINA...")
         time.sleep(2)
 
 # =========================
@@ -332,6 +336,10 @@ if __name__ == "__main__":
         print("⏸️ Execução cancelada: O motor de coleta está definido como PAUSADO.")
     else:
         for nicho, total in NICHOS.items():
+            # ⚡ Otimização: pula na hora se o nicho estiver definido como 0
+            if total == 0:
+                continue
+                
             executar_nicho(nicho, total)
             if contador_total >= MAX_IMAGENS_TOTAL:
                 break
