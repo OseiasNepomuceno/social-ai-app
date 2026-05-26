@@ -50,17 +50,18 @@ BUCKET_NAME = "coregov-media"
 
 MAX_IMAGENS_TOTAL = 1000
 
-# Redistribuído: 9 nichos somando exatamente 1000 imagens
+# Redistribuído: 10 nichos somando exatamente 1000 imagens
 NICHOS = {
-    "marketing": 150,
-    "negocios": 120,
-    "financeiro": 100,
-    "tecnologia": 100,
-    "vendas": 90,
-    "empreendedorismo": 90,
+    "marketing": 80,
+    "negocios": 80,
+    "financeiro": 80,
+    "tecnologia": 80,
+    "vendas": 80,
+    "empreendedorismo": 30,
     "contabilidade": 120,   # Novo nicho
-    "psicologia": 120,      # Novo nicho
-    "engenharia": 110       # Novo nicho
+    "psicologia": 150,      # Novo nicho
+    "engenharia": 150,       # Novo nicho
+    "saude": 150       # Novo nicho
 }
 
 # =========================
