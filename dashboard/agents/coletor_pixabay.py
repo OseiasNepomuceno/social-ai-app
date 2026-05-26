@@ -52,16 +52,16 @@ MAX_IMAGENS_TOTAL = 1000
 
 # Redistribuído: 10 nichos somando exatamente 1000 imagens
 NICHOS = {
-    "marketing": 80,
-    "negocios": 80,
-    "financeiro": 80,
-    "tecnologia": 80,
-    "vendas": 80,
+    "marketing": 0,
+    "negocios": 0,
+    "financeiro": 0,
+    "tecnologia": 0,
+    "vendas": 0,
     "empreendedorismo": 30,
     "contabilidade": 120,   # Novo nicho
-    "psicologia": 150,      # Novo nicho
-    "engenharia": 150,       # Novo nicho
-    "saude": 150       # Novo nicho
+    "psicologia": 300,      # Novo nicho
+    "engenharia": 250,       # Novo nicho
+    "saude": 300       # Novo nicho
 }
 
 # =========================
