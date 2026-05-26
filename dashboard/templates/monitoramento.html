@@ -12,34 +12,35 @@
 
     <style>
         :root {
-            --bg-principal: #0b111e;
-            --bg-card: #121826;
-            --bg-sidebar: #090d16;
+            --bg-principal: #0b0f19;
+            --bg-card: #131c2e;
+            --bg-sidebar: #0e1626;
             --cor-primaria: #22c55e;
             --cor-azul: #2563eb;
             --cor-roxa: #a855f7;
             --texto-principal: #f8fafc;
-            --texto-mutado: #64748b;
-            --borda-suave: rgba(255, 255, 255, 0.03);
+            --texto-mutado: #94a3b8;
+            --borda-suave: rgba(255, 255, 255, 0.05);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
         body { background-color: var(--bg-principal); color: var(--texto-principal); min-height: 100vh; display: flex; }
 
-        /* SIDEBAR LATERAL (Padrão Dark Premium) */
+        /* SIDEBAR LATERAL */
         .sidebar {
-            width: 260px; background: var(--bg-sidebar); border-right: 1px solid var(--borda-suave);
+            width: 280px; background: var(--bg-sidebar); border-right: 1px solid var(--borda-suave);
             padding: 30px 20px; display: flex; flex-direction: column; position: fixed; height: 100vh;
         }
-        .sidebar h2 { font-size: 20px; margin-bottom: 30px; letter-spacing: 0.5px; }
+        .sidebar h2 { font-size: 22px; margin-bottom: 30px; }
+        
         .menu-item {
-            padding: 14px 16px; color: #94a3b8; text-decoration: none;
-            border-radius: 8px; margin-bottom: 6px; display: block; font-weight: 500; cursor: pointer;
+            padding: 12px 16px; color: var(--texto-mutado); text-decoration: none;
+            border-radius: 8px; margin-bottom: 8px; display: block; font-weight: 500; cursor: pointer;
         }
-        .menu-item:hover, .menu-item.ativo { background: rgba(255, 255, 255, 0.02); color: white; }
+        .menu-item:hover, .menu-item.ativo { background: rgba(255, 255, 255, 0.03); color: white; }
 
         /* CONTEÚDO PRINCIPAL */
-        .conteudo-principal { margin-left: 260px; padding: 50px; width: calc(100% - 260px); }
+        .conteudo-principal { margin-left: 280px; padding: 60px; width: calc(100% - 280px); }
         
         .topo-monitoramento { display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px; }
         .topo-monitoramento h1 { font-size: 24px; font-weight: 700; }
@@ -51,17 +52,16 @@
         .card-metrica p { font-size: 12px; color: var(--texto-mutado); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 10px; }
         .card-metrica h2 { font-size: 32px; font-weight: 700; }
         
-        /* Ícones com opacidade */
         .icone-card { position: absolute; top: 25px; right: 25px; width: 40px; height: 40px; border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 18px; }
         .ic-online { background: rgba(34, 197, 94, 0.08); color: var(--cor-primaria); }
         .ic-acesso { background: rgba(37, 99, 235, 0.08); color: var(--cor-azul); }
         .ic-mes { background: rgba(168, 85, 247, 0.08); color: var(--cor-roxa); }
 
-        /* ESTILIZAÇÃO DOS 03 CARDS DE LISTAS */
+        /* SEÇÃO DE LISTAS DETALHADAS */
         .secao-titulo { 
-            font-size: 15px; 
+            font-size: 14px; 
             font-weight: 600; 
-            margin: 35px 0 20px 0; 
+            margin: 40px 0 20px 0; 
             color: #f1f5f9; 
             display: flex; 
             align-items: center; 
@@ -81,15 +81,15 @@
             border: 1px solid var(--borda-suave); 
             border-radius: 12px; 
             padding: 22px;
-            min-height: 220px;
-            max-height: 350px;
+            min-height: 250px;
+            max-height: 380px;
             overflow-y: auto;
         }
         
         .card-lista-nomes h3 {
             font-size: 13px;
             font-weight: 600;
-            color: #94a3b8;
+            color: var(--texto-mutado);
             text-transform: uppercase;
             letter-spacing: 0.5px;
             margin-bottom: 18px;
@@ -108,24 +108,19 @@
         .usuario-item {
             display: flex;
             align-items: center;
-            gap: 10px;
             font-size: 14px;
             color: #e2e8f0;
             padding-bottom: 8px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.02);
         }
         
-        .usuario-item:last-child {
-            border-bottom: none;
-        }
+        .usuario-item:last-child { border-bottom: none; }
 
-        /* Pontos de status coloridos */
         .ponto-status { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
         .ponto-online { background-color: var(--cor-primaria); box-shadow: 0 0 6px var(--cor-primaria); }
         .ponto-hoje { background-color: var(--cor-azul); }
         .ponto-mes { background-color: var(--cor-roxa); }
 
-        /* Mensagem de feedback vazia */
         .lista-vazia { font-size: 13px; color: var(--texto-mutado); font-style: italic; }
     </style>
 </head>
@@ -145,7 +140,7 @@
         <div class="topo-monitoramento">
             <div>
                 <h1>📊 Monitoramento do Sistema</h1>
-                <span style="color: var(--texto-mutado); font-size: 14px;">Métricas de integridade e controle de acessos em tempo real integradas ao Supabase.</span>
+                <span style="color: var(--texto-mutado); font-size: 14px;">Controle operacional e análise de tráfego de clientes em tempo real.</span>
             </div>
             <div class="badge-admin">Modo Administrador</div>
         </div>
@@ -169,7 +164,7 @@
         </div>
 
         <div class="secao-titulo">
-            <span>📊</span> Detalhamento de Acessos de Clientes
+            <span>👁️‍🗨️</span> Fluxo de Clientes por Período
         </div>
 
         <div class="grid-listas-tempo">
@@ -177,114 +172,107 @@
             <div class="card-lista-nomes">
                 <h3><span class="ponto-status ponto-online"></span> Clientes Online Agora</h3>
                 <ul class="lista-usuarios" id="lista-online">
-                    <li class="lista-vazia">Carregando dados...</li>
+                    <li class="lista-vazia">Conectando ao banco...</li>
                 </ul>
             </div>
 
             <div class="card-lista-nomes">
                 <h3><span class="ponto-status ponto-hoje"></span> Acessaram Hoje</h3>
                 <ul class="lista-usuarios" id="lista-hoje">
-                    <li class="lista-vazia">Carregando dados...</li>
+                    <li class="lista-vazia">Conectando ao banco...</li>
                 </ul>
             </div>
 
             <div class="card-lista-nomes">
                 <h3><span class="ponto-status ponto-mes"></span> Acessaram no Mês Atual</h3>
                 <ul class="lista-usuarios" id="lista-mes">
-                    <li class="lista-vazia">Carregando dados...</li>
+                    <li class="lista-vazia">Conectando ao banco...</li>
                 </ul>
             </div>
 
         </div>
-
     </main>
 
     <script>
-        // 1. Configurações de Conexão com o Banco (Substitua pelas chaves do seu projeto)
+        // Configuração do Supabase (Insira as credenciais do seu projeto aqui)
         const SUPABASE_URL = "SUA_URL_DO_SUPABASE_AQUI";
         const SUPABASE_KEY = "SUA_ANON_KEY_DO_SUPABASE_AQUI";
         
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // Função responsável por buscar os dados das tabelas e renderizar as listas de nomes
-        async function inicializarMonitoramento() {
+        async function sincronizarMonitoramento() {
             try {
-                // Definição dos limites de tempo
                 const agora = new Date();
                 
-                // Janela de atividade para ser considerado online agora (ex: ativo nos últimos 5 minutos)
+                // Janela de 5 minutos para o cliente ser considerado online agora
                 const limiteOnline = new Date(agora.getTime() - 5 * 60 * 1000).toISOString();
-                
-                // Início do dia de hoje (00:00:00)
+                // Início do dia atual (00:00:00)
                 const inicioHoje = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate()).toISOString();
-                
-                // Início do mês atual
+                // Início do mês corrente
                 const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1).toISOString();
 
-                // 2. QUERY PARA CLIENTES ONLINE AGORA (filtrando pelo campo de última atividade)
-                // * Ajuste o nome da coluna de data conforme sua tabela (ex: ultimo_acesso, updated_at)
-                const { data: usersOnline, error: err1 } = await supabase
+                // 1. QUERY CLIENTES ONLINE AGORA
+                const { data: onlineUsers, error: err1 } = await _supabase
                     .from('users')
-                    .select('nome') 
+                    .select('nome')
                     .gte('ultimo_acesso', limiteOnline);
 
-                // 3. QUERY PARA CLIENTES QUE ACESSARAM HOJE
-                const { data: usersHoje, error: err2 } = await supabase
+                // 2. QUERY CLIENTES QUE ACESSARAM HOJE
+                const { data: hojeUsers, error: err2 } = await _supabase
                     .from('users')
                     .select('nome')
                     .gte('ultimo_acesso', inicioHoje);
 
-                // 4. QUERY PARA CLIENTES QUE ACESSARAM NO MÊS
-                const { data: usersMes, error: err3 } = await supabase
+                // 3. QUERY CLIENTES QUE ACESSARAM NO MÊS
+                const { data: mesUsers, error: err3 } = await _supabase
                     .from('users')
                     .select('nome')
                     .gte('ultimo_acesso', inicioMes);
 
                 if (err1 || err2 || err3) throw (err1 || err2 || err3);
 
-                // 5. ATUALIZAR OS NÚMEROS NOS CARDS DO TOPO DIRETAMENTE DA BASE
-                document.getElementById('qtd-online').innerText = usersOnline ? usersOnline.length : 0;
-                document.getElementById('qtd-hoje').innerText = usersHoje ? usersHoje.length : 0;
-                document.getElementById('qtd-mes').innerText = usersMes ? usersMes.length : 0;
+                // Atualiza os contadores numéricos dos cards do topo
+                document.getElementById('qtd-online').innerText = onlineUsers ? onlineUsers.length : 0;
+                document.getElementById('qtd-hoje').innerText = hojeUsers ? hojeUsers.length : 0;
+                document.getElementById('qtd-mes').innerText = mesUsers ? mesUsers.length : 0;
 
-                // 6. RENDERIZAR OS NOMES NOS CARDS DE BAIXO
-                renderizarLista('lista-online', usersOnline);
-                renderizarLista('lista-hoje', usersHoje);
-                renderizarLista('lista-mes', usersMes);
+                // Popula os nomes reais nas listas abaixo
+                atualizarDOMLista('lista-online', onlineUsers);
+                atualizarDOMLista('lista-hoje', hojeUsers);
+                atualizarDOMLista('lista-mes', mesUsers);
 
             } catch (error) {
-                console.error("Erro ao sincronizar com o Supabase:", error);
-                // Exibe erro amigável nas listas caso a conexão falhe
-                const avisosErro = document.querySelectorAll('.lista-vazia');
-                avisosErro.forEach(el => el.innerText = "Erro ao carregar dados reais.");
+                console.error("Falha ao sincronizar dados com a tabela users:", error);
+                document.querySelectorAll('.lista-vazia').forEach(el => el.innerText = "Erro ao carregar dados da tabela.");
             }
         }
 
-        // Função auxiliar para injetar os itens HTML com segurança na lista
-        function renderizarLista(idElemento, listaUsuarios) {
-            const container = document.getElementById(idElemento);
-            container.innerHTML = ""; // Limpa o carregando...
+        // Renderizador de nós de lista dinâmicos
+        function atualizarDOMLista(idLista, arrayDados) {
+            const container = document.getElementById(idLista);
+            if (!container) return;
+            
+            container.innerHTML = "";
 
-            if (!listaUsuarios || listaUsuarios.length === 0) {
-                container.innerHTML = `<li class="lista-vazia">Nenhum cliente ativo no período.</li>`;
+            if (!arrayDados || arrayDados.length === 0) {
+                container.innerHTML = `<li class="lista-vazia">Nenhum cliente registrado no período.</li>`;
                 return;
             }
 
-            listaUsuarios.forEach(user => {
-                // Verifica se o campo 'nome' existe ou usa um fallback caso esteja nulo
-                const nomeCliente = user.nome ? user.nome : "Cliente Sem Nome";
+            arrayDados.forEach(item => {
                 const li = document.createElement('li');
                 li.className = 'usuario-item';
-                li.innerText = nomeCliente;
+                // Puxa dinamicamente a coluna 'nome' da sua tabela users
+                li.innerText = item.nome ? item.nome : "Cliente sem identificação";
                 container.appendChild(li);
             });
         }
 
-        // Dispara a sincronização assim que o painel abrir na tela
-        document.addEventListener("DOMContentLoaded", inicializarMonitoramento);
+        // Dispara ao carregar a página
+        document.addEventListener("DOMContentLoaded", sincronizarMonitoramento);
         
-        // Atualiza os dados no painel automaticamente a cada 30 segundos
-        setInterval(inicializarMonitoramento, 30000);
+        // Atualização automática contínua em background a cada 30 segundos
+        setInterval(sincronizarMonitoramento, 30000);
     </script>
 </body>
 </html>
