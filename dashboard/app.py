@@ -98,6 +98,20 @@ PLANOS = {
 }
 
 # =========================
+# ROBOTS.TXT
+# =========================
+
+@app.route('/robots.txt')
+def robots_txt():
+    linhas = [
+        "User-agent: *",          # Se aplica a TODOS os robôs (Google, OpenAI, Bing)
+        "Disallow: /dashboard",   # Proíbe de indexar a área logada (se houver essa rota)
+        "Disallow: /api/",        # Proíbe de ler suas rotas internas de API
+        "Allow: /$"               # Permite indexar APENAS a página inicial institucional
+    ]
+    return "\n".join(linhas), 200, {'Content-Type': 'text/plain'}
+
+# =========================
 # MIDDLEWARE: MONITORAMENTO DE TRÁFEGO (SÉRIE TEMPORAL)
 # =========================
 
