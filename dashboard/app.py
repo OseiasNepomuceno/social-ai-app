@@ -53,7 +53,10 @@ app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SECURE'] = True     
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  
 
+# =========================
 # ROTA DO FAVICON:
+# =========================
+
 @app.route('/favicon.ico')
 def favicon():
     return send_from_directory(
@@ -64,18 +67,13 @@ def favicon():
 
 
 
+# =========================
+# FUNDO ANIMADO
+# =========================
+
 @app.route("/fundo")
-def fundo():
+def fundo_video():
     return render_template("fundo-video.html")
-
-app = Flask(__name__)
-
-@app.route("/")
-def home():
-    return render_template("fundo-video.html")
-
-if __name__ == "__main__":
-    app.run(debug=True)
 
 
 # =========================
