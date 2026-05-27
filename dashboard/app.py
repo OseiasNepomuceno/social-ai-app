@@ -23,6 +23,7 @@ from dashboard.agents.analisador_media import gerar_relatorio_completo
 from services.supabase_storage import upload_image
 from dashboard.agents.media_selector import selecionar_imagem
 from dashboard.ia_engine import gerar_conteudo
+from flask import Flask, render_template
 
 # AGENTE DE VARIAÇÃO: Importando o pipeline de multiplicação automática
 from dashboard.agents.media_variation_agent import iniciar_multiplicacao_banco_existente
@@ -61,7 +62,11 @@ def favicon():
         mimetype='image/vnd.microsoft.icon'
     )
 
-from flask import Flask, render_template
+
+
+@app.route("/fundo")
+def fundo():
+    return render_template("fundo-video.html")
 
 app = Flask(__name__)
 
