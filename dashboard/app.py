@@ -155,53 +155,88 @@ def monitoramento():
         return redirect("/login")
         
     if session.get("email") != ADMIN_EMAIL:
+        print(f"🚨 Tentativa de acesso não autorizado ao monitoramento por: {session.get('email')}")
         return redirect("/")
 
-    # Inicia variáveis de listas e contagens
-    lista_online, lista_hoje, lista_mes = [], [], []
-    u_online_count, u_hoje_count, u_mes_count = 0, 0, 0
-    grafico_labels, grafico_dados = [], []
+    # ⚡ SOLUÇÃO DE TIMEOUT: Mantendo seu robô assíncrono em segundo plano
+    try:
+        print("⚡ Gatilho detectado via Painel Admin: Disparando robô multiplicador...")
+        thread_agente = threading.Thread(
+            target=iniciar_multiplicacao_banco_existente,
+            kwargs={"limite_por_rodada": 20},
+            daemon=True
+        )
+        thread_agente.start()
+    except Exception as err_agente:
+        print(f"⚠️ Falha ao criar a thread de multiplicação: {str(err_agente)}")
+
+    # Inicialização das variáveis limpas para evitar quebras
+    usuarios_online = 0
+    usuarios_hoje = 0
+    usuarios_mes = 0
+    lista_online = []
+    lista_hoje = []
+    lista_mes = []
+    grafico_labels = []
+    grafico_dados = []
 
     try:
         agora = datetime.utcnow()
         
-        # --- 1. BUSCA NOMES ONLINE AGORA (últimos 5 minutos) ---
+        # --- 1. USUÁRIOS ONLINE (Últimos 5 minutos) ---
         cinco_minutos_atras = (agora - timedelta(minutes=5)).isoformat()
-        res_online = supabase.table("users").select("nome").gte("ultima_atividade", cinco_minutos_atras).execute()
-        lista_online = res_online.data if res_online.data else []
-        u_online_count = len(lista_online)
+        # Buscamos o 'id' e o 'email' da tabela 'users'
+        res_online = supabase.table("users").select("id", "email").gte("ultima_atividade", cinco_minutos_atras).execute()
+        if res_online.data:
+            lista_online = res_online.data
+            usuarios_online = len(lista_online)
 
-        # --- 2. BUSCA NOMES QUE ACESSARAM HOJE ---
+        # --- 2. ACESSOS HOJE ---
         hoje_str = agora.strftime("%Y-%m-%d")
-        # Fazemos um join simples com a tabela users para pegar o nome
-        res_hoje = supabase.table("analytics_acessos").select("users(nome)").eq("data_acesso", hoje_str).execute()
-        lista_hoje = [item['users'] for item in res_hoje.data if item.get('users')] if res_hoje.data else []
-        u_hoje_count = len(lista_hoje)
+        # Fazemos o Join trazendo os dados do usuário conectado através da relação da tabela users (buscando o email)
+        res_hoje = supabase.table("analytics_acessos").select("user_id", "users(email)").eq("data_acesso", hoje_str).execute()
+        if res_hoje.data:
+            # Filtra registros válidos e mapeia para uma lista limpa
+            lista_hoje = [{"email": item["users"]["email"]} for item in res_hoje.data if item.get("users")]
+            usuarios_hoje = len(lista_hoje)
 
-        # --- 3. BUSCA NOMES QUE ACESSARAM NO MÊS ---
+        # --- 3. ACESSOS NO MÊS (Últimos 30 dias) ---
         trinta_dias_atras = (agora - timedelta(days=30)).strftime("%Y-%m-%d")
-        res_mes = supabase.table("analytics_acessos").select("users(nome)").gte("data_acesso", trinta_dias_atras).execute()
-        # Removemos duplicatas de nomes no mês para a lista não ficar gigante
-        nomes_mes = {item['users']['nome'] for item in res_mes.data if item.get('users')}
-        lista_mes = [{"nome": n} for n in nomes_mes]
-        u_mes_count = len(nomes_mes)
+        res_mes = supabase.table("analytics_acessos").select("user_id", "users(email)").gte("data_acesso", trinta_dias_atras).execute()
+        if res_mes.data:
+            # Usamos um set para eliminar e-mails duplicados no relatório mensal
+            emails_unicos_mes = {item["users"]["email"] for item in res_mes.data if item.get("users")}
+            lista_mes = [{"email": email} for email in emails_unicos_mes]
+            usuarios_mes = len(lista_mes)
 
-        # --- 4. DADOS DO GRÁFICO (ÚLTIMOS 7 DIAS) ---
+        # --- 4. CONSTRUÇÃO DO GRÁFICO (ÚLTIMOS 7 DIAS) ---
         for i in range(6, -1, -1):
-            dia = agora - timedelta(days=i)
-            dia_str = dia.strftime("%Y-%m-%d")
-            res_dia = supabase.table("analytics_acessos").select("user_id", count="exact").eq("data_acesso", dia_str).execute()
-            grafico_labels.append(dia.strftime("%d/%m"))
-            grafico_dados.append(res_dia.count if res_dia.count else 0)
+            dia_alvo = agora - timedelta(days=i)
+            dia_alvo_str = dia_alvo.strftime("%Y-%m-%d")
+            dia_exibicao = dia_alvo.strftime("%d/%m")
+            
+            res_dia = supabase.table("analytics_acessos").select("user_id", count="exact").eq("data_acesso", dia_alvo_str).execute()
+            total_dia = res_dia.count if res_dia.count is not None else 0
+            
+            grafico_labels.append(dia_exibicao)
+            grafico_dados.append(total_dia)
 
+    except Exception as err_metrics:
+        print(f"⚠️ Falha crítica ao computar métricas de usuários: {str(err_metrics)}")
+
+    # --- 5. SAÚDE DOS AGENTES ---
+    try:
+        relatorio = gerar_relatorio_completo()
     except Exception as e:
-        print(f"⚠️ Erro nas métricas: {str(e)}")
-
+        print("Erro ao gerar relatório do monitoramento:", str(e))
+        relatorio = {}
+        
     return render_template(
         'monitoramento.html', 
-        usuarios_online=u_online_count, 
-        usuarios_hoje=u_hoje_count, 
-        usuarios_mes=u_mes_count,
+        data=relatorio,
+        usuarios_online=usuarios_online,
+        usuarios_hoje=usuarios_hoje,
+        usuarios_mes=usuarios_mes,
         lista_online=lista_online,
         lista_hoje=lista_hoje,
         lista_mes=lista_mes,
