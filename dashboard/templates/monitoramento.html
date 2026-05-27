@@ -1,278 +1,188 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoramento do Sistema | CoreGov</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+{% extends "base.html" %}
+
+{% block title %}
+    Monitoramento do Sistema - Social COREGOV
+{% endblock %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<div class="space-y-6 max-w-6xl mx-auto">
     
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-    <style>
-        :root {
-            --bg-principal: #0b0f19;
-            --bg-card: #131c2e;
-            --bg-sidebar: #0e1626;
-            --cor-primaria: #22c55e;
-            --cor-azul: #2563eb;
-            --cor-roxa: #a855f7;
-            --texto-principal: #f8fafc;
-            --texto-mutado: #94a3b8;
-            --borda-suave: rgba(255, 255, 255, 0.05);
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-        body { background-color: var(--bg-principal); color: var(--texto-principal); min-height: 100vh; display: flex; }
-
-        /* SIDEBAR LATERAL */
-        .sidebar {
-            width: 280px; background: var(--bg-sidebar); border-right: 1px solid var(--borda-suave);
-            padding: 30px 20px; display: flex; flex-direction: column; position: fixed; height: 100vh;
-        }
-        .sidebar h2 { font-size: 22px; margin-bottom: 30px; }
-        
-        .menu-item {
-            padding: 12px 16px; color: var(--texto-mutado); text-decoration: none;
-            border-radius: 8px; margin-bottom: 8px; display: block; font-weight: 500; cursor: pointer;
-        }
-        .menu-item:hover, .menu-item.ativo { background: rgba(255, 255, 255, 0.03); color: white; }
-
-        /* CONTEÚDO PRINCIPAL */
-        .conteudo-principal { margin-left: 280px; padding: 60px; width: calc(100% - 280px); }
-        
-        .topo-monitoramento { display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px; }
-        .topo-monitoramento h1 { font-size: 24px; font-weight: 700; }
-        .badge-admin { background: rgba(37, 99, 235, 0.1); color: #3b82f6; border: 1px solid rgba(37, 99, 235, 0.2); padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase; }
-
-        /* GRID DE METRICAS (Cards Superiores) */
-        .grid-metricas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 35px; }
-        .card-metrica { background: var(--bg-card); border: 1px solid var(--borda-suave); border-radius: 12px; padding: 25px; position: relative; }
-        .card-metrica p { font-size: 12px; color: var(--texto-mutado); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 10px; }
-        .card-metrica h2 { font-size: 32px; font-weight: 700; }
-        
-        .icone-card { position: absolute; top: 25px; right: 25px; width: 40px; height: 40px; border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 18px; }
-        .ic-online { background: rgba(34, 197, 94, 0.08); color: var(--cor-primaria); }
-        .ic-acesso { background: rgba(37, 99, 235, 0.08); color: var(--cor-azul); }
-        .ic-mes { background: rgba(168, 85, 247, 0.08); color: var(--cor-roxa); }
-
-        /* SEÇÃO DE LISTAS DETALHADAS */
-        .secao-titulo { 
-            font-size: 14px; 
-            font-weight: 600; 
-            margin: 40px 0 20px 0; 
-            color: #f1f5f9; 
-            display: flex; 
-            align-items: center; 
-            gap: 8px; 
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        .grid-listas-tempo { 
-            display: grid; 
-            grid-template-columns: repeat(3, 1fr); 
-            gap: 20px; 
-        }
-        
-        .card-lista-nomes {
-            background: var(--bg-card); 
-            border: 1px solid var(--borda-suave); 
-            border-radius: 12px; 
-            padding: 22px;
-            min-height: 250px;
-            max-height: 380px;
-            overflow-y: auto;
-        }
-        
-        .card-lista-nomes h3 {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--texto-mutado);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 18px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .lista-usuarios {
-            list-style: none;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .usuario-item {
-            display: flex;
-            align-items: center;
-            font-size: 14px;
-            color: #e2e8f0;
-            padding-bottom: 8px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.02);
-        }
-        
-        .usuario-item:last-child { border-bottom: none; }
-
-        .ponto-status { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
-        .ponto-online { background-color: var(--cor-primaria); box-shadow: 0 0 6px var(--cor-primaria); }
-        .ponto-hoje { background-color: var(--cor-azul); }
-        .ponto-mes { background-color: var(--cor-roxa); }
-
-        .lista-vazia { font-size: 13px; color: var(--texto-mutado); font-style: italic; }
-    </style>
-</head>
-<body>
-
-    <aside class="sidebar">
-        <h2>🛰️ CoreGov</h2>
-        <nav>
-            <div class="menu-item">Dashboard</div>
-            <div class="menu-item">Revisor de Estatuto</div>
-            <div class="menu-item">Gestão de Clientes</div>
-            <div class="menu-item ativo">Monitoramento</div>
-        </nav>
-    </aside>
-
-    <main class="conteudo-principal">
-        <div class="topo-monitoramento">
-            <div>
-                <h1>📊 Monitoramento do Sistema</h1>
-                <span style="color: var(--texto-mutado); font-size: 14px;">Controle operacional e análise de tráfego de clientes em tempo real.</span>
-            </div>
-            <div class="badge-admin">Modo Administrador</div>
+    <div class="flex items-center justify-between border-b border-gray-800 pb-4">
+        <div>
+            <h1 class="text-2xl font-bold text-white tracking-wide">
+                <i class="fa-solid fa-chart-line text-blue-500 mr-2"></i>Monitoramento do Sistema
+            </h1>
+            <p class="text-sm text-gray-400 mt-1">
+                Controle operacional e análise de tráfego de clientes em tempo real integrados ao Supabase.
+            </p>
         </div>
+        <div class="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider">
+            Modo Administrador
+        </div>
+    </div>
 
-        <div class="grid-metricas">
-            <div class="card-metrica">
-                <p>Online Agora</p>
-                <h2 id="qtd-online">0</h2>
-                <div class="icone-card ic-online">👥</div>
-            </div>
-            <div class="card-metrica">
-                <p>Acessos Hoje</p>
-                <h2 id="qtd-hoje">0</h2>
-                <div class="icone-card ic-acesso">📅</div>
-            </div>
-            <div class="card-metrica">
-                <p>Mês Atual</p>
-                <h2 id="qtd-mes">0</h2>
-                <div class="icone-card ic-mes">📈</div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        <div class="bg-gray-800 rounded-xl border border-gray-700 p-6 shadow-xl relative overflow-hidden">
+            <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Online Agora</p>
+            <h2 id="qtd-online" class="text-3xl font-extrabold text-white mt-2">0</h2>
+            <div class="absolute top-6 right-6 w-10 h-10 rounded-lg bg-green-500/10 text-green-400 flex items-center justify-center text-lg">
+                <i class="fa-solid fa-users"></i>
             </div>
         </div>
 
-        <div class="secao-titulo">
-            <span>👁️‍🗨️</span> Fluxo de Clientes por Período
+        <div class="bg-gray-800 rounded-xl border border-gray-700 p-6 shadow-xl relative overflow-hidden">
+            <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Acessos Hoje</p>
+            <h2 id="qtd-hoje" class="text-3xl font-extrabold text-white mt-2">0</h2>
+            <div class="absolute top-6 right-6 w-10 h-10 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center text-lg">
+                <i class="fa-solid fa-calendar-day"></i>
+            </div>
         </div>
 
-        <div class="grid-listas-tempo">
+        <div class="bg-gray-800 rounded-xl border border-gray-700 p-6 shadow-xl relative overflow-hidden">
+            <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Mês Atual</p>
+            <h2 id="qtd-mes" class="text-3xl font-extrabold text-white mt-2">0</h2>
+            <div class="absolute top-6 right-6 w-10 h-10 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center text-lg">
+                <i class="fa-solid fa-chart-bar"></i>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="pt-2">
+        <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-eye text-gray-500"></i> Fluxo de Clientes por Período
+        </h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             
-            <div class="card-lista-nomes">
-                <h3><span class="ponto-status ponto-online"></span> Clientes Online Agora</h3>
-                <ul class="lista-usuarios" id="lista-online">
-                    <li class="lista-vazia">Conectando ao banco...</li>
+            <div class="bg-gray-800 rounded-xl border border-gray-700 p-5 shadow-xl flex flex-col min-h-[240px] max-h-[380px]">
+                <h4 class="text-sm font-semibold text-white border-b border-gray-700/50 pb-3 mb-3 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_#22c55e]"></span>
+                    Clientes Online Agora
+                </h4>
+                <ul id="lista-online" class="space-y-2 overflow-y-auto flex-1 pr-1 custom-scrollbar">
+                    <li class="text-xs text-gray-500 italic py-1">Conectando ao banco...</li>
                 </ul>
             </div>
 
-            <div class="card-lista-nomes">
-                <h3><span class="ponto-status ponto-hoje"></span> Acessaram Hoje</h3>
-                <ul class="lista-usuarios" id="lista-hoje">
-                    <li class="lista-vazia">Conectando ao banco...</li>
+            <div class="bg-gray-800 rounded-xl border border-gray-700 p-5 shadow-xl flex flex-col min-h-[240px] max-h-[380px]">
+                <h4 class="text-sm font-semibold text-white border-b border-gray-700/50 pb-3 mb-3 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                    Acessaram Hoje
+                </h4>
+                <ul id="lista-hoje" class="space-y-2 overflow-y-auto flex-1 pr-1 custom-scrollbar">
+                    <li class="text-xs text-gray-500 italic py-1">Conectando ao banco...</li>
                 </ul>
             </div>
 
-            <div class="card-lista-nomes">
-                <h3><span class="ponto-status ponto-mes"></span> Acessaram no Mês Atual</h3>
-                <ul class="lista-usuarios" id="lista-mes">
-                    <li class="lista-vazia">Conectando ao banco...</li>
+            <div class="bg-gray-800 rounded-xl border border-gray-700 p-5 shadow-xl flex flex-col min-h-[240px] max-h-[380px]">
+                <h4 class="text-sm font-semibold text-white border-b border-gray-700/50 pb-3 mb-3 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-purple-500"></span>
+                    Acessaram no Mês Atual
+                </h4>
+                <ul id="lista-mes" class="space-y-2 overflow-y-auto flex-1 pr-1 custom-scrollbar">
+                    <li class="text-xs text-gray-500 italic py-1">Conectando ao banco...</li>
                 </ul>
             </div>
 
         </div>
-    </main>
+    </div>
+</div>
 
-    <script>
-        // Configuração do Supabase (Insira as credenciais do seu projeto aqui)
-        const SUPABASE_URL = "SUA_URL_DO_SUPABASE_AQUI";
-        const SUPABASE_KEY = "SUA_ANON_KEY_DO_SUPABASE_AQUI";
-        
-        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+<script>
+    // Substitua pelas credenciais de conexão do seu projeto CoreGov
+    const SUPABASE_URL = "SUA_URL_DO_SUPABASE_AQUI";
+    const SUPABASE_KEY = "SUA_ANON_KEY_DO_SUPABASE_AQUI";
+    
+    // Construtor global seguro do SDK via CDN
+    const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        async function sincronizarMonitoramento() {
-            try {
-                const agora = new Date();
-                
-                // Janela de 5 minutos para o cliente ser considerado online agora
-                const limiteOnline = new Date(agora.getTime() - 5 * 60 * 1000).toISOString();
-                // Início do dia atual (00:00:00)
-                const inicioHoje = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate()).toISOString();
-                // Início do mês corrente
-                const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1).toISOString();
-
-                // 1. QUERY CLIENTES ONLINE AGORA
-                const { data: onlineUsers, error: err1 } = await _supabase
-                    .from('users')
-                    .select('nome')
-                    .gte('ultimo_acesso', limiteOnline);
-
-                // 2. QUERY CLIENTES QUE ACESSARAM HOJE
-                const { data: hojeUsers, error: err2 } = await _supabase
-                    .from('users')
-                    .select('nome')
-                    .gte('ultimo_acesso', inicioHoje);
-
-                // 3. QUERY CLIENTES QUE ACESSARAM NO MÊS
-                const { data: mesUsers, error: err3 } = await _supabase
-                    .from('users')
-                    .select('nome')
-                    .gte('ultimo_acesso', inicioMes);
-
-                if (err1 || err2 || err3) throw (err1 || err2 || err3);
-
-                // Atualiza os contadores numéricos dos cards do topo
-                document.getElementById('qtd-online').innerText = onlineUsers ? onlineUsers.length : 0;
-                document.getElementById('qtd-hoje').innerText = hojeUsers ? hojeUsers.length : 0;
-                document.getElementById('qtd-mes').innerText = mesUsers ? mesUsers.length : 0;
-
-                // Popula os nomes reais nas listas abaixo
-                atualizarDOMLista('lista-online', onlineUsers);
-                atualizarDOMLista('lista-hoje', hojeUsers);
-                atualizarDOMLista('lista-mes', mesUsers);
-
-            } catch (error) {
-                console.error("Falha ao sincronizar dados com a tabela users:", error);
-                document.querySelectorAll('.lista-vazia').forEach(el => el.innerText = "Erro ao carregar dados da tabela.");
-            }
-        }
-
-        // Renderizador de nós de lista dinâmicos
-        function atualizarDOMLista(idLista, arrayDados) {
-            const container = document.getElementById(idLista);
-            if (!container) return;
+    async function atualizarPainelMonitoramento() {
+        try {
+            const agora = new Date();
             
-            container.innerHTML = "";
+            // Definição dos critérios de data/hora (Janela de 5 min para Online)
+            const dataLimiteOnline = new Date(agora.getTime() - 5 * 60 * 1000).toISOString();
+            const dataInicioHoje = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate()).toISOString();
+            const dataInicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1).toISOString();
 
-            if (!arrayDados || arrayDados.length === 0) {
-                container.innerHTML = `<li class="lista-vazia">Nenhum cliente registrado no período.</li>`;
-                return;
-            }
+            // 1. SELECT DO SUPABASE - ONLINE AGORA
+            const { data: resOnline, error: err1 } = await _supabase
+                .from('users')
+                .select('*')
+                .gte('ultimo_acesso', dataLimiteOnline);
 
-            arrayDados.forEach(item => {
-                const li = document.createElement('li');
-                li.className = 'usuario-item';
-                // Puxa dinamicamente a coluna 'nome' da sua tabela users
-                li.innerText = item.nome ? item.nome : "Cliente sem identificação";
-                container.appendChild(li);
+            // 2. SELECT DO SUPABASE - HOJE
+            const { data: resHoje, error: err2 } = await _supabase
+                .from('users')
+                .select('*')
+                .gte('ultimo_acesso', dataInicioHoje);
+
+            // 3. SELECT DO SUPABASE - MÊS ATUAL
+            const { data: resMes, error: err3 } = await _supabase
+                .from('users')
+                .select('*')
+                .gte('ultimo_acesso', dataInicioMes);
+
+            if (err1 || err2 || err3) throw (err1 || err2 || err3);
+
+            // Alimenta os contadores numéricos dos cards de cima
+            document.getElementById('qtd-online').innerText = resOnline ? resOnline.length : 0;
+            document.getElementById('qtd-hoje').innerText = resHoje ? resHoje.length : 0;
+            document.getElementById('qtd-mes').innerText = resMes ? resMes.length : 0;
+
+            // Alimenta as listas de nomes reais logo abaixo
+            popularEspacoLista('lista-online', resOnline);
+            popularEspacoLista('lista-hoje', resHoje);
+            popularEspacoLista('lista-mes', resMes);
+
+        } catch (erro) {
+            console.error("Erro na busca de logs do Supabase:", erro);
+            document.querySelectorAll('#lista-online, #lista-hoje, #lista-mes').forEach(el => {
+                el.innerHTML = `<li class="text-xs text-red-400 italic py-1"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Erro de conexão.</li>`;
             });
         }
+    }
 
-        // Dispara ao carregar a página
-        document.addEventListener("DOMContentLoaded", sincronizarMonitoramento);
-        
-        // Atualização automática contínua em background a cada 30 segundos
-        setInterval(sincronizarMonitoramento, 30000);
-    </script>
-</body>
-</html>
+    // Função interna para manipular o DOM e listar as linhas de clientes de forma limpa
+    function popularEspacoLista(idLista, arrayUsuarios) {
+        const elementoAlvo = document.getElementById(idLista);
+        if (!elementoAlvo) return;
+
+        elementoAlvo.innerHTML = "";
+
+        if (!arrayUsuarios || arrayUsuarios.length === 0) {
+            elementoAlvo.innerHTML = `<li class="text-xs text-gray-500 italic py-1">Nenhum cliente ativo.</li>`;
+            return;
+        }
+
+        arrayUsuarios.forEach(user => {
+            const li = document.createElement('li');
+            // Classes nativas do Tailwind para as linhas de nomes ficarem bonitas e consistentes
+            li.className = "text-sm text-gray-300 py-1.5 border-b border-gray-700/30 last:border-0 flex items-center gap-2";
+            
+            // Trata se o banco possui a coluna grafada como 'nome' ou 'name'
+            const identificacaoCliente = user.nome || user.name || "Cliente sem nome";
+            
+            li.innerHTML = `<i class="fa-solid fa-circle-user text-gray-600 text-xs"></i> <span>${identificacaoCliente}</span>`;
+            elementoAlvo.appendChild(li);
+        });
+    }
+
+    // Inicializa a consulta no momento em que a página renderizar na tela
+    document.addEventListener("DOMContentLoaded", atualizarPainelMonitoramento);
+
+    // Faz o refresh automático a cada 30 segundos de forma silenciosa para o admin
+    setInterval(atualizarPainelMonitoramento, 30000);
+</script>
+
+<style>
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #374151; border-radius: 10px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+</style>
+{% endblock %}
