@@ -4,227 +4,461 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CoreGov Fundo Animado</title>
+
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
     }
 
-    body {
-      overflow: hidden;
-      background: #020617;
-      font-family: Arial, sans-serif;
+    html,
+    body{
+      width:100%;
+      height:100%;
+      overflow:hidden;
+      background:#020617;
+      font-family:Arial, sans-serif;
     }
 
-    .background {
-      position: fixed;
-      width: 100%;
-      height: 100vh;
+    body{
+      position:relative;
+    }
+
+    .background{
+      position:fixed;
+      inset:0;
+      width:100vw;
+      height:100vh;
+      overflow:hidden;
+
       background:
-        radial-gradient(circle at top right, rgba(0,255,140,0.18), transparent 35%),
-        radial-gradient(circle at bottom left, rgba(0,180,255,0.12), transparent 40%),
-        linear-gradient(135deg, #020617 0%, #03121f 40%, #000814 100%);
-      overflow: hidden;
+        radial-gradient(circle at top right,
+        rgba(0,255,140,0.18),
+        transparent 35%),
+
+        radial-gradient(circle at bottom left,
+        rgba(0,180,255,0.12),
+        transparent 40%),
+
+        linear-gradient(
+          135deg,
+          #020617 0%,
+          #03121f 40%,
+          #000814 100%
+        );
     }
 
-    .grid {
-      position: absolute;
-      width: 200%;
-      height: 200%;
+    .background::before{
+      content:'';
+      position:absolute;
+      inset:0;
+
+      background:
+        radial-gradient(
+          circle at center,
+          rgba(0,255,136,0.08),
+          transparent 60%
+        );
+
+      z-index:0;
+    }
+
+    .grid{
+      position:absolute;
+      width:200%;
+      height:200%;
+
       background-image:
-        linear-gradient(rgba(0,255,136,0.05) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0,255,136,0.05) 1px, transparent 1px);
-      background-size: 60px 60px;
-      transform: perspective(700px) rotateX(75deg);
-      animation: moveGrid 15s linear infinite;
-      top: 40%;
-      left: -50%;
+        linear-gradient(
+          rgba(0,255,136,0.05) 1px,
+          transparent 1px
+        ),
+
+        linear-gradient(
+          90deg,
+          rgba(0,255,136,0.05) 1px,
+          transparent 1px
+        );
+
+      background-size:60px 60px;
+
+      transform:
+        perspective(700px)
+        rotateX(75deg);
+
+      animation:moveGrid 15s linear infinite;
+
+      top:40%;
+      left:-50%;
     }
 
-    @keyframes moveGrid {
-      from {
-        transform: perspective(700px) rotateX(75deg) translateY(0);
+    @keyframes moveGrid{
+      from{
+        transform:
+          perspective(700px)
+          rotateX(75deg)
+          translateY(0);
       }
-      to {
-        transform: perspective(700px) rotateX(75deg) translateY(60px);
-      }
-    }
 
-    .logo {
-      position: absolute;
-      width: 320px;
-      opacity: 0.08;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      animation: pulseLogo 8s ease-in-out infinite;
-      filter: drop-shadow(0 0 30px rgba(0,255,136,0.6));
-    }
-
-    @keyframes pulseLogo {
-      0% {
-        transform: translate(-50%, -50%) scale(1) rotate(0deg);
-      }
-      50% {
-        transform: translate(-50%, -52%) scale(1.08) rotate(2deg);
-      }
-      100% {
-        transform: translate(-50%, -50%) scale(1) rotate(0deg);
+      to{
+        transform:
+          perspective(700px)
+          rotateX(75deg)
+          translateY(60px);
       }
     }
 
-    .bars {
-      position: absolute;
-      bottom: 0;
-      right: 8%;
-      display: flex;
-      align-items: flex-end;
-      gap: 12px;
-      height: 300px;
+    .logo{
+      position:absolute;
+
+      width:320px;
+
+      opacity:0.08;
+
+      top:50%;
+      left:50%;
+
+      transform:
+        translate(-50%, -50%);
+
+      animation:
+        pulseLogo 8s ease-in-out infinite;
+
+      filter:
+        drop-shadow(
+          0 0 30px rgba(0,255,136,0.6)
+        );
+
+      z-index:1;
     }
 
-    .bar {
-      width: 38px;
-      background: linear-gradient(to top, #00ff88, #2effb4);
-      border-radius: 12px 12px 0 0;
-      box-shadow: 0 0 25px rgba(0,255,136,0.5);
-      animation: grow 4s ease-in-out infinite;
-    }
+    @keyframes pulseLogo{
 
-    .bar:nth-child(1) { height: 80px; animation-delay: 0.2s; }
-    .bar:nth-child(2) { height: 120px; animation-delay: 0.4s; }
-    .bar:nth-child(3) { height: 160px; animation-delay: 0.6s; }
-    .bar:nth-child(4) { height: 210px; animation-delay: 0.8s; }
-    .bar:nth-child(5) { height: 270px; animation-delay: 1s; }
-
-    @keyframes grow {
-      0%,100% {
-        transform: scaleY(1);
+      0%{
+        transform:
+          translate(-50%, -50%)
+          scale(1)
+          rotate(0deg);
       }
-      50% {
-        transform: scaleY(1.12);
+
+      50%{
+        transform:
+          translate(-50%, -52%)
+          scale(1.08)
+          rotate(2deg);
       }
-    }
 
-    .arrow {
-      position: absolute;
-      right: 5%;
-      bottom: 180px;
-      width: 300px;
-      height: 8px;
-      background: #00ff88;
-      transform: rotate(-28deg);
-      border-radius: 10px;
-      box-shadow: 0 0 20px rgba(0,255,136,0.7);
-    }
-
-    .arrow::after {
-      content: '';
-      position: absolute;
-      right: -10px;
-      top: -14px;
-      border-left: 30px solid #00ff88;
-      border-top: 18px solid transparent;
-      border-bottom: 18px solid transparent;
-      filter: drop-shadow(0 0 12px rgba(0,255,136,0.8));
-    }
-
-    .particles span {
-      position: absolute;
-      width: 6px;
-      height: 6px;
-      background: #00ff88;
-      border-radius: 50%;
-      opacity: 0.6;
-      animation: float 10s linear infinite;
-    }
-
-    @keyframes float {
-      from {
-        transform: translateY(100vh) scale(0);
-      }
-      to {
-        transform: translateY(-120vh) scale(1.5);
+      100%{
+        transform:
+          translate(-50%, -50%)
+          scale(1)
+          rotate(0deg);
       }
     }
 
-    .headline {
-      position: absolute;
-      left: 7%;
-      top: 20%;
-      max-width: 620px;
-      z-index: 10;
+    .bars{
+      position:absolute;
+
+      bottom:0;
+      right:8%;
+
+      display:flex;
+      align-items:flex-end;
+
+      gap:12px;
+
+      height:300px;
+
+      z-index:2;
     }
 
-    .tag {
-      display: inline-block;
-      padding: 12px 24px;
-      border: 1px solid rgba(0,255,136,0.4);
-      border-radius: 40px;
-      color: #00ff88;
-      background: rgba(0,255,136,0.08);
-      margin-bottom: 20px;
-      font-size: 20px;
-      backdrop-filter: blur(10px);
+    .bar{
+      width:38px;
+
+      background:
+        linear-gradient(
+          to top,
+          #00ff88,
+          #2effb4
+        );
+
+      border-radius:12px 12px 0 0;
+
+      box-shadow:
+        0 0 25px rgba(0,255,136,0.5);
+
+      animation:
+        grow 4s ease-in-out infinite;
     }
 
-    h1 {
-      font-size: 78px;
-      line-height: 1.05;
-      color: white;
-      margin-bottom: 25px;
-      font-weight: 800;
+    .bar:nth-child(1){
+      height:80px;
+      animation-delay:0.2s;
     }
 
-    h1 span {
-      color: #00ff88;
+    .bar:nth-child(2){
+      height:120px;
+      animation-delay:0.4s;
     }
 
-    p {
-      color: rgba(255,255,255,0.82);
-      font-size: 28px;
-      line-height: 1.5;
-      max-width: 760px;
+    .bar:nth-child(3){
+      height:160px;
+      animation-delay:0.6s;
     }
 
-    .cta {
-      margin-top: 40px;
-      display: inline-block;
-      padding: 22px 42px;
-      background: linear-gradient(90deg, #00ff88, #1ce07a);
-      color: #00150b;
-      border-radius: 18px;
-      font-size: 24px;
-      font-weight: bold;
-      box-shadow: 0 0 35px rgba(0,255,136,0.35);
+    .bar:nth-child(4){
+      height:210px;
+      animation-delay:0.8s;
+    }
+
+    .bar:nth-child(5){
+      height:270px;
+      animation-delay:1s;
+    }
+
+    @keyframes grow{
+
+      0%,100%{
+        transform:scaleY(1);
+      }
+
+      50%{
+        transform:scaleY(1.12);
+      }
+    }
+
+    .arrow{
+      position:absolute;
+
+      right:5%;
+      bottom:180px;
+
+      width:300px;
+      height:8px;
+
+      background:#00ff88;
+
+      transform:rotate(-28deg);
+
+      border-radius:10px;
+
+      box-shadow:
+        0 0 20px rgba(0,255,136,0.7);
+
+      z-index:2;
+    }
+
+    .arrow::after{
+      content:'';
+
+      position:absolute;
+
+      right:-10px;
+      top:-14px;
+
+      border-left:30px solid #00ff88;
+      border-top:18px solid transparent;
+      border-bottom:18px solid transparent;
+
+      filter:
+        drop-shadow(
+          0 0 12px rgba(0,255,136,0.8)
+        );
+    }
+
+    .particles span{
+      position:absolute;
+
+      width:6px;
+      height:6px;
+
+      background:#00ff88;
+
+      border-radius:50%;
+
+      opacity:0.6;
+
+      animation:
+        float 10s linear infinite;
+
+      z-index:1;
+    }
+
+    @keyframes float{
+
+      from{
+        transform:
+          translateY(100vh)
+          scale(0);
+      }
+
+      to{
+        transform:
+          translateY(-120vh)
+          scale(1.5);
+      }
+    }
+
+    .headline{
+      position:absolute;
+
+      left:7%;
+      top:20%;
+
+      max-width:620px;
+
+      z-index:10;
+    }
+
+    .tag{
+      display:inline-block;
+
+      padding:12px 24px;
+
+      border:
+        1px solid rgba(0,255,136,0.4);
+
+      border-radius:40px;
+
+      color:#00ff88;
+
+      background:
+        rgba(0,255,136,0.08);
+
+      margin-bottom:20px;
+
+      font-size:20px;
+
+      backdrop-filter:blur(10px);
+    }
+
+    h1{
+      font-size:78px;
+      line-height:1.05;
+
+      color:white;
+
+      margin-bottom:25px;
+
+      font-weight:800;
+    }
+
+    h1 span{
+      color:#00ff88;
+    }
+
+    p{
+      color:rgba(255,255,255,0.82);
+
+      font-size:28px;
+
+      line-height:1.5;
+
+      max-width:760px;
+    }
+
+    .cta{
+      margin-top:40px;
+
+      display:inline-block;
+
+      padding:22px 42px;
+
+      background:
+        linear-gradient(
+          90deg,
+          #00ff88,
+          #1ce07a
+        );
+
+      color:#00150b;
+
+      border-radius:18px;
+
+      font-size:24px;
+
+      font-weight:bold;
+
+      box-shadow:
+        0 0 35px rgba(0,255,136,0.35);
+    }
+
+    @media(max-width:768px){
+
+      h1{
+        font-size:42px;
+      }
+
+      p{
+        font-size:18px;
+      }
+
+      .headline{
+        left:5%;
+        right:5%;
+        max-width:90%;
+        top:12%;
+      }
+
+      .bars{
+        right:2%;
+        transform:scale(0.7);
+      }
+
+      .logo{
+        width:180px;
+      }
+
+      .cta{
+        font-size:18px;
+        padding:18px 28px;
+      }
     }
 
   </style>
+
 </head>
+
 <body>
 
   <div class="background">
 
     <div class="grid"></div>
 
-    <img src="{{ url_for('static', filename='logo.png') }}" class="logo">
+    <img
+      src="{{ url_for('static', filename='logo.png') }}"
+      class="logo"
+    >
 
     <div class="particles">
+
       <span style="left:5%; animation-delay:0s"></span>
+
       <span style="left:15%; animation-delay:1s"></span>
+
       <span style="left:28%; animation-delay:3s"></span>
+
       <span style="left:45%; animation-delay:2s"></span>
+
       <span style="left:60%; animation-delay:5s"></span>
+
       <span style="left:70%; animation-delay:4s"></span>
+
       <span style="left:85%; animation-delay:6s"></span>
+
     </div>
 
     <div class="headline">
-      <div class="tag">✨ Nova Era da Automação Corporativa</div>
+
+      <div class="tag">
+        ✨ Nova Era da Automação Corporativa
+      </div>
 
       <h1>
-        Multiplique sua <span>Presença Digital</span>
+        Multiplique sua
+        <span>Presença Digital</span>
         sem gastar horas do seu dia
       </h1>
 
@@ -237,19 +471,34 @@
       <div class="cta">
         Começar Agora
       </div>
+
     </div>
 
     <div class="bars">
+
       <div class="bar"></div>
       <div class="bar"></div>
       <div class="bar"></div>
       <div class="bar"></div>
       <div class="bar"></div>
+
     </div>
 
     <div class="arrow"></div>
 
   </div>
+
+  <script>
+
+    document.addEventListener(
+      "click",
+      () => {
+        document.documentElement.requestFullscreen();
+      },
+      { once:true }
+    );
+
+  </script>
 
 </body>
 </html>
