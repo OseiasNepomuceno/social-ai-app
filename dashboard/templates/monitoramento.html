@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 
-{% block title %}Monitoramento - Social COREGOV{% endblock %}
+{% block title %}
+    Monitoramento do Sistema - Social COREGOV
+{% endblock %}
 
 {% block content %}
 <div class="space-y-6 max-w-6xl mx-auto">
@@ -10,106 +12,126 @@
             <h1 class="text-2xl font-bold text-white tracking-wide">
                 <i class="fa-solid fa-chart-line text-blue-500 mr-2"></i>Monitoramento do Sistema
             </h1>
-            <p class="text-sm text-gray-400 mt-1">Visão em tempo real da atividade dos clientes na plataforma.</p>
+            <p class="text-sm text-gray-400 mt-1">
+                Controle operacional e análise de tráfego de clientes em tempo real integrados ao Supabase.
+            </p>
         </div>
-        <div class="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-3 py-1.5 rounded-lg text-xs font-semibold uppercase">
+        <div class="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider">
             Modo Administrador
         </div>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="bg-gray-800 rounded-xl border border-gray-700 p-6 relative overflow-hidden">
+        <div class="bg-gray-800 rounded-xl border border-gray-700 p-6 shadow-xl relative overflow-hidden">
             <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Online Agora</p>
             <h2 class="text-3xl font-extrabold text-white mt-2">{{ usuarios_online }}</h2>
-            <div class="absolute top-6 right-6 text-green-500/20 text-4xl"><i class="fa-solid fa-users"></i></div>
+            <div class="absolute top-6 right-6 w-10 h-10 rounded-lg bg-green-500/10 text-green-400 flex items-center justify-center text-lg">
+                <i class="fa-solid fa-users"></i>
+            </div>
         </div>
 
-        <div class="bg-gray-800 rounded-xl border border-gray-700 p-6 relative overflow-hidden">
+        <div class="bg-gray-800 rounded-xl border border-gray-700 p-6 shadow-xl relative overflow-hidden">
             <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Acessos Hoje</p>
             <h2 class="text-3xl font-extrabold text-white mt-2">{{ usuarios_hoje }}</h2>
-            <div class="absolute top-6 right-6 text-blue-500/20 text-4xl"><i class="fa-solid fa-calendar-check"></i></div>
+            <div class="absolute top-6 right-6 w-10 h-10 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center text-lg">
+                <i class="fa-solid fa-calendar-day"></i>
+            </div>
         </div>
 
-        <div class="bg-gray-800 rounded-xl border border-gray-700 p-6 relative overflow-hidden">
-            <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Mês Atual</p>
+        <div class="bg-gray-800 rounded-xl border border-gray-700 p-6 shadow-xl relative overflow-hidden">
+            <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Últimos 30 Dias</p>
             <h2 class="text-3xl font-extrabold text-white mt-2">{{ usuarios_mes }}</h2>
-            <div class="absolute top-6 right-6 text-purple-500/20 text-4xl"><i class="fa-solid fa-chart-pie"></i></div>
+            <div class="absolute top-6 right-6 w-10 h-10 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center text-lg">
+                <i class="fa-solid fa-chart-bar"></i>
+            </div>
         </div>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
         
-        <div class="bg-gray-800 rounded-xl border border-gray-700 p-5 flex flex-col h-[300px]">
+        <div class="bg-gray-800 rounded-xl border border-gray-700 p-5 flex flex-col h-[280px] shadow-xl">
             <h4 class="text-xs font-bold text-gray-400 uppercase mb-4 flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Online Agora
+                <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Clientes Online Agora
             </h4>
-            <ul class="space-y-3 overflow-y-auto flex-1 pr-2 custom-scrollbar">
+            <ul class="space-y-2 overflow-y-auto flex-1 pr-2 custom-scrollbar">
                 {% for user in lista_online %}
-                <li class="flex items-center gap-3 text-sm text-gray-300 border-b border-gray-700/50 pb-2">
-                    <i class="fa-solid fa-circle-user text-gray-500"></i>
-                    <span>{{ user.nome or "Usuário sem nome" }}</span>
+                <li class="flex items-center gap-2.5 text-xs text-gray-300 border-b border-gray-700/40 pb-2">
+                    <i class="fa-solid fa-circle-user text-green-400 text-sm"></i>
+                    <span class="truncate" title="{{ user.email }}">{{ user.email }}</span>
                 </li>
                 {% else %}
-                <li class="text-xs text-gray-600 italic text-center mt-10">Ninguém online agora.</li>
+                <li class="text-xs text-gray-500 italic text-center mt-12">Ninguém online nos últimos 5 min.</li>
                 {% endfor %}
             </ul>
         </div>
 
-        <div class="bg-gray-800 rounded-xl border border-gray-700 p-5 flex flex-col h-[300px]">
+        <div class="bg-gray-800 rounded-xl border border-gray-700 p-5 flex flex-col h-[280px] shadow-xl">
             <h4 class="text-xs font-bold text-gray-400 uppercase mb-4 flex items-center gap-2">
                 <span class="w-2 h-2 rounded-full bg-blue-500"></span> Acessaram Hoje
             </h4>
-            <ul class="space-y-3 overflow-y-auto flex-1 pr-2 custom-scrollbar">
+            <ul class="space-y-2 overflow-y-auto flex-1 pr-2 custom-scrollbar">
                 {% for user in lista_hoje %}
-                <li class="flex items-center gap-3 text-sm text-gray-300 border-b border-gray-700/50 pb-2">
-                    <i class="fa-solid fa-circle-user text-gray-500"></i>
-                    <span>{{ user.nome or "Usuário sem nome" }}</span>
+                <li class="flex items-center gap-2.5 text-xs text-gray-300 border-b border-gray-700/40 pb-2">
+                    <i class="fa-solid fa-circle-user text-blue-400 text-sm"></i>
+                    <span class="truncate" title="{{ user.email }}">{{ user.email }}</span>
                 </li>
                 {% else %}
-                <li class="text-xs text-gray-600 italic text-center mt-10">Nenhum acesso hoje.</li>
+                <li class="text-xs text-gray-500 italic text-center mt-12">Nenhum acesso registrado hoje.</li>
                 {% endfor %}
             </ul>
         </div>
 
-        <div class="bg-gray-800 rounded-xl border border-gray-700 p-5 flex flex-col h-[300px]">
+        <div class="bg-gray-800 rounded-xl border border-gray-700 p-5 flex flex-col h-[280px] shadow-xl">
             <h4 class="text-xs font-bold text-gray-400 uppercase mb-4 flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-purple-500"></span> Acessos no Mês
+                <span class="w-2 h-2 rounded-full bg-purple-500"></span> Acessaram no Mês
             </h4>
-            <ul class="space-y-3 overflow-y-auto flex-1 pr-2 custom-scrollbar">
+            <ul class="space-y-2 overflow-y-auto flex-1 pr-2 custom-scrollbar">
                 {% for user in lista_mes %}
-                <li class="flex items-center gap-3 text-sm text-gray-300 border-b border-gray-700/50 pb-2">
-                    <i class="fa-solid fa-circle-user text-gray-500"></i>
-                    <span>{{ user.nome or "Usuário sem nome" }}</span>
+                <li class="flex items-center gap-2.5 text-xs text-gray-300 border-b border-gray-700/40 pb-2">
+                    <i class="fa-solid fa-circle-user text-purple-400 text-sm"></i>
+                    <span class="truncate" title="{{ user.email }}">{{ user.email }}</span>
                 </li>
                 {% else %}
-                <li class="text-xs text-gray-600 italic text-center mt-10">Nenhum acesso este mês.</li>
+                <li class="text-xs text-gray-500 italic text-center mt-12">Nenhum histórico este mês.</li>
                 {% endfor %}
             </ul>
         </div>
+
     </div>
 
-    <div class="bg-gray-800 rounded-xl border border-gray-700 p-6 shadow-xl">
-        <h4 class="text-sm font-bold text-gray-400 uppercase mb-6"><i class="fa-solid fa-chart-area mr-2"></i>Frequência de Acesso (7 dias)</h4>
-        <div class="flex items-end justify-between h-48 px-2 gap-4">
-            {% for i in range(grafico_dados|length) %}
-            <div class="flex flex-col items-center flex-1 group">
-                <div class="w-full bg-blue-600/20 group-hover:bg-blue-500/40 rounded-t-lg transition-all relative" 
-                     style="height: {{ (grafico_dados[i] * 10) if grafico_dados[i] < 15 else 150 }}px;">
-                    <span class="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] text-blue-400 font-bold opacity-0 group-hover:opacity-100 transition-opacity">
-                        {{ grafico_dados[i] }}
-                    </span>
+    <div class="bg-gray-800 rounded-xl border border-gray-700 p-5 shadow-xl">
+        <h4 class="text-sm font-semibold text-white border-b border-gray-700/50 pb-3 mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-chart-area text-purple-400"></i> Frequência de Acesso (Últimos 7 dias)
+        </h4>
+        <div class="flex items-end justify-between h-40 pt-4 px-2 gap-2">
+            {% if grafico_dados %}
+                {% set max_acessos = grafico_dados | max %}
+                {% set max_val = max_acessos if max_acessos > 0 else 1 %}
+                
+                {% for i in range(grafico_dados | length) %}
+                    <div class="flex flex-col items-center flex-1 group">
+                        <span class="text-[10px] bg-gray-900 text-white rounded px-1.5 py-0.5 mb-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                            {{ grafico_dados[i] }}
+                        </span>
+                        <div class="w-full bg-gradient-to-t from-blue-600 to-purple-500 rounded-t transition-all duration-500 hover:from-blue-500 hover:to-purple-400" 
+                             style="height: {{ (grafico_dados[i] / max_val) * 110 }}px; min-height: 4px;">
+                        </div>
+                        <span class="text-[11px] text-gray-400 mt-2 tracking-tighter">{{ grafico_labels[i] }}</span>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="w-full h-full flex items-center justify-center text-xs text-gray-500 italic">
+                    Nenhum dado de histórico disponível para os últimos 7 dias.
                 </div>
-                <span class="text-[10px] text-gray-500 mt-2">{{ grafico_labels[i] }}</span>
-            </div>
-            {% endfor %}
+            {% endif %}
         </div>
     </div>
 </div>
 
 <style>
-    /* Scrollbar Bonita para as Listas */
+    /* Scrollbar minimalista e escura para as listas */
     .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-    .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
+    .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #374151; border-radius: 10px; }
     .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #4b5563; }
 </style>
