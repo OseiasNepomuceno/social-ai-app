@@ -26,7 +26,7 @@ from dashboard.ia_engine import gerar_conteudo
 from flask import Flask, render_template
 
 # AGENTE DE VARIAÇÃO: Importando o pipeline de multiplicação automática
-from dashboard.agents.media_variation_agent import iniciar_multiplicacao_banco_existente
+#from dashboard.agents.media_variation_agent import iniciar_multiplicacao_banco_existente
 
 # =========================
 # CONFIGURAÇÃO UNIFICADA E BLINDADA DO FLASK
@@ -174,16 +174,16 @@ def monitoramento():
         return redirect("/")
 
     # ⚡ SOLUÇÃO DE TIMEOUT: Mantendo seu robô assíncrono em segundo plano
-    try:
-        print("⚡ Gatilho detectado via Painel Admin: Disparando robô multiplicador...")
-        thread_agente = threading.Thread(
-            target=iniciar_multiplicacao_banco_existente,
-            kwargs={"limite_por_rodada": 20},
-            daemon=True
-        )
-        thread_agente.start()
-    except Exception as err_agente:
-        print(f"⚠️ Falha ao criar a thread de multiplicação: {str(err_agente)}")
+    #try:
+        #print("⚡ Gatilho detectado via Painel Admin: Disparando robô multiplicador...")
+        #thread_agente = threading.Thread(
+            #target=iniciar_multiplicacao_banco_existente,
+            #kwargs={"limite_por_rodada": 20},
+            #daemon=True
+        #)
+        #thread_agente.start()
+   #except Exception as err_agente:
+        #print(f"⚠️ Falha ao criar a thread de multiplicação: {str(err_agente)}")
 
     # Inicialização das variáveis limpas para evitar quebras
     usuarios_online = 0
