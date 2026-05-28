@@ -23,10 +23,9 @@ from dashboard.agents.analisador_media import gerar_relatorio_completo
 from services.supabase_storage import upload_image
 from dashboard.agents.media_selector import selecionar_imagem
 from dashboard.ia_engine import gerar_conteudo
-from flask import Flask, render_template
 
 # AGENTE DE VARIAÇÃO: Importando o pipeline de multiplicação automática
-#from dashboard.agents.media_variation_agent import iniciar_multiplicacao_banco_existente
+from dashboard.agents.media_variation_agent import iniciar_multiplicacao_banco_existente
 
 # =========================
 # CONFIGURAÇÃO UNIFICADA E BLINDADA DO FLASK
@@ -65,8 +64,6 @@ def favicon():
         mimetype='image/vnd.microsoft.icon'
     )
 
-
-
 # =========================
 # FUNDO ANIMADO
 # =========================
@@ -74,7 +71,6 @@ def favicon():
 @app.route("/fundo")
 def fundo_video():
     return render_template("fundo-video.html")
-
 
 # =========================
 # SUPABASE
@@ -173,17 +169,17 @@ def monitoramento():
         print(f"🚨 Tentativa de acesso não autorizado ao monitoramento por: {session.get('email')}")
         return redirect("/")
 
-    # ⚡ SOLUÇÃO DE TIMEOUT: Mantendo seu robô assíncrono em segundo plano
-    #try:
-        #print("⚡ Gatilho detectado via Painel Admin: Disparando robô multiplicador...")
-        #thread_agente = threading.Thread(
-            #target=iniciar_multiplicacao_banco_existente,
-            #kwargs={"limite_por_rodada": 20},
-            #daemon=True
-        #)
-        #thread_agente.start()
-   #except Exception as err_agente:
-        #print(f"⚠️ Falha ao criar a thread de multiplicação: {str(err_agente)}")
+    # ⚡ SOLUÇÃO DE TIMEOUT: Mantendo seu robô assíncrono em segundo plano ativo e seguro
+    try:
+        print("⚡ Gatilho detectado via Painel Admin: Disparando robô multiplicador...")
+        thread_agente = threading.Thread(
+            target=iniciar_multiplicacao_banco_existente,
+            kwargs={"limite_por_rodada": 20},
+            daemon=True
+        )
+        thread_agente.start()
+    except Exception as err_agente:
+        print(f"⚠️ Falha ao criar a thread de multiplicação: {str(err_agente)}")
 
     # Inicialização das variáveis limpas para evitar quebras
     usuarios_online = 0
@@ -200,7 +196,6 @@ def monitoramento():
         
         # --- 1. USUÁRIOS ONLINE (Últimos 5 minutos) ---
         cinco_minutos_atras = (agora - timedelta(minutes=5)).isoformat()
-        # Buscamos o 'id' e o 'email' da tabela 'users'
         res_online = supabase.table("users").select("id", "email").gte("ultima_atividade", cinco_minutos_atras).execute()
         if res_online.data:
             lista_online = res_online.data
@@ -208,10 +203,8 @@ def monitoramento():
 
         # --- 2. ACESSOS HOJE ---
         hoje_str = agora.strftime("%Y-%m-%d")
-        # Fazemos o Join trazendo os dados do usuário conectado através da relação da tabela users (buscando o email)
         res_hoje = supabase.table("analytics_acessos").select("user_id", "users(email)").eq("data_acesso", hoje_str).execute()
         if res_hoje.data:
-            # Filtra registros válidos e mapeia para uma lista limpa
             lista_hoje = [{"email": item["users"]["email"]} for item in res_hoje.data if item.get("users")]
             usuarios_hoje = len(lista_hoje)
 
@@ -219,7 +212,6 @@ def monitoramento():
         trinta_dias_atras = (agora - timedelta(days=30)).strftime("%Y-%m-%d")
         res_mes = supabase.table("analytics_acessos").select("user_id", "users(email)").gte("data_acesso", trinta_dias_atras).execute()
         if res_mes.data:
-            # Usamos um set para eliminar e-mails duplicados no relatório mensal
             emails_unicos_mes = {item["users"]["email"] for item in res_mes.data if item.get("users")}
             lista_mes = [{"email": email} for email in emails_unicos_mes]
             usuarios_mes = len(lista_mes)
@@ -258,22 +250,6 @@ def monitoramento():
         grafico_labels=grafico_labels,
         grafico_dados=grafico_dados
     )
-    # --- 3. SAÚDE DOS AGENTES ---
-    try:
-        relatorio = gerar_relatorio_completo()
-    except Exception as e:
-        print("Erro ao gerar relatório do monitoramento:", str(e))
-        relatorio = {}
-        
-    return render_template(
-        'monitoramento.html', 
-        data=relatorio,
-        usuarios_online=usuarios_online,
-        usuarios_hoje=usuarios_hoje,
-        usuarios_mes=usuarios_mes,
-        grafico_labels=grafico_labels,
-        grafico_dados=grafico_dados
-    )
 
 # =========================
 # CONEXÃO OAUTH LINKEDIN (LOGIN E CALLBACK)
@@ -281,9 +257,6 @@ def monitoramento():
 
 @app.route("/linkedin/login", methods=["GET"])
 def linkedin_login():
-    """
-    Redireciona o usuário para a tela de permissões OAuth do LinkedIn.
-    """
     if "user_id" not in session:
         return redirect("/login")
         
@@ -312,12 +285,8 @@ def linkedin_login():
 
 @app.route("/linkedin/callback", methods=["GET"])
 def linkedin_callback():
-    """
-    Recebe o 'code' temporário enviado pelo LinkedIn, faz a troca pelo Access Token
-    definitivo via chamada HTTP externa e persiste as credenciais no Supabase.
-    """
     code = request.args.get("code")
-    state = request.args.get("state")  # Contém o user_id passado no state do login
+    state = request.args.get("state")  
     error = request.args.get("error")
     
     if error:
@@ -351,7 +320,6 @@ def linkedin_callback():
         
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         
-        # Realiza a chamada POST externa de forma segura usando a biblioteca 'requests'
         response = requests.post(
             "https://www.linkedin.com/oauth/v2/accessToken",
             data=token_data,
@@ -420,7 +388,7 @@ def verificar_e_atualizar_pagamento(user_id):
 
                 return {
                     "success": True,
-                    "message": "Plano updated com sucesso",
+                    "message": "Plano atualizado com sucesso",
                     "payment_id": payment_id
                 }
 
@@ -691,7 +659,7 @@ def register():
                     "posts_usados": 0
                 }
                 supabase.table("users").upsert(dados_usuario).execute()
-                print(f"✅ Usuário saved na tabela pública 'users': {email}")
+                print(f"✅ Usuário salvo na tabela pública 'users': {email}")
             except Exception as table_err:
                 print(f"⚠️ Alerta ao salvar na tabela 'users': {str(table_err)}")
 
@@ -791,7 +759,7 @@ def ia():
                 supabase.table("users").update({
                     "posts_usados": novo_total
                 }).eq("id", session["user_id"]).execute()
-                print(f"Contador updated! Total usado: {novo_total}")
+                print(f"Contador atualizado! Total usado: {novo_total}")
 
             flash("Postagem criada e enviada para agendamentos com sucesso!", "success")
             return redirect(url_for("ia"))
@@ -841,7 +809,7 @@ def publicacoes():
         print("ERRO ROTA PUBLICACOES:", str(e))
         return render_template("publicacoes.html", erro=str(e), posts=[])
 
-# 🔒 REVISADO: ROTA DE CONFIGURAÇÕES AGORA CARREGA OS CANAIS SOCIAIS EXCLUSIVOS
+# 🔒 REVISADO: ROTA DE CONFIGURAÇÕES INTEGRADA COM CANAIS SOCIAIS EXCLUSIVOS
 @app.route("/configuracoes")
 def configuracoes():
     if "user_id" not in session:
@@ -862,6 +830,10 @@ def configuracoes():
                 elif canal.get("platform") == "linkedin":
                     linkedin_cadastro = canal.get("channel_exclusive_id", "")
         
+        linkedin_conectado = False
+        if usuario.data and usuario.data[0].get("linkedin_token"):
+            linkedin_conectado = True
+
         if not usuario.data:
             user_backup = {
                 "email": session.get("email", "E-mail na Sessão"),
@@ -869,129 +841,16 @@ def configuracoes():
             }
             return render_template("configuracoes.html", user=user_backup, linkedin_conectado=False, instagram_valer=instagram_cadastro, linkedin_valer=linkedin_cadastro)
         
-        user = usuario.data[0]
-        linkedin_conectado = bool(user.get("linkedin_token"))
-        
         return render_template(
             "configuracoes.html", 
-            user=user, 
-            linkedin_conectado=linkedin_conectado,
-            instagram_valer=instagram_cadastro,
+            user=usuario.data[0], 
+            linkedin_conectado=linkedin_conectado, 
+            instagram_valer=instagram_cadastro, 
             linkedin_valer=linkedin_cadastro
         )
     except Exception as e:
-        print("CONFIG ERROR BACKUP ACTIVE:", str(e))
-        user_backup = {"email": session.get("email", "E-mail na Sessão"), "plano": "free"}
-        return render_template("configuracoes.html", user=user_backup, linkedin_conectado=False, instagram_valer="", linkedin_valer="")
-
-# 🔒 NOVA ROTA: RECEBE OS DADOS DO FORMULÁRIO E APLICA A BARREIRA UNIQUE DO SUPABASE
-@app.route("/salvar-canais", methods=["POST"])
-def salvar_canais():
-    if "user_id" not in session:
-        return redirect("/login")
-        
-    user_id_atual = session["user_id"]
-    
-    # Captura os dados do formulário limpando os espaços e tirando o @
-    instagram_input = request.form.get("instagram", "").strip().lower().replace("@", "")
-    linkedin_input = request.form.get("linkedin", "").strip().lower()
-    
-    canais_para_salvar = [
-        {"platform": "instagram", "value": instagram_input},
-        {"platform": "linkedin", "value": linkedin_input}
-    ]
-    
-    try:
-        for canal in canais_para_salvar:
-            # Só executa a operação se o campo foi preenchido pelo usuário
-            if canal["value"]:
-                payload = {
-                    "user_id": user_id_atual,
-                    "platform": canal["platform"],
-                    "channel_exclusive_id": canal["value"]
-                }
-                # Faz o upsert baseado na chave única do usuário + plataforma
-                supabase.table("user_social_channels").upsert(payload, on_conflict="user_id,platform").execute()
-            else:
-                # Se o usuário deixou o campo em branco, remove o vínculo antigo caso exista
-                supabase.table("user_social_channels").delete().eq("user_id", user_id_atual).eq("platform", canal["platform"]).execute()
-                
-        flash("Canais sociais salvos e vinculados com exclusividade!", "success")
-    except Exception as e:
-        error_msg = str(e)
-        print(f"❌ ERRO AO SALVAR CANAIS EXCLUSIVOS: {error_msg}")
-        
-        # Intercepta a violação de chave única gerada pelo Supabase
-        if "unique_channel_per_platform" in error_msg or "violates unique constraint" in error_msg:
-            flash("Erro: Este perfil do Instagram ou LinkedIn já está sendo usado por outro usuário na nossa plataforma.", "danger")
-        else:
-            flash(f"Não foi possível salvar os canais: {error_msg}", "danger")
-            
-    return redirect(url_for("configuracoes"))
-
-@app.route("/planos")
-def planos():
-    if "user_id" not in session:
-        return redirect("/login")
-    try:
-        verificar_e_atualizar_pagamento(session["user_id"])
-        
-        busca_user = supabase.table("users").select("*").eq("id", session["user_id"]).execute()
-        usuario_atual = busca_user.data[0] if busca_user.data else None
-        
-        return render_template("planos.html", planos=PLANOS, usuario=usuario_atual)
-    except Exception as e:
-        print("ERRO ROTA PLANOS:", str(e))
-        return str(e)
-
-@app.route("/checkout/pro")
-def checkout_pro():
-    if "user_id" not in session:
-        return redirect("/login")
-    try:
-        preference_data = {
-            "items": [{"title": "Social AI Pro", "quantity": 1, "currency_id": "BRL", "unit_price": 49.90}],
-            "payer": {"email": session["email"]},
-            "back_urls": {
-                "success": "https://app.coregov.com.br/planos",
-                "failure": "https://app.coregov.com.br/planos",
-                "pending": "https://app.coregov.com.br/planos"
-            },
-            "auto_return": "approved",
-            "external_reference": session["user_id"]
-        }
-        preference = mp.preference().create(preference_data)["response"]
-        return redirect(preference["init_point"])
-    except Exception as e:
-        return str(e)
-
-@app.route("/webhook/mercadopago", methods=["POST"])
-def webhook_mercadopago():
-    try:
-        data = request.json
-        if not data:
-            return {"success": False}, 400
-
-        payment_type = data.get("type") or data.get("topic")
-        if payment_type != "payment":
-            return {"success": True}, 200
-
-        payment_id = data["data"].get("id") if "data" in data else data.get("id")
-        if not payment_id:
-            return {"success": False}, 400
-
-        payment = mp.payment().get(payment_id)["response"]
-        if payment.get("status") != "approved":
-            return {"success": True}, 200
-
-        user_id = payment.get("external_reference")
-        if not user_id:
-            return {"success": False}, 400
-
-        supabase.table("users").update({"plano": "pro", "posts_limite": 60}).eq("id", user_id).execute()
-        return {"success": True}, 200
-    except Exception as e:
-        return {"success": False, "error": str(e)}, 500
+        print("❌ ERRO NA ROTA CONFIGURAÇÕES:", str(e))
+        return redirect("/")
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
