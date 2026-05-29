@@ -114,11 +114,9 @@ PLANOS = {
 
 @app.route("/instagram/login")
 def instagram_login():
-    if "user_id" not in session:
-        return redirect("/login")
-
-    # Mantenha APENAS estes dois para testar se o erro de 'Invalid Scopes' some
-    scope = "public_profile"
+    # 1. Remova 'email' se não for estritamente necessário agora
+    # 2. Use os escopos que estão com check verde no seu painel (print image_ab6f1b.png)
+    scope = "instagram_business_basic,instagram_manage_comments,instagram_business_manage_messages,pages_show_list,pages_read_engagement,pages_manage_posts"
     
     auth_url = (
         f"https://www.facebook.com/v21.0/dialog/oauth?"
@@ -126,8 +124,8 @@ def instagram_login():
         f"&redirect_uri=https://app.coregov.com.br/facebook/callback"
         f"&scope={scope}"
         f"&response_type=code"
-        f"&state={session['user_id']}"
-        f"&auth_type=rerequest" # Isso força o Facebook a ignorar permissões antigas
+        f"&state={session.get('user_id', 'init')}"
+        f"&auth_type=rerequest" 
     )
     return redirect(auth_url)
 
