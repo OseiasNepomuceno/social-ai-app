@@ -852,5 +852,59 @@ def configuracoes():
         print("❌ ERRO NA ROTA CONFIGURAÇÕES:", str(e))
         return redirect("/")
 
+# =========================
+# GESTÃO FINANCEIRA: PLANOS E AFILIADOS
+# =========================
+
+@app.route("/planos")
+def planos():
+    if "user_id" not in session:
+        return redirect("/login")
+        
+    try:
+        # Busca as informações atualizadas do usuário logado (Plano, Posts Usados, etc.)
+        usuario_res = supabase.table("users").select("*").eq("id", session["user_id"]).execute()
+        
+        if usuario_res.data:
+            user_data = usuario_res.data[0]
+        else:
+            # Fallback seguro caso o registro demore a sincronizar
+            user_data = {
+                "email": session.get("email"),
+                "plano": "free",
+                "posts_limite": 10,
+                "posts_usados": 0
+            }
+            
+        return render_template("planos.html", user=user_data)
+        
+    except Exception as e:
+        print(f"❌ ERRO NA ROTA /PLANOS: {str(e)}")
+        flash("Ocorreu uma instabilidade ao carregar os planos. Tente novamente.", "danger")
+        return redirect("/")
+
+
+@app.route("/configuracoes/salvar_pix", methods=["POST"])
+def salvar_pix():
+    if "user_id" not in session:
+        return redirect("/login")
+        
+    tipo_pix = request.form.get("tipo_pix")
+    chave_pix = request.form.get("chave_pix")
+    
+    try:
+        # Atualiza os novos campos financeiros na tabela 'users' do Supabase
+        supabase.table("users").update({
+            "tipo_pix": tipo_pix,
+            "chave_pix": chave_pix
+        }).eq("id", session["user_id"]).execute()
+        
+        flash("Dados de recebimento via PIX atualizados com sucesso! 💸", "success")
+    except Exception as e:
+        print(f"❌ Erro ao salvar chaves PIX do usuário: {str(e)}")
+        flash("Erro interno ao salvar suas configurações financeiras.", "danger")
+        
+    return redirect(url_for("configuracoes"))
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
