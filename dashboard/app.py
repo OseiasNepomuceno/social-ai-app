@@ -117,11 +117,9 @@ def instagram_login():
     if "user_id" not in session:
         return redirect("/login")
 
-    # Estes são os escopos corretos e atuais para a Graph API v21.0+
-    # public_profile é padrão. 
-    # instagram_basic foi substituído por permissões de leitura de página.
-    scope = "public_profile,email,pages_show_list,pages_read_engagement,pages_manage_posts,instagram_basic,instagram_content_publish"
-
+    # Mantenha APENAS estes dois para testar se o erro de 'Invalid Scopes' some
+    scope = "public_profile" 
+    
     auth_url = (
         f"https://www.facebook.com/v21.0/dialog/oauth?"
         f"client_id={os.getenv('FACEBOOK_APP_ID')}"
