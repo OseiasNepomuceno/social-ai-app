@@ -118,7 +118,7 @@ def instagram_login():
         return redirect("/login")
 
     # Mantenha APENAS estes dois para testar se o erro de 'Invalid Scopes' some
-    scope = "public_profile" 
+    scope = "public_profile, email"
     
     auth_url = (
         f"https://www.facebook.com/v21.0/dialog/oauth?"
