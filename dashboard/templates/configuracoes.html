@@ -5,15 +5,124 @@
 {% block content %}
 <div class="space-y-8 max-w-4xl mx-auto">
     
-    <!-- Cabeçalho -->
     <div class="text-center md:text-left border-b border-gray-800 pb-5">
         <h1 class="text-3xl font-bold text-white tracking-wide flex items-center justify-center md:justify-start gap-2">
             ⚙️ Configurações da Conta
         </h1>
-        <p class="text-sm text-gray-400 mt-2">Gerencie suas informações de perfil, segurança e dados de recebimento.</p>
+        <p class="text-sm text-gray-400 mt-2">Gerencie suas informações de perfil, integrações de redes sociais e dados de faturamento.</p>
     </div>
 
-    <!-- Seção: Chave PIX (Destaque Financeiro/Afiliados) -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="md:col-span-2 bg-gray-800 border border-gray-700/70 rounded-2xl p-6 shadow-xl space-y-4">
+            <div class="flex items-center gap-3 border-b border-gray-700 pb-3">
+                <div class="p-2 bg-indigo-500/10 text-indigo-400 rounded-lg">
+                    <i class="fa-solid fa-user text-xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-lg font-bold text-white">Dados Pessoais</h2>
+                    <p class="text-xs text-gray-400">Seus dados de identificação na plataforma.</p>
+                </div>
+            </div>
+            
+            <div class="space-y-3">
+                <div>
+                    <span class="block text-xs font-semibold text-gray-400 uppercase tracking-wider">Nome de Exibição</span>
+                    <span class="text-sm text-gray-200 font-medium block mt-1 bg-gray-900/50 border border-gray-700/40 rounded-xl px-4 py-2.5">{{ user.name }}</span>
+                </div>
+                <div>
+                    <span class="block text-xs font-semibold text-gray-400 uppercase tracking-wider">E-mail Conectado</span>
+                    <span class="text-sm text-gray-200 font-medium block mt-1 bg-gray-900/50 border border-gray-700/40 rounded-xl px-4 py-2.5">{{ user.email }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-2xl p-6 shadow-xl flex flex-col justify-between relative overflow-hidden">
+            <div class="absolute top-0 right-0 p-8 opacity-5 text-7xl text-white pointer-events-none">
+                <i class="fa-solid fa-gem"></i>
+            </div>
+            <div>
+                <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider block mb-1">Plano Atual</span>
+                <div class="flex items-baseline gap-2">
+                    <h3 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400 tracking-tight">
+                        {{ user.plan }}
+                    </h3>
+                </div>
+                <p class="text-xs text-gray-400 mt-2 leading-relaxed">
+                    {% if user.plan == 'FREE' %}
+                        Você possui limitações de postagens mensais e ferramentas básicas de IA.
+                    {% else %}
+                        Acesso total liberado! 30 Posts + 30 Stories mensais com inteligência premium.
+                    {% endif %}
+                </p>
+            </div>
+            <div class="pt-4">
+                <a href="/planos" class="w-full text-center block bg-gray-700/60 hover:bg-gray-700 text-white font-medium py-2.5 px-4 rounded-xl text-xs border border-gray-600 transition-all">
+                    <i class="fa-solid fa-arrows-rotate mr-1.5"></i> Gerenciar Assinatura
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-gray-800 border border-gray-700/70 rounded-2xl p-6 shadow-xl space-y-6">
+        <div class="flex items-center gap-3 border-b border-gray-700 pb-3">
+            <div class="p-2 bg-blue-500/10 text-blue-400 rounded-lg">
+                <i class="fa-solid fa-share-nodes text-xl"></i>
+            </div>
+            <div>
+                <h2 class="text-lg font-bold text-white">Canais Sociais & Integrações</h2>
+                <p class="text-xs text-gray-400">Conecte seus perfis oficiais para automação direta via inteligência artificial.</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-gray-900/60 border border-gray-700 rounded-xl p-4 flex items-center justify-between transition-all hover:border-gray-600">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-[#0a66c2]/10 text-[#0a66c2] rounded-xl flex items-center justify-center text-xl">
+                        <i class="fa-brands fa-linkedin-in"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-bold text-gray-200">LinkedIn Corporation</h4>
+                        <p class="text-xs mt-0.5 {% if user.linkedin_connected %}text-emerald-400{% else %}text-gray-500{% endif %}">
+                            <i class="fa-solid {% if user.linkedin_connected %}fa-circle-check{% else %}fa-circle-xmark{% endif %} mr-1"></i>
+                            {% if user.linkedin_connected %}Conta Conectada Ativa{% else %}Desconectado da API{% endif %}
+                        </p>
+                    </div>
+                </div>
+                <div>
+                    {% if not user.linkedin_connected %}
+                        <a href="/linkedin/login" class="bg-[#0a66c2] hover:bg-[#084d93] text-white font-semibold py-1.5 px-3 rounded-lg text-xs transition-colors flex items-center gap-1.5">
+                            Vincular <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                        </a>
+                    {% else %}
+                        <span class="bg-emerald-500/10 text-emerald-400 font-semibold py-1 px-2.5 rounded-lg text-xs border border-emerald-500/20">
+                            Pronto
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="bg-gray-900/60 border border-gray-700 rounded-xl p-4 flex items-center justify-between transition-all hover:border-gray-600">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-gradient-to-tr from-yellow-500 via-pink-500 to-purple-600 text-white rounded-xl flex items-center justify-center text-xl">
+                        <i class="fa-brands fa-instagram"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-bold text-gray-200">Instagram Business</h4>
+                        <p class="text-xs mt-0.5 {% if user.instagram_connected %}text-emerald-400{% else %}text-gray-500{% endif %}">
+                            <i class="fa-solid {% if user.instagram_connected %}fa-circle-check{% else %}fa-circle-xmark{% endif %} mr-1"></i>
+                            {% if user.instagram_connected %}Pronto para Download{% else %}Acesso Manual Ativo{% endif %}
+                        </p>
+                    </div>
+                </div>
+                <div>
+                    <span class="bg-gray-800 text-gray-400 font-semibold py-1 px-2.5 rounded-lg text-xs border border-gray-700">
+                        Manual (UI)
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="bg-gray-800 border border-gray-700/70 rounded-2xl p-6 shadow-xl space-y-6">
         <div class="flex items-center gap-3 border-b border-gray-700 pb-3">
             <div class="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg">
@@ -27,22 +136,20 @@
 
         <form action="/configuracoes/salvar-pix" method="POST" class="space-y-4">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <!-- Tipo de Chave -->
                 <div>
                     <label for="tipo_pix" class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Tipo de Chave</label>
                     <select id="tipo_pix" name="tipo_pix" class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-emerald-500 transition-colors">
-                        <option value="cpf" {% if dados_usuario.tipo_pix == 'cpf' %}selected{% endif %}>CPF</option>
-                        <option value="cnpj" {% if dados_usuario.tipo_pix == 'cnpj' %}selected{% endif %}>CNPJ</option>
-                        <option value="email" {% if dados_usuario.tipo_pix == 'email' %}selected{% endif %}>E-mail</option>
-                        <option value="celular" {% if dados_usuario.tipo_pix == 'celular' %}selected{% endif %}>Celular</option>
-                        <option value="aleatoria" {% if dados_usuario.tipo_pix == 'aleatoria' %}selected{% endif %}>Chave Aleatória (EVP)</option>
+                        <option value="cpf" {% if dados_usuario.tipo_pix == 'cpf' or user.tipo_pix == 'cpf' %}selected{% endif %}>CPF</option>
+                        <option value="cnpj" {% if dados_usuario.tipo_pix == 'cnpj' or user.tipo_pix == 'cnpj' %}selected{% endif %}>CNPJ</option>
+                        <option value="email" {% if dados_usuario.tipo_pix == 'email' or user.tipo_pix == 'email' %}selected{% endif %}>E-mail</option>
+                        <option value="celular" {% if dados_usuario.tipo_pix == 'celular' or user.tipo_pix == 'celular' %}selected{% endif %}>Celular</option>
+                        <option value="aleatoria" {% if dados_usuario.tipo_pix == 'aleatoria' or user.tipo_pix == 'aleatoria' %}selected{% endif %}>Chave Aleatória (EVP)</option>
                     </select>
                 </div>
 
-                <!-- A Chave em si -->
                 <div class="md:col-span-2">
                     <label for="chave_pix" class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Sua Chave PIX</label>
-                    <input type="text" id="chave_pix" name="chave_pix" value="{{ dados_usuario.chave_pix or '' }}" placeholder="Insira sua chave aqui..." required
+                    <input type="text" id="chave_pix" name="chave_pix" value="{{ dados_usuario.chave_pix or user.chave_pix or '' }}" placeholder="Insira sua chave aqui..." required
                            class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-emerald-500 transition-colors">
                 </div>
             </div>
@@ -55,7 +162,6 @@
         </form>
     </div>
 
-    <!-- Seção: Alterar Senha (Segurança) -->
     <div class="bg-gray-800 border border-gray-700/70 rounded-2xl p-6 shadow-xl space-y-6">
         <div class="flex items-center gap-3 border-b border-gray-700 pb-3">
             <div class="p-2 bg-blue-500/10 text-blue-400 rounded-lg">
