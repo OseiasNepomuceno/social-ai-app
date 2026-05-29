@@ -97,6 +97,14 @@
                 </div>
             </div>
 
+            <p class="text-white text-[10px]">URL DEBUG: {{ post.imagem_url }}</p>
+
+{% if post.imagem_url %}
+    <!-- SEU CÓDIGO ATUAL AQUI -->
+{% else %}
+    <p class="text-red-500 text-[10px]">A URL está vazia ou nula!</p>
+{% endif %}
+
             {% if post.imagem_url %}
             <div class="w-full md:w-48 h-48 md:h-auto min-h-[180px] rounded-lg overflow-hidden border border-gray-700 bg-gray-900 relative shrink-0 group shadow-inner">
                 <img src="{{ post.imagem_url }}" alt="Preview" class="w-full h-full object-cover absolute inset-0 transition-transform duration-300 group-hover:scale-105">
