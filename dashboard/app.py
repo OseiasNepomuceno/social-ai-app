@@ -109,39 +109,60 @@ PLANOS = {
 }
 
 
-# =========================
-# LOGIN FACEBOOK
-# =========================
+# --- ROTA 1: INÍCIO DO FLUXO (O botão que você coloca no HTML) ---
+@app.route("/instagram/login")
+def instagram_login():
+    if "user_id" not in session: return redirect("/login")
+    
+    # URL de redirecionamento para o Facebook pedir permissão ao usuário
+    auth_url = (
+        f"https://www.facebook.com/v21.0/dialog/oauth?"
+        f"client_id={os.getenv('FACEBOOK_APP_ID')}"
+        f"&redirect_uri=https://app.coregov.com.br/facebook/callback"
+        f"&scope=instagram_basic,instagram_content_publish,pages_read_engagement,pages_manage_posts"
+        f"&response_type=code"
+        f"&state={session['user_id']}"
+    )
+    return redirect(auth_url)
 
-@app.route('/login/facebook')
-
-
-# =========================
-# FACEBOOK
-# =========================
-
+# --- ROTA 2, 3 e 4: O CALLBACK (Onde a mágica acontece) ---
 @app.route('/facebook/callback')
 def facebook_callback():
-    # 1. Captura o código enviado pelo Facebook
     code = request.args.get('code')
-    
-    # 2. Faz a troca do código pelo ACCESS TOKEN (usando seu App ID e Secret)
+    user_id = request.args.get('state') # Recupera o usuário que iniciou o processo
+
+    # PASSO 2: Trocar 'code' por 'access_token' de curta duração
     token_url = "https://graph.facebook.com/v21.0/oauth/access_token"
     params = {
-        'client_id': 'SEU_APP_ID',
-        'client_secret': 'SEU_APP_SECRET',
+        'client_id': os.getenv('FACEBOOK_APP_ID'),
+        'client_secret': os.getenv('FACEBOOK_APP_SECRET'),
         'redirect_uri': 'https://app.coregov.com.br/facebook/callback',
         'code': code
     }
-    
     response = requests.get(token_url, params=params).json()
     access_token = response.get('access_token')
+
+    # PASSO 3: O Passo Oculto (Buscar o Instagram Business ID)
+    # Primeiro buscamos a página do Facebook ligada ao Instagram
+    me_url = f"https://graph.facebook.com/v21.0/me/accounts?access_token={access_token}"
+    pages = requests.get(me_url).json()
     
-    # 3. Salva esse token no seu banco Supabase (vinculado ao usuário logado)
-    # Exemplo (pseudocódigo):
-    # supabase.table("tokens").insert({"user_id": usuario_atual, "token": access_token}).execute()
+    # Aqui assumimos a primeira página encontrada (ajuste conforme necessário)
+    page_id = pages['data'][0]['id']
+    page_token = pages['data'][0]['access_token']
+
+    # Agora buscamos o ID da conta do Instagram atrelada a essa página
+    insta_url = f"https://graph.facebook.com/v21.0/{page_id}?fields=instagram_business_account&access_token={page_token}"
+    insta_data = requests.get(insta_url).json()
+    insta_id = insta_data['instagram_business_account']['id']
+
+    # PASSO 4: Armazenar tudo no Supabase
+    supabase.table("users").update({
+        "instagram_token": access_token,
+        "instagram_business_id": insta_id
+    }).eq("id", user_id).execute()
     
-    return "Conectado com sucesso! Você pode fechar esta janela."
+    return "Conectado com sucesso! Agora você pode voltar ao sistema."
 
 
 # =========================
