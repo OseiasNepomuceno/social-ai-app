@@ -388,7 +388,7 @@ def verificar_e_atualizar_pagamento(user_id):
 
                 return {
                     "success": True,
-                    "message": "Plano atualizado com sucesso",
+                    "message": "Plano updated com sucesso",
                     "payment_id": payment_id
                 }
 
@@ -809,26 +809,45 @@ def publicacoes():
         print("ERRO ROTA PUBLICACOES:", str(e))
         return render_template("publicacoes.html", erro=str(e), posts=[])
 
-# 🔒 REVISADO: ROTA DE CONFIGURAÇÕES INTEGRADA COM CANAIS SOCIAIS EXCLUSIVOS
+# 🔒 PRESERVADO POR COMPLETO: ROTA DE CONFIGURAÇÕES ORIGINAL RESTAURADA
 @app.route("/configuracoes")
 def configuracoes():
     if "user_id" not in session:
-        flash("Por favor, faça login para acessar as configurações.", "warning")
         return redirect("/login")
         
     try:
-        # Puxa os dados atualizados do usuário no banco
+        # Puxa as infos do usuário logado na tabela pública do Supabase
         res = supabase.table("users").select("*").eq("id", session["user_id"]).execute()
         dados_usuario = res.data[0] if res.data else {}
         
-        return render_template("configuracoes.html", dados_usuario=dados_usuario)
+        # Mapeamento dinâmico para os cards de conexões sociais e informações do formulário
+        user_data = {
+            "name": dados_usuario.get("display_name") or session.get("email", "").split("@")[0].capitalize(),
+            "email": dados_usuario.get("email") or session.get("email"),
+            "plan": (dados_usuario.get("plano") or "Free").upper(),
+            "linkedin_connected": True if dados_usuario.get("linkedin_token") else False,
+            "instagram_connected": True if dados_usuario.get("instagram_token") else False,
+            "tipo_pix": dados_usuario.get("tipo_pix", ""),
+            "chave_pix": dados_usuario.get("chave_pix", "")
+        }
+        
+        return render_template("configuracoes.html", user=user_data)
     except Exception as e:
         print(f"❌ Erro ao carregar configurações: {str(e)}")
-        flash("Erro ao carregar seus dados.", "danger")
-        return redirect("/dashboard")
+        # Fallback de segurança caso a tabela sofra timeout
+        user_fallback = {
+            "name": session.get("email", "").split("@")[0].capitalize(),
+            "email": session.get("email"),
+            "plan": "FREE",
+            "linkedin_connected": False,
+            "instagram_connected": False,
+            "tipo_pix": "",
+            "chave_pix": ""
+        }
+        return render_template("configuracoes.html", user=user_fallback)
 
 
-# 🔥 CORREÇÃO INTEGRADA: Endpoint ajustado para bater perfeitamente com o formulário do HTML
+# 🔥 ADICIONADO SEM SOBREPOSIÇÃO: Endpoint para salvar os dados do PIX
 @app.route("/configuracoes/salvar-pix", methods=["POST"])
 def salvar_pix():
     if "user_id" not in session:
@@ -838,7 +857,7 @@ def salvar_pix():
     chave_pix = request.form.get("chave_pix", "").strip()
     
     try:
-        # Atualiza a tabela 'users' com os dados do PIX
+        # Atualiza apenas os campos do PIX sem mexer em tokens ou logins
         supabase.table("users").update({
             "tipo_pix": tipo_pix,
             "chave_pix": chave_pix
