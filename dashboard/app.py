@@ -544,6 +544,7 @@ def home():
         return render_template("index.html", posts=[], total_posts=0, executados=0, pendentes=0, erros=0, erro=str(e))
 
 @app.route("/login", methods=["GET", "POST"])
+@app.route('/login/', methods=['GET', 'POST']) # Adicione esta linha extra logo aci
 def login():
     if request.method == "POST":
         email = request.form["email"]
