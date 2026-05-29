@@ -133,35 +133,28 @@ def instagram_login():
 # --- ROTA 2, 3 e 4: O CALLBACK (Onde a mágica acontece) ---
 @app.route('/facebook/callback')
 def facebook_callback():
-
-    # 1. Checar se houve erro vindo do Facebook na URL
-    error = request.args.get('error')
-    if error:
-        return f"Erro retornado pelo Facebook: {request.args.get('error_message')}", 400
+    # Verifica se o Facebook enviou erro na URL
+    error_msg = request.args.get('error_message')
+    if error_msg:
+        return f"Erro do Facebook: {error_msg}", 400
 
     code = request.args.get('code')
-    # ... resto do seu código ...
-    code = request.args.get('code')
-    user_id = request.args.get('state') # Recupera o usuário que iniciou o processo
-
-    # PASSO 2: Trocar 'code' por 'access_token' de curta duração
-    token_url = "https://graph.facebook.com/v21.0/oauth/access_token"
-    params = {
-        'client_id': os.getenv('FACEBOOK_APP_ID'),
-        'client_secret': os.getenv('FACEBOOK_APP_SECRET'),
-        'redirect_uri': 'https://app.coregov.com.br/facebook/callback',
-        'code': code
-    }
-    response = requests.get(token_url, params=params).json()
-    access_token = response.get('access_token')
-
-    # PASSO 3: O Passo Oculto (Buscar o Instagram Business ID)
-    # Primeiro buscamos a página do Facebook ligada ao Instagram
-    me_url = f"https://graph.facebook.com/v21.0/me/accounts?access_token={access_token}"
-    pages = requests.get(me_url).json()
+    # ... (seu código de troca de token) ...
     
-    # Aqui assumimos a primeira página encontrada (ajuste conforme necessário)
+    # Após pegar o access_token, verifique a resposta antes de usar
+    me_url = f"https://graph.facebook.com/v21.0/me/accounts?access_token={access_token}"
+    response = requests.get(me_url)
+    pages = response.json()
+    
+    # PROTEÇÃO AQUI:
+    if 'data' not in pages:
+        return f"Erro na API do Facebook: {pages.get('error', 'Sem dados de páginas')}", 400
+        
+    if len(pages['data']) == 0:
+        return "Você não selecionou nenhuma página na tela do Facebook!", 400
+
     page_id = pages['data'][0]['id']
+    # ... restante ...
     page_token = pages['data'][0]['access_token']
 
     # Agora buscamos o ID da conta do Instagram atrelada a essa página
