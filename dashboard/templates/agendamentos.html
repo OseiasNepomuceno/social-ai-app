@@ -99,23 +99,21 @@
 
             <p class="text-white text-[10px]">URL DEBUG: {{ post.imagem_url }}</p>
 
+<!-- Bloco Único e Otimizado -->
 {% if post.imagem_url %}
-    <!-- SEU CÓDIGO ATUAL AQUI -->
+    <div class="w-full md:w-48 h-48 md:h-auto min-h-[180px] rounded-lg overflow-hidden border border-gray-700 bg-gray-900 relative shrink-0 group shadow-inner">
+        <img src="{{ post.imagem_url }}" 
+             alt="Preview" 
+             class="w-full h-full object-cover absolute inset-0 transition-transform duration-300 group-hover:scale-105"
+             onerror="this.style.display='none'">
+        <div class="absolute inset-0 bg-gradient-to-t from-gray-950/40 to-transparent pointer-events-none"></div>
+    </div>
 {% else %}
-    <p class="text-red-500 text-[10px]">A URL está vazia ou nula!</p>
+    <div class="w-full md:w-48 h-40 rounded-lg border border-dashed border-gray-700 flex flex-col items-center justify-center text-gray-500 shrink-0 bg-gray-900/30">
+        <i class="fa-solid fa-image text-xl mb-1"></i>
+        <span class="text-xs">Sem Imagem</span>
+    </div>
 {% endif %}
-
-            {% if post.imagem_url %}
-            <div class="w-full md:w-48 h-48 md:h-auto min-h-[180px] rounded-lg overflow-hidden border border-gray-700 bg-gray-900 relative shrink-0 group shadow-inner">
-                <img src="{{ post.imagem_url }}" alt="Preview" class="w-full h-full object-cover absolute inset-0 transition-transform duration-300 group-hover:scale-105">
-                <div class="absolute inset-0 bg-gradient-to-t from-gray-950/40 to-transparent pointer-events-none"></div>
-            </div>
-            {% else %}
-            <div class="w-full md:w-48 h-40 rounded-lg border border-dashed border-gray-700 flex flex-col items-center justify-center text-gray-500 shrink-0 bg-gray-900/30">
-                <i class="fa-solid fa-image text-xl mb-1"></i>
-                <span class="text-xs">Sem Imagem</span>
-            </div>
-            {% endif %}
 
         </div>
         {% else %}
