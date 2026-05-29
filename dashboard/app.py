@@ -331,7 +331,8 @@ def linkedin_login():
         flash("A integração com o LinkedIn está em manutenção temporária. Contate o suporte.", "danger")
         return redirect(url_for("configuracoes"))
         
-    scope = "w_member_social%20profile%20openid%20email"
+    # Use exatamente este scope para cobrir as permissões que você adicionou
+    scope = "public_profile,instagram_business_basic,instagram_manage_comments,instagram_business_manage_messages,pages_show_list,pages_read_engagement,pages_manage_posts"
     
     linkedin_auth_url = (
         f"https://www.linkedin.com/oauth/v2/authorization"
