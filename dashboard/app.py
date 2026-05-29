@@ -127,6 +127,7 @@ def instagram_login():
         f"&scope={scope}"
         f"&response_type=code"
         f"&state={session['user_id']}"
+        f"&auth_type=rerequest" # Isso força o Facebook a ignorar permissões antigas
     )
     return redirect(auth_url)
 
