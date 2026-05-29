@@ -116,28 +116,20 @@ PLANOS = {
 def instagram_login():
     if "user_id" not in session:
         return redirect("/login")
-    
-    # 1. Definir escopos básicos e necessários
-    # Removemos 'pages_manage_posts' que frequentemente causa erro em apps novos
-    # Use apenas estes escopos básicos para não travar o login
-    scope = "instagram_basic,instagram_content_publish,public_profile"
-    
-    # 2. Codificar o scope para formato de URL (importante!)
-    scope_encoded = urllib.parse.quote(scope)
-    
-    # 3. Construir a URL sem quebras de linha que possam corromper o parâmetro
-    base_url = "https://www.facebook.com/v21.0/dialog/oauth"
-    client_id = os.getenv('FACEBOOK_APP_ID')
-    redirect_uri = "https://app.coregov.com.br/facebook/callback"
-    
+
+    # Estes são os escopos corretos e atuais para a Graph API v21.0+
+    # public_profile é padrão. 
+    # instagram_basic foi substituído por permissões de leitura de página.
+    scope = "public_profile,email,pages_show_list,pages_read_engagement,pages_manage_posts,instagram_basic,instagram_content_publish"
+
     auth_url = (
-        f"{base_url}?client_id={client_id}"
-        f"&redirect_uri={redirect_uri}"
-        f"&scope={scope_encoded}"
+        f"https://www.facebook.com/v21.0/dialog/oauth?"
+        f"client_id={os.getenv('FACEBOOK_APP_ID')}"
+        f"&redirect_uri=https://app.coregov.com.br/facebook/callback"
+        f"&scope={scope}"
         f"&response_type=code"
         f"&state={session['user_id']}"
     )
-    
     return redirect(auth_url)
 
 # --- ROTA 2, 3 e 4: O CALLBACK (Onde a mágica acontece) ---
