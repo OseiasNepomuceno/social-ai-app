@@ -810,6 +810,7 @@ def publicacoes():
         return render_template("publicacoes.html", erro=str(e), posts=[])
 
 # 🔒 PRESERVADO POR COMPLETO: ROTA DE CONFIGURAÇÕES ORIGINAL RESTAURADA
+# 🔒 CORRIGIDO: ROTA DE CONFIGURAÇÕES COM SUPORTE A DADOS_USUARIO E USER NO HTML
 @app.route("/configuracoes")
 def configuracoes():
     if "user_id" not in session:
@@ -831,7 +832,8 @@ def configuracoes():
             "chave_pix": dados_usuario.get("chave_pix", "")
         }
         
-        return render_template("configuracoes.html", user=user_data)
+        # 🚀 SOLUÇÃO: Passando 'user' e também 'dados_usuario' para blindar o Jinja2
+        return render_template("configuracoes.html", user=user_data, dados_usuario=dados_usuario)
     except Exception as e:
         print(f"❌ Erro ao carregar configurações: {str(e)}")
         # Fallback de segurança caso a tabela sofra timeout
@@ -844,9 +846,7 @@ def configuracoes():
             "tipo_pix": "",
             "chave_pix": ""
         }
-        return render_template("configuracoes.html", user=user_fallback)
-
-
+        return render_template("configuracoes.html", user=user_fallback, dados_usuario=user_fallback)
 # 🔥 ADICIONADO SEM SOBREPOSIÇÃO: Endpoint para salvar os dados do PIX
 @app.route("/configuracoes/salvar-pix", methods=["POST"])
 def salvar_pix():
