@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 import threading  # 🚀 SOLUÇÃO: Importado para rodar o robô em segundo plano de forma assíncrona
 import requests   # 🔗 ADICIONADO: Necessário para a troca de tokens na rota de callback do LinkedIn
 import mercadopago
+import urllib.parse # Importe isso no topo do arquivo
 from flask import (
     Flask,
     render_template,
@@ -110,21 +111,32 @@ PLANOS = {
 
 
 # --- ROTA 1: INÍCIO DO FLUXO (O botão que você coloca no HTML) ---
+
 @app.route("/instagram/login")
 def instagram_login():
-    if "user_id" not in session: return redirect("/login")
+    if "user_id" not in session:
+        return redirect("/login")
     
-    # URL ajustada com escopos validados
+    # 1. Definir escopos básicos e necessários
+    # Removemos 'pages_manage_posts' que frequentemente causa erro em apps novos
     scope = "instagram_basic,instagram_content_publish,pages_read_engagement,public_profile"
     
+    # 2. Codificar o scope para formato de URL (importante!)
+    scope_encoded = urllib.parse.quote(scope)
+    
+    # 3. Construir a URL sem quebras de linha que possam corromper o parâmetro
+    base_url = "https://www.facebook.com/v21.0/dialog/oauth"
+    client_id = os.getenv('FACEBOOK_APP_ID')
+    redirect_uri = "https://app.coregov.com.br/facebook/callback"
+    
     auth_url = (
-        f"https://www.facebook.com/v21.0/dialog/oauth?"
-        f"client_id={os.getenv('FACEBOOK_APP_ID')}"
-        f"&redirect_uri=https://app.coregov.com.br/facebook/callback"
-        f"&scope={scope}"
+        f"{base_url}?client_id={client_id}"
+        f"&redirect_uri={redirect_uri}"
+        f"&scope={scope_encoded}"
         f"&response_type=code"
         f"&state={session['user_id']}"
     )
+    
     return redirect(auth_url)
 
 # --- ROTA 2, 3 e 4: O CALLBACK (Onde a mágica acontece) ---
