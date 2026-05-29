@@ -114,13 +114,14 @@ PLANOS = {
 def instagram_login():
     if "user_id" not in session: return redirect("/login")
     
-    # URL de redirecionamento para o Facebook pedir permissão ao usuário
+    # URL ajustada com escopos validados
+    scope = "instagram_basic,instagram_content_publish,pages_read_engagement,public_profile"
+    
     auth_url = (
         f"https://www.facebook.com/v21.0/dialog/oauth?"
         f"client_id={os.getenv('FACEBOOK_APP_ID')}"
         f"&redirect_uri=https://app.coregov.com.br/facebook/callback"
-        # Use exatamente estes escopos para evitar o erro de 'Invalid Scopes'
-        f"scope = "instagram_basic,instagram_content_publish,pages_read_engagement,public_profile"
+        f"&scope={scope}"
         f"&response_type=code"
         f"&state={session['user_id']}"
     )
