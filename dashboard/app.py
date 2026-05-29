@@ -119,7 +119,8 @@ def instagram_login():
     
     # 1. Definir escopos básicos e necessários
     # Removemos 'pages_manage_posts' que frequentemente causa erro em apps novos
-    scope = "instagram_basic,instagram_content_publish,pages_read_engagement,public_profile"
+    # Use apenas estes escopos básicos para não travar o login
+    scope = "instagram_basic,instagram_content_publish,public_profile"
     
     # 2. Codificar o scope para formato de URL (importante!)
     scope_encoded = urllib.parse.quote(scope)
