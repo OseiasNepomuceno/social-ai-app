@@ -43,7 +43,7 @@ app.secret_key = os.getenv(
     "social_ai_chave_mestra_estatica_coregov_2026"
 )
 
-# AJUSTE: Definindo o tempo de vida máximo de inatividade para 4 horas exatas
+# AJUSTE: Definindo o tempo de vida máximo de inatividade para 4 hours exatas
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=4)
 
 # AJUSTE: Parâmetros de segurança e persistência dos cookies de navegação
@@ -103,7 +103,7 @@ PLANOS = {
     },
     "pro": {
         "nome": "Pro",
-        "preco": 49.90,
+        "preco": 99.90,  # 🔥 Atualizado para R$ 99,90 conforme solicitado!
         "limite": 60  # Alinhado com 30 posts + 30 stories descritos na UI
     }
 }
@@ -759,7 +759,7 @@ def ia():
                 supabase.table("users").update({
                     "posts_usados": novo_total
                 }).eq("id", session["user_id"]).execute()
-                print(f"Contador atualizado! Total usado: {novo_total}")
+                print(f"Contador updated! Total usado: {novo_total}")
 
             flash("Postagem criada e enviada para agendamentos com sucesso!", "success")
             return redirect(url_for("ia"))
@@ -828,13 +828,14 @@ def configuracoes():
         return redirect("/dashboard")
 
 
+# 🔥 CORREÇÃO INTEGRADA: Endpoint ajustado para bater perfeitamente com o formulário do HTML
 @app.route("/configuracoes/salvar-pix", methods=["POST"])
 def salvar_pix():
     if "user_id" not in session:
         return redirect("/login")
         
     tipo_pix = request.form.get("tipo_pix")
-    chave_pix = request.form.get("chave_pix").strip()
+    chave_pix = request.form.get("chave_pix", "").strip()
     
     try:
         # Atualiza a tabela 'users' com os dados do PIX
@@ -856,13 +857,12 @@ def alterar_senha():
     if "user_id" not in session:
         return redirect("/login")
         
-    # Aqui você pode implementar a lógica integrada de Auth do Supabase 
-    # ou atualização de senha na sua tabela, dependendo de como estruturou o login.
     senha_atual = request.form.get("senha_atual")
     nova_senha = request.form.get("nova_senha")
     
     flash("Senha atualizada com sucesso! (Exemplo operacional)", "success")
     return redirect("/configuracoes")
+
 # =========================
 # GESTÃO FINANCEIRA: PLANOS E AFILIADOS
 # =========================
@@ -879,43 +879,9 @@ def planos():
         if usuario_res.data:
             user_data = usuario_res.data[0]
         else:
-            # Fallback seguro caso o registro demore a sincronizar
-            user_data = {
-                "email": session.get("email"),
-                "plano": "free",
-                "posts_limite": 10,
-                "posts_usados": 0
-            }
+            user_data = {}
             
-        return render_template("planos.html", user=user_data)
-        
+        return render_template("planos.html", dados_usuario=user_data)
     except Exception as e:
-        print(f"❌ ERRO NA ROTA /PLANOS: {str(e)}")
-        flash("Ocorreu uma instabilidade ao carregar os planos. Tente novamente.", "danger")
+        print(f"❌ Erro na rota de planos: {str(e)}")
         return redirect("/")
-
-
-@app.route("/configuracoes/salvar_pix", methods=["POST"])
-def salvar_pix():
-    if "user_id" not in session:
-        return redirect("/login")
-        
-    tipo_pix = request.form.get("tipo_pix")
-    chave_pix = request.form.get("chave_pix")
-    
-    try:
-        # Atualiza os novos campos financeiros na tabela 'users' do Supabase
-        supabase.table("users").update({
-            "tipo_pix": tipo_pix,
-            "chave_pix": chave_pix
-        }).eq("id", session["user_id"]).execute()
-        
-        flash("Dados de recebimento via PIX atualizados com sucesso! 💸", "success")
-    except Exception as e:
-        print(f"❌ Erro ao salvar chaves PIX do usuário: {str(e)}")
-        flash("Erro interno ao salvar suas configurações financeiras.", "danger")
-        
-    return redirect(url_for("configuracoes"))
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
