@@ -106,13 +106,25 @@
                     <div class="w-10 h-10 bg-gradient-to-tr from-yellow-500 via-pink-500 to-purple-600 text-white rounded-xl flex items-center justify-center text-xl">
                         <i class="fa-brands fa-instagram"></i>
                     </div>
-                    <div>
-                        <h4 class="text-sm font-bold text-gray-200">Instagram Business</h4>
-                        <p class="text-xs mt-0.5 {% if user.instagram_connected %}text-emerald-400{% else %}text-gray-500{% endif %}">
-                            <i class="fa-solid {% if user.instagram_connected %}fa-circle-check{% else %}fa-circle-xmark{% endif %} mr-1"></i>
-                            {% if user.instagram_connected %}Pronto para Download{% else %}Acesso Manual Ativo{% endif %}
-                        </p>
-                    </div>
+                   {% if not user.instagram_connected %}
+            <a href="/instagram/login" class="block bg-gray-800 p-4 rounded-lg hover:bg-gray-700 transition">
+                <div>
+                    <h4 class="text-sm font-bold text-gray-200">Instagram Business</h4>
+                    <p class="text-xs mt-0.5 text-gray-500">
+                        <i class="fa-solid fa-circle-xmark mr-1"></i>
+                        Clique aqui para conectar seu Instagram
+                    </p>
+                </div>
+            </a>
+        {% else %}
+            <div class="bg-gray-800 p-4 rounded-lg">
+                <h4 class="text-sm font-bold text-gray-200">Instagram Business</h4>
+                <p class="text-xs mt-0.5 text-emerald-400">
+                    <i class="fa-solid fa-circle-check mr-1"></i>
+                    Conta Conectada
+                </p>
+            </div>
+        {% endif %}
                 </div>
                 <div>
                     <span class="bg-gray-800 text-gray-400 font-semibold py-1 px-2.5 rounded-lg text-xs border border-gray-700">
