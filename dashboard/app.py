@@ -109,6 +109,34 @@ PLANOS = {
 }
 
 # =========================
+# FACEBOOK
+# =========================
+
+@app.route('/facebook/callback')
+def facebook_callback():
+    # 1. Captura o código enviado pelo Facebook
+    code = request.args.get('code')
+    
+    # 2. Faz a troca do código pelo ACCESS TOKEN (usando seu App ID e Secret)
+    token_url = "https://graph.facebook.com/v21.0/oauth/access_token"
+    params = {
+        'client_id': 'SEU_APP_ID',
+        'client_secret': 'SEU_APP_SECRET',
+        'redirect_uri': 'https://app.coregov.com.br/facebook/callback',
+        'code': code
+    }
+    
+    response = requests.get(token_url, params=params).json()
+    access_token = response.get('access_token')
+    
+    # 3. Salva esse token no seu banco Supabase (vinculado ao usuário logado)
+    # Exemplo (pseudocódigo):
+    # supabase.table("tokens").insert({"user_id": usuario_atual, "token": access_token}).execute()
+    
+    return "Conectado com sucesso! Você pode fechar esta janela."
+
+
+# =========================
 # ROBOTS.TXT
 # =========================
 
