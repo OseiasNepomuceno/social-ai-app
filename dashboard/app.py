@@ -133,6 +133,14 @@ def instagram_login():
 # --- ROTA 2, 3 e 4: O CALLBACK (Onde a mágica acontece) ---
 @app.route('/facebook/callback')
 def facebook_callback():
+
+    # 1. Checar se houve erro vindo do Facebook na URL
+    error = request.args.get('error')
+    if error:
+        return f"Erro retornado pelo Facebook: {request.args.get('error_message')}", 400
+
+    code = request.args.get('code')
+    # ... resto do seu código ...
     code = request.args.get('code')
     user_id = request.args.get('state') # Recupera o usuário que iniciou o processo
 
