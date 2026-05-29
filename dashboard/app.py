@@ -119,7 +119,8 @@ def instagram_login():
         f"https://www.facebook.com/v21.0/dialog/oauth?"
         f"client_id={os.getenv('FACEBOOK_APP_ID')}"
         f"&redirect_uri=https://app.coregov.com.br/facebook/callback"
-        f"&scope=instagram_basic,instagram_content_publish,pages_read_engagement,pages_manage_posts"
+        # Use exatamente estes escopos para evitar o erro de 'Invalid Scopes'
+        f"scope = "instagram_basic,instagram_content_publish,pages_read_engagement,public_profile"
         f"&response_type=code"
         f"&state={session['user_id']}"
     )
