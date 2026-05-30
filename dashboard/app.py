@@ -121,7 +121,10 @@ def instagram_login():
     
     scope = (
     "instagram_basic,"
-    "instagram_manage_comments"
+    "instagram_manage_comments,"
+    "pages_show_list,"
+    "pages_read_engagement,"
+    "business_management"
     )
     
     auth_url = (
@@ -172,6 +175,10 @@ def facebook_callback():
     me_url = f"https://graph.facebook.com/v21.0/me/accounts?access_token={access_token}"
     response = requests.get(me_url)
     pages = response.json()
+    print("PAGES RESPONSE:")
+    print(pages)
+    print("ACCESS TOKEN:")
+    print(access_token[:20])
     
     # PROTEÇÃO AQUI:
     if 'data' not in pages:
