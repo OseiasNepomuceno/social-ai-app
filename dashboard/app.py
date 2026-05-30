@@ -118,12 +118,12 @@ def instagram_login():
     # 2. Use os escopos que estão com check verde no seu painel (print image_ab6f1b.png)
     # Use apenas estas permissões que já estão configuradas no seu painel
     # Mude para isso, removendo a permissão que está dando erro
+    
     scope = (
-    "pages_show_list,"
-    "pages_read_engagement,"
-    "pages_manage_posts,"
-    "business_management"
-)    
+    "instagram_basic,"
+    "instagram_manage_comments"
+    )
+    
     auth_url = (
         f"https://www.facebook.com/v21.0/dialog/oauth?"
         f"client_id={os.getenv('FACEBOOK_APP_ID')}"
