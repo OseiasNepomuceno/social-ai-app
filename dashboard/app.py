@@ -138,12 +138,34 @@ def instagram_login():
 # --- ROTA 2, 3 e 4: O CALLBACK (Onde a mágica acontece) ---
 @app.route('/facebook/callback')
 def facebook_callback():
-    # Verifica se o Facebook enviou erro na URL
-    error_msg = request.args.get('error_message')
-    if error_msg:
-        return f"Erro do Facebook: {error_msg}", 400
 
-    code = request.args.get('code')
+    user_id = request.args.get("state")
+
+    code = request.args.get("code")
+
+    if not code:
+        return "Código OAuth não recebido", 400
+
+    FACEBOOK_APP_ID = os.getenv("FACEBOOK_APP_ID")
+    FACEBOOK_APP_SECRET = os.getenv("FACEBOOK_APP_SECRET")
+    
+    token_url = (
+        "https://graph.facebook.com/v21.0/oauth/access_token"
+        f"?client_id={FACEBOOK_APP_ID}"
+        f"&redirect_uri=https://app.coregov.com.br/facebook/callback"
+        f"&client_secret={FACEBOOK_APP_SECRET}"
+        f"&code={code}"
+    )
+
+    token_response = requests.get(token_url)
+    token_data = token_response.json()
+    
+    print("TOKEN RESPONSE:", token_data)
+    
+    if "access_token" not in token_data:
+        return f"Erro ao obter token: {token_data}", 400
+    
+    access_token = token_data["access_token"]
     # ... (seu código de troca de token) ...
     
     # Após pegar o access_token, verifique a resposta antes de usar
@@ -165,8 +187,12 @@ def facebook_callback():
     # Agora buscamos o ID da conta do Instagram atrelada a essa página
     insta_url = f"https://graph.facebook.com/v21.0/{page_id}?fields=instagram_business_account&access_token={page_token}"
     insta_data = requests.get(insta_url).json()
-    insta_id = insta_data['instagram_business_account']['id']
+    
+    if "instagram_business_account" not in insta_data:
+        return f"Instagram não vinculado à página: {insta_data}", 400
 
+    insta_id = insta_data["instagram_business_account"]["id"]
+   
     # PASSO 4: Armazenar tudo no Supabase
     supabase.table("users").update({
         "instagram_token": access_token,
