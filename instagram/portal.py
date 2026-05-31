@@ -1,4 +1,15 @@
+import os
 import requests
+
+from supabase import create_client
+
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+
+supabase = create_client(
+    SUPABASE_URL,
+    SUPABASE_KEY
+)
 
 # =========================
 # PUBLICAR INSTAGRAM
@@ -6,8 +17,7 @@ import requests
 
 def publicar_instagram(
 
-    access_token,
-    ig_user_id,
+    user_id,
     texto,
     imagem_url
 
@@ -19,16 +29,49 @@ def publicar_instagram(
         print("📸 PUBLICANDO INSTAGRAM")
         print("========================")
 
+        user_result = (
+
+            supabase
+            .table("users")
+            .select(
+                "instagram_token, instagram_business_id"
+            )
+            .eq("id", user_id)
+            .execute()
+
+        )
+
+        if not user_result.data:
+
+            print("❌ Usuário não encontrado")
+
+            return False
+
+        access_token = user_result.data[0].get(
+            "instagram_token"
+        )
+
+        ig_user_id = user_result.data[0].get(
+            "instagram_business_id"
+        )
+
+        if not access_token:
+
+            print("❌ Instagram Token vazio")
+
+            return False
+
+        if not ig_user_id:
+
+            print("❌ Instagram Business ID vazio")
+
+            return False
+
         print("IG USER ID:")
         print(ig_user_id)
 
         print("IMAGEM:")
         print(imagem_url)
-
-        # =========================
-        # ETAPA 1
-        # CRIAR CONTAINER
-        # =========================
 
         create_url = (
 
@@ -74,13 +117,6 @@ def publicar_instagram(
         creation_id = data["id"]
 
         print("✅ CONTAINER CRIADO")
-
-        print(creation_id)
-
-        # =========================
-        # ETAPA 2
-        # PUBLICAR POST
-        # =========================
 
         publish_url = (
 
