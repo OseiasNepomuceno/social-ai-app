@@ -1,3 +1,5 @@
+print("######## EXECUTOR VERSAO TESTE ########")
+
 import os
 import sys
 
