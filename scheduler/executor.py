@@ -1,6 +1,13 @@
 import sys
 import os
 import time
+
+print("CURRENT DIR:")
+print(os.getcwd())
+
+print("PYTHON PATH:")
+print(sys.path)
+
 from instagram.portal import publicar_instagram
 
 from datetime import datetime
