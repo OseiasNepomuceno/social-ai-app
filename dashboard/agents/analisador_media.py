@@ -20,6 +20,8 @@ NICHOS_ALVO = [
     "empreendedorismo",
     "contabilidade",
     "psicologia",
+    "alimentação",
+    "limpeza",
     "engenharia",
     "saude"
 ]
