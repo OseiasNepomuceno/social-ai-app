@@ -814,7 +814,7 @@ def ia():
 
             print(f"🚀 EXECUTOR IA ACIONADO: Tema='{tema}' | Rede='{rede}' | Modo='{modo}'")
 
-            status_post = "pronto_instagram" if (rede and rede.lower() == "instagram") else "pendente"
+            status_post = "pendente"
             imagem_url = None
 
             file = request.files.get("imagem")
