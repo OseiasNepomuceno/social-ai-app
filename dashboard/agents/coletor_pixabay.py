@@ -9,7 +9,7 @@ from supabase import create_client
 # =========================
 # CONTROLADORES DO COLETOR
 # =========================
-PAUSADO = True  # Altere para False quando quiser que ele volte a rodar
+PAUSADO = False  # Altere para False quando quiser que ele volte a rodar
 
 # =========================
 # ENV
@@ -56,12 +56,14 @@ NICHOS = {
     "negocios": 0,
     "financeiro": 0,
     "tecnologia": 0,
-    "vendas": 200,
+    "vendas": 0,
     "empreendedorismo": 0,
     "contabilidade": 0,   
-    "psicologia": 0,      
+    "psicologia": 0,
+    "limpeza": 500,
+    "alimentação": 500,
     "engenharia": 0,       
-    "saude": 800           # 🚀 Alvo agressivo focado no crescimento deste nicho
+    "saude": 0           # 🚀 Alvo agressivo focado no crescimento deste nicho
 }
 
 # =========================
