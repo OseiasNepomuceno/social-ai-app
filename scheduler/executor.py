@@ -1,6 +1,7 @@
 import sys
 import os
 import time
+from instagram.portal import publicar_instagram
 
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -189,9 +190,40 @@ def executar_post(post, user):
         elif rede == "instagram":
 
             print(
-                "🚀 Instagram futuramente"
+                "🚀 Publicando Instagram"
             )
 
+        sucesso = publicar_instagram(
+    
+            post["user_id"],
+    
+            conteudo,
+    
+            imagem_url
+    
+        )
+
+        if not sucesso:
+    
+            print(
+                "❌ Falha Instagram"
+            )
+    
+            supabase.table(
+                "posts"
+            ).update({
+    
+                "status": "erro"
+    
+            }).eq(
+    
+                "id",
+                post["id"]
+    
+            ).execute()
+    
+            return
+        
         else:
 
             print(
