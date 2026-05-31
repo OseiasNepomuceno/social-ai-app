@@ -1,4 +1,9 @@
-print("######## EXECUTOR VERSAO TESTE ########")
+print("#################################")
+print("EXECUTOR NOVA VERSAO 31-05-2026")
+print("#################################")
+
+import os
+import sys
 
 import os
 import sys
