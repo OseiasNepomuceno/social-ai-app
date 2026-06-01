@@ -112,7 +112,11 @@ def publicar_instagram(
         print("RESPOSTA CONTAINER:")
         print(response.text)
 
-        data = response.json()
+        try:
+            data = response.json()
+        except:
+            print("❌ ERRO: Resposta inválida do Facebook")
+            return False
 
         if "id" not in data:
 
@@ -158,7 +162,11 @@ def publicar_instagram(
         print("RESPOSTA PUBLICAÇÃO:")
         print(publish_response.text)
 
-        publish_data = publish_response.json()
+        try:
+            publish_data = publish_response.json()
+        except:
+            print("❌ ERRO: Resposta inválida do Facebook na publicação")
+            return False
 
         if "id" not in publish_data:
 
@@ -178,5 +186,8 @@ def publicar_instagram(
         print("❌ ERRO INSTAGRAM")
 
         print(str(e))
+
+        import traceback
+        traceback.print_exc()
 
         return False
