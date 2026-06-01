@@ -1,5 +1,5 @@
 print("#################################")
-print("EXECUTOR NOVA VERSAO 31-05-2026")
+print("EXECUTOR TESTE 01-06-2026 09:00")
 print("#################################")
 
 import os
