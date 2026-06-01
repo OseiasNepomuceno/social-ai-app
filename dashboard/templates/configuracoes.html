@@ -135,43 +135,14 @@
         </div>
     </div>
 
-    <div class="bg-gray-800 border border-gray-700/70 rounded-2xl p-6 shadow-xl space-y-6">
-        <div class="flex items-center gap-3 border-b border-gray-700 pb-3">
-            <div class="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg">
-                <i class="fa-solid fa-wallet text-xl"></i>
-            </div>
-            <div>
-                <h2 class="text-lg font-bold text-white">Dados de Recebimento (PIX)</h2>
-                <p class="text-xs text-gray-400">Configure sua chave Pix para o recebimento de comissões e bonificações de afiliados.</p>
-            </div>
-        </div>
-
-        <form action="/configuracoes/salvar-pix" method="POST" class="space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                    <label for="tipo_pix" class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Tipo de Chave</label>
-                    <select id="tipo_pix" name="tipo_pix" class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-emerald-500 transition-colors">
-                        <option value="cpf" {% if dados_usuario.tipo_pix == 'cpf' or user.tipo_pix == 'cpf' %}selected{% endif %}>CPF</option>
-                        <option value="cnpj" {% if dados_usuario.tipo_pix == 'cnpj' or user.tipo_pix == 'cnpj' %}selected{% endif %}>CNPJ</option>
-                        <option value="email" {% if dados_usuario.tipo_pix == 'email' or user.tipo_pix == 'email' %}selected{% endif %}>E-mail</option>
-                        <option value="celular" {% if dados_usuario.tipo_pix == 'celular' or user.tipo_pix == 'celular' %}selected{% endif %}>Celular</option>
-                        <option value="aleatoria" {% if dados_usuario.tipo_pix == 'aleatoria' or user.tipo_pix == 'aleatoria' %}selected{% endif %}>Chave Aleatória (EVP)</option>
-                    </select>
-                </div>
-
-                <div class="md:col-span-2">
-                    <label for="chave_pix" class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Sua Chave PIX</label>
-                    <input type="text" id="chave_pix" name="chave_pix" value="{{ dados_usuario.chave_pix or user.chave_pix or '' }}" placeholder="Insira sua chave aqui..." required
-                           class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-emerald-500 transition-colors">
-                </div>
-            </div>
-
-            <div class="flex justify-end">
-                <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-6 rounded-xl text-sm transition-all shadow-lg shadow-emerald-500/10 flex items-center gap-2">
-                    <i class="fa-solid fa-floppy-disk"></i> Salvar Chave PIX
-                </button>
-            </div>
-        </form>
+    <div class="bg-gray-800 border border-gray-700/70 rounded-2xl p-6 shadow-xl space-y-6 text-center">
+        <p class="text-white font-semibold text-lg">
+            Informação: <br>
+            Seja um AFILIADO do COREGOV e GANHE RENDA EXTRA!!!<br>
+            <a href="https://dashboard.kiwify.com/join/affiliate/I5OzSgUy" target="_blank" class="text-indigo-400 underline">
+                Clique Aqui e Cadastre-se
+            </a>
+        </p>
     </div>
 
     <div class="bg-gray-800 border border-gray-700/70 rounded-2xl p-6 shadow-xl space-y-6">
