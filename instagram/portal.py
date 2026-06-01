@@ -72,6 +72,11 @@ def publicar_instagram(
 
         print("IMAGEM:")
         print(imagem_url)
+        print("TOKEN ENCONTRADO:")
+        print(bool(access_token))
+        
+        print("IG USER ID ENCONTRADO:")
+        print(bool(ig_user_id))
 
         create_url = (
 
@@ -99,6 +104,7 @@ def publicar_instagram(
             data=create_payload
 
         )
+        
 
         print("STATUS CONTAINER:")
         print(response.status_code)
@@ -111,7 +117,10 @@ def publicar_instagram(
         if "id" not in data:
 
             print("❌ ERRO CONTAINER")
-
+        
+            print("JSON RETORNADO:")
+            print(data)
+        
             return False
 
         creation_id = data["id"]
@@ -154,7 +163,10 @@ def publicar_instagram(
         if "id" not in publish_data:
 
             print("❌ ERRO PUBLICAÇÃO")
-
+        
+            print("JSON RETORNADO:")
+            print(publish_data)
+        
             return False
 
         print("✅ INSTAGRAM PUBLICADO")
