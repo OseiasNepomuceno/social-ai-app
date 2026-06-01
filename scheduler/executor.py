@@ -155,6 +155,7 @@ def executar_post(post, user):
             ""
         ).lower()
 
+        sucesso = False
 
         # =========================
         # LINKEDIN
