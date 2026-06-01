@@ -353,7 +353,7 @@ def monitoramento():
     )
 
 # =========================
-# CONEXÃO OAUTH LINKEDIN (LOGIN E CALLBACK)
+# CONEXÃO OAUTH LINKEDIN (LOGIN E CALLBACK) ✅ CORRIGIDO
 # =========================
 
 @app.route("/linkedin/login", methods=["GET"])
@@ -368,9 +368,9 @@ def linkedin_login():
         print("❌ Erro: LINKEDIN_CLIENT_ID não configurado no ambiente do Render.")
         flash("A integração com o LinkedIn está em manutenção temporária. Contate o suporte.", "danger")
         return redirect(url_for("configuracoes"))
-        
-    # Use exatamente este scope para cobrir as permissões que você adicionou
-    scope = "public_profile,instagram_business_basic,instagram_manage_comments,instagram_business_manage_messages,pages_show_list,pages_read_engagement,pages_manage_posts"
+    
+    # ✅ CORRIGIDO: Usando APENAS escopos válidos do LinkedIn (removido Instagram)
+    scope = "openid,profile,email,w_member_social"
     
     linkedin_auth_url = (
         f"https://www.linkedin.com/oauth/v2/authorization"
@@ -382,6 +382,7 @@ def linkedin_login():
     )
     
     print(f"🔗 Redirecionando Usuário {session['user_id']} para o fluxo do LinkedIn OAuth.")
+    print(f"📋 Escopos solicitados: {scope}")
     return redirect(linkedin_auth_url)
 
 
@@ -390,10 +391,12 @@ def linkedin_callback():
     code = request.args.get("code")
     state = request.args.get("state")  
     error = request.args.get("error")
+    error_description = request.args.get("error_description")
     
     if error:
         print(f"❌ Autorização recusada ou cancelada: {error}")
-        flash("Autorização cancelada ou negada.", "warning")
+        print(f"📝 Descrição: {error_description}")
+        flash("Autorização cancelada ou negada. Verifique as permissões solicitadas.", "warning")
         return redirect(url_for("configuracoes"))
         
     if not code:
