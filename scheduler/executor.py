@@ -155,108 +155,121 @@ def executar_post(post, user):
             ""
         ).lower()
 
-        # =========================
-        # LINKEDIN
-        # =========================
 
-        if rede == "linkedin":
+# =========================
+# LINKEDIN
+# =========================
 
-            print(
-                "🚀 Publicando no LinkedIn..."
-            )
+if rede == "linkedin":
 
-            sucesso = publicar_linkedin(
+    print(
+        "🚀 Publicando no LinkedIn..."
+    )
 
-                user["id"],
+    sucesso = publicar_linkedin(
 
-                conteudo,
+        user["id"],
 
-                imagem_url
+        conteudo,
 
-            )
+        imagem_url
 
-            if not sucesso:
+    )
 
-                print(
-                    "❌ Falha publicação LinkedIn"
-                )
+    if not sucesso:
 
-                supabase.table(
-                    "posts"
-                ).update({
-
-                    "status": "erro"
-
-                }).eq(
-
-                    "id",
-                    post["id"]
-
-                ).execute()
-
-                return
-
-        # =========================
-        # INSTAGRAM
-        # =========================
-
-        elif rede == "instagram":
-
-            print(
-                "🚀 Publicando Instagram"
-            )
-
-        sucesso = publicar_instagram(
-    
-            post["user_id"],
-    
-            conteudo,
-    
-            imagem_url
-    
+        print(
+            "❌ Falha publicação LinkedIn"
         )
 
-        if not sucesso:
-    
-            print(
-                "❌ Falha Instagram"
-            )
-    
-            supabase.table(
-                "posts"
-            ).update({
-    
-                "status": "erro"
-    
-            }).eq(
-    
-                "id",
-                post["id"]
-    
-            ).execute()
-    
-            return
-        
-        else:
+        supabase.table(
+            "posts"
+        ).update({
 
-            print(
-                "❌ Rede social inválida"
-            )
+            "status": "erro"
 
-            supabase.table(
-                "posts"
-            ).update({
+        }).eq(
 
-                "status": "erro"
+            "id",
+            post["id"]
 
-            }).eq(
+        ).execute()
 
-                "id",
-                post["id"]
+        return
 
-            ).execute()
 
-            return
+# =========================
+# INSTAGRAM
+# =========================
+
+elif rede == "instagram":
+
+    print(
+        "🚀 Publicando Instagram"
+    )
+
+    print("USER_ID:", post["user_id"])
+    print("IMAGEM:", imagem_url)
+    print("CONTEUDO:", conteudo[:200])
+    
+    sucesso = publicar_instagram(
+
+        post["user_id"],
+
+        conteudo,
+
+        imagem_url
+
+    )
+
+    if not sucesso:
+
+        print(
+            "❌ Falha Instagram"
+        )
+
+        supabase.table(
+            "posts"
+        ).update({
+
+            "status": "erro"
+
+        }).eq(
+
+            "id",
+            post["id"]
+
+        ).execute()
+
+        return
+
+
+# =========================
+# REDE INVÁLIDA
+# =========================
+
+else:
+
+    print(
+        "❌ Rede social inválida:"
+    )
+
+    print(rede)
+
+    supabase.table(
+        "posts"
+    ).update({
+
+        "status": "erro"
+
+    }).eq(
+
+        "id",
+        post["id"]
+
+    ).execute()
+
+    return
 
         # =========================
         # ALTERAR STATUS
