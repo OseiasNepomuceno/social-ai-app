@@ -3,6 +3,8 @@ import time
 import requests
 import tempfile
 import uuid
+import unicodedata
+import re
 
 from supabase import create_client
 
@@ -71,6 +73,20 @@ NICHOS = {
 # =========================
 
 contador_total = 0
+
+# =========================
+# FUNÇÃO PARA LIMPAR O NOME DO NICHO
+# =========================
+
+def limpar_nicho(nicho):
+    nicho_normalizado = unicodedata.normalize('NFD', nicho)
+    nicho_sem_acento = ''.join(
+        char for char in nicho_normalizado
+        if unicodedata.category(char) != 'Mn'
+    )
+    nicho_sem_acentos_e_cedilha = nicho_sem_acento.replace('ç', 'c').replace('Ç', 'C')
+    nicho_limpo = re.sub(r'[^a-zA-Z0-9_\-]', '', nicho_sem_acentos_e_cedilha)
+    return nicho_limpo.lower()
 
 # =========================
 # BUSCAR IMAGENS PIXABAY
@@ -153,7 +169,7 @@ def baixar_imagem(url):
         return None
 
 # =========================
-# UPLOAD SUPABASE
+# UPLOAD SUPABASE (ATUALIZADO PARA LIMPA NICHO)
 # =========================
 
 def upload_supabase(
@@ -161,8 +177,9 @@ def upload_supabase(
     nicho
 ):
     try:
+        nicho_limpo = limpar_nicho(nicho)
         nome_arquivo = (
-            f"{nicho}/"
+            f"{nicho_limpo}/"
             f"{uuid.uuid4()}.jpg"
         )
 
