@@ -1,4 +1,5 @@
 import os
+import unicodedata
 from openai import OpenAI
 
 from dashboard.agents.image_agent import (
@@ -10,6 +11,56 @@ from dashboard.agents.image_agent import (
 # =========================
 
 print("🚀 IA ENGINE INICIADA")
+
+
+# Funções para normalização e cálculo da distância de Levenshtein
+
+def normalizar_texto(texto):
+    texto = texto.lower()
+    texto = ''.join(c for c in unicodedata.normalize('NFD', texto) if unicodedata.category(c) != 'Mn')
+    texto = texto.replace(" ", "")
+    return texto
+
+def distancia_levenshtein(a, b):
+    n, m = len(a), len(b)
+    if n > m:
+        a, b = b, a
+        n, m = m, n
+
+    current = list(range(n + 1))
+    for i in range(1, m + 1):
+        previous, current = current, [i] + [0] * n
+        for j in range(1, n + 1):
+            add = previous[j] + 1
+            delete = current[j - 1] + 1
+            change = previous[j - 1]
+            if a[j - 1] != b[i - 1]:
+                change += 1
+            current[j] = min(add, delete, change)
+
+    return current[n]
+
+def encontrar_nicho_mais_proximo(entrada, lista_nichos):
+    entrada_norm = normalizar_texto(entrada)
+
+    melhor_nicho = None
+    menor_distancia = float('inf')
+
+    for nicho in lista_nichos:
+        nicho_norm = normalizar_texto(nicho)
+        dist = distancia_levenshtein(entrada_norm, nicho_norm)
+        if dist < menor_distancia:
+            menor_distancia = dist
+            melhor_nicho = nicho
+    return melhor_nicho
+
+def mapear_nicho_escolhido(nicho_escolha, lista_nichos):
+    if isinstance(nicho_escolha, int) or (isinstance(nicho_escolha, str) and nicho_escolha.isdigit()):
+        idx = int(nicho_escolha) - 1
+        if 0 <= idx < len(lista_nichos):
+            return lista_nichos[idx]
+    return encontrar_nicho_mais_proximo(str(nicho_escolha), lista_nichos)
+
 
 # =========================
 # GERAR CONTEÚDO
@@ -33,7 +84,6 @@ def gerar_conteudo(
         )
 
         if not api_key:
-
             raise Exception(
                 "GROQ_API_KEY não configurada"
             )
@@ -49,6 +99,7 @@ def gerar_conteudo(
             base_url="https://api.groq.com/openai/v1"
 
         )
+
 
         # =========================
         # MAPEAR MODOS
@@ -67,24 +118,42 @@ def gerar_conteudo(
             "viral"
         )
 
+
         # =========================
-        # MAPEAR NICHOS
+        # LISTA OFICIAL DE NICHOS (SUPABASE)
         # =========================
 
-        nichos = {
-            "1": "contabilidade",
-            "2": "advocacia",
-            "3": "saude",
-            "4": "marketing",
-            "5": "imobiliaria",
-            "6": "politica",
-            "7": "gestao_negocios"
-        }
+        lista_nichos = [
+            "limpeza",
+            "marketing",
+            "psicologia",
+            "negocios",
+            "engenharia",
+            "financeiro",
+            "tecnologia",
+            "contabilidade",
+            "vendas",
+            "empreendedorismo",
+            "saude",
+            "fotografiadealimentos",
+            "fitnessbem-estar",
+            "diversidadeerepresentacao",
+            "viagenseturismo",
+            "saudementalemindfulness",
+            "alimentacao",
+            "familiaerelacionamentos",
+            "arquiteturaedesigndeinteriores",
+            "tecnologiamergente",
+            "moda",
+            "educacao"
+        ]
 
-        nicho_nome = nichos.get(
-            str(nicho_escolha),
-            "marketing"
-        )
+        # =========================
+        # MAPEAR NICHOS COM LÓGICA ROBUSTA
+        # =========================
+
+        nicho_nome = mapear_nicho_escolhido(nicho_escolha, lista_nichos)
+
 
         # =========================
         # LÓGICA DE REDE E CTA DINÂMICO
@@ -99,7 +168,6 @@ def gerar_conteudo(
                 "- Adote o tom ideal para o modo selecionado: um estilo que seja dinâmico e focado no comportamento do usuário do Instagram."
             )
             
-            # Condicional estrita: apenas o modo educacional entrega material
             if modo_nome == "educacional":
                 cta_instrucao = (
                     "Crie uma chamada voltada para a automação de comentários (padrão ManyChat). "
@@ -122,7 +190,6 @@ def gerar_conteudo(
                 "- Adapte o vocabulário para o ecossistema corporativo B2B."
             )
             
-            # Condicional estrita: apenas o modo educacional entrega material
             if modo_nome == "educacional":
                 cta_instrucao = (
                     "Crie um fechamento estimulando o engajamento direto na publicação. "
@@ -135,6 +202,7 @@ def gerar_conteudo(
                     "Termine obrigatoriamente a última linha do texto com a frase exata: "
                     "'Quer entender como aplicar isso no seu cenário? Clique no link da minha bio ou me envie uma mensagem no inbox para conversarmos!'"
                 )
+
 
         # =========================
         # PROMPT MESTRE INTEGRADO
