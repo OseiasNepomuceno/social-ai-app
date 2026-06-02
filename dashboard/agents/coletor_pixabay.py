@@ -74,7 +74,7 @@ NICHOS = {
     "moda": 100,
     "alimentação": 100,
     "engenharia": 0,
-    "educacao": 50,
+    "educacao e education": 50,
     "saude": 0           # 🚀 Alvo agressivo focado no crescimento deste nicho
 }
 
