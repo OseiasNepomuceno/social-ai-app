@@ -88,17 +88,17 @@
                         </p>
                     </div>
                 </div>
-                <div>
+                
+               <div>
                     {% if not user.linkedin_connected %}
                         <a href="/linkedin/login" class="bg-[#0a66c2] hover:bg-[#084d93] text-white font-semibold py-1.5 px-3 rounded-lg text-xs transition-colors flex items-center gap-1.5">
                             Vincular <i class="fa-solid fa-arrow-right text-[10px]"></i>
                         </a>
                     {% else %}
-                        <span class="bg-emerald-500/10 text-emerald-400 font-semibold py-1 px-2.5 rounded-lg text-xs border border-emerald-500/20">
-                            Pronto
-                        </span>
+                        <!-- Conta conectada: não exibe texto "Pronto" -->
                     {% endif %}
                 </div>
+
             </div>
 
             <div class="bg-gray-900/60 border border-gray-700 rounded-xl p-4 flex items-center justify-between transition-all hover:border-gray-600">
