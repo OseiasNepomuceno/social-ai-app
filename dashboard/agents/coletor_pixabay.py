@@ -62,9 +62,19 @@ NICHOS = {
     "empreendedorismo": 0,
     "contabilidade": 0,   
     "psicologia": 0,
-    "limpeza": 500,
-    "alimentação": 500,
-    "engenharia": 0,       
+    "limpeza": 0,
+    "viagens e natureza": 100,
+    "fotografia de alimentos": 100,
+    "diversidade e representação": 100,
+    "fitness e bem-estar": 100,
+    "tecnologia emergente": 50,
+    "saude mental e mindfulness": 100,
+    "familia e relacionamentos": 100,
+    "arquitetura e design de interiores": 100,
+    "moda": 100,
+    "alimentação": 100,
+    "engenharia": 0,
+    "educacao": 50
     "saude": 0           # 🚀 Alvo agressivo focado no crescimento deste nicho
 }
 
