@@ -43,31 +43,41 @@
                 <div class="space-y-2 sm:col-span-2">
                     <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider block">Tema do Post</label>
                     <input type="text" id="tema" name="tema" placeholder="Ex: O Raio-X do MEI ou Mapeamento Inteligente..." required
-                        class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-all text-sm">
+                        class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-all text-sm"
+                        value="{{ request.form.tema or '' }}">
                 </div>
 
                 <div class="space-y-2">
                     <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider block">Rede Social</label>
                     <select id="rede_social" name="rede_social" class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-all text-sm cursor-pointer">
-                        <option value="LinkedIn">LinkedIn</option>
-                        <option value="Instagram">Instagram</option>
+                        <option value="LinkedIn" {% if (request.form.rede_social or '').lower() == 'linkedin' %}selected{% endif %}>LinkedIn</option>
+                        <option value="Instagram" {% if (request.form.rede_social or '').lower() == 'instagram' %}selected{% endif %}>Instagram</option>
                     </select>
                 </div>
 
                 <div class="space-y-2">
                     <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider block">Modo de Escrita</label>
                     <select id="modo" name="modo" class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-all text-sm cursor-pointer">
-                        <option value="Viral">Viral</option>
-                        <option value="Corporativo">Corporativo / Sério</option>
-                        <option value="Educacional">Educacional / Técnico</option>
-                        <option value="Vendas">Focado em Vendas</option>
+                        <option value="Viral" {% if (request.form.modo or '').lower() == 'viral' %}selected{% endif %}>Viral</option>
+                        <option value="Corporativo" {% if (request.form.modo or '').lower() in ['corporativo', 'autoridade'] %}selected{% endif %}>Corporativo / Sério</option>
+                        <option value="Educacional" {% if (request.form.modo or '').lower() == 'educacional' %}selected{% endif %}>Educacional / Técnico</option>
+                        <option value="Vendas" {% if (request.form.modo or '').lower() == 'vendas' %}selected{% endif %}>Focado em Vendas</option>
                     </select>
                 </div>
 
                 <div class="space-y-2 sm:col-span-2">
                     <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider block">Nicho / Segmento</label>
-                    <input type="text" id="nicho" name="nicho" placeholder="Ex: Contabilidade, Estética, Perfumaria..." required
-                        class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-all text-sm">
+                    <select id="nicho" name="nicho" required class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-all text-sm cursor-pointer">
+                        <option value="" disabled {% if not nicho_sugerido %}selected{% endif %}>Selecione um nicho</option>
+                        {% if nicho_sugerido %}
+                            <option value="{{ nicho_sugerido }}" selected>{{ nicho_sugerido | capitalize }}</option>
+                        {% endif %}
+                        {% for n in lista_nichos %}
+                            {% if n != nicho_sugerido %}
+                                <option value="{{ n }}">{{ n | capitalize }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
                 </div>
             </div>
         </div>
@@ -84,12 +94,14 @@
                     <div class="space-y-2">
                         <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider block">Data da Postagem</label>
                         <input type="date" id="data_postagem" name="data_postagem" required
-                            class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-blue-500 transition-all text-sm cursor-pointer">
+                            class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-blue-500 transition-all text-sm cursor-pointer"
+                            value="{{ request.form.data_postagem or '' }}">
                     </div>
                     <div class="space-y-2">
                         <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider block">Horário de Envio</label>
                         <input type="time" id="horario" name="horario" required
-                            class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-blue-500 transition-all text-sm cursor-pointer">
+                            class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-blue-500 transition-all text-sm cursor-pointer"
+                            value="{{ request.form.horario or '' }}">
                     </div>
                 </div>
             </div>
