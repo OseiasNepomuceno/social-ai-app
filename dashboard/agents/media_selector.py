@@ -23,68 +23,63 @@ supabase = create_client(
 # SELECIONAR IMAGEM
 # =========================
 
-def selecionar_imagem(
-    nicho="marketing",
-    rede="linkedin",
-    estilo="premium"
-):
+def selecionar_imagem(nicho="marketing", rede="linkedin", estilo="premium"):
     try:
         print("\n🔎 BUSCANDO IMAGEM")
         print("NICHO:", nicho)
         print("REDE:", rede)
         print("ESTILO:", estilo)
 
-        # Busca principal com filtros completos
+        # Busca inicial no nicho solicitado
         response = supabase.table("media_library")\
             .select("*")\
-            .eq("nicho", nicho)\
-            .eq("rede", rede)\
+            .eq("nicho", nicho.lower())\
+            .ilike("rede", rede.lower())\
             .eq("estilo", estilo)\
             .eq("ativo", True)\
             .execute()
 
         imagens = response.data
-
         print(f"📸 TOTAL IMAGENS NO NICHO: {len(imagens)}")
 
-        # Fallback mais robusto: tenta nichos relacionados se não encontrar imagens
-        if not imagens:
-            print("⚠️ FALLBACK POR NICHOS RELACIONADOS")
+        if imagens:
+            valid_images = [img for img in imagens if img.get("image_url")]
+            if valid_images:
+                selecionada = random.choice(valid_images)
+                print("✅ IMAGEM SELECIONADA:", selecionada["image_url"])
+                return selecionada["image_url"]
 
-            nichos_relacionados = ["marketing", "negocios", "empreendedorismo", "contabilidade"]
+        # Busca todos os nichos ativos para fallback, exceto o nicho atual
+        nichos_resp = supabase.table("media_library")\
+            .select("nicho", distinct=True)\
+            .eq("ativo", True)\
+            .execute()
 
-            # Remove o nicho atual da lista para não tentar novamente
-            nichos_relacionados = [n for n in nichos_relacionados if n != nicho]
+        nichos_ativos = list({item['nicho'] for item in nichos_resp.data or []})
+        nicho_atual_lower = nicho.lower()
+        nichos_ativos = [n for n in nichos_ativos if n.lower() != nicho_atual_lower]
 
-            for fallback_nicho in nichos_relacionados:
-                print(f"Tentando fallback para nicho: {fallback_nicho}")
+        print(f"⚠️ FALLBACK EM TODOS OS NICHOS, exceto '{nicho}': {nichos_ativos}")
 
-                response = supabase.table("media_library")\
-                    .select("*")\
-                    .eq("nicho", fallback_nicho)\
-                    .eq("rede", rede)\
-                    .eq("ativo", True)\
-                    .execute()
+        for fallback_nicho in nichos_ativos:
+            response = supabase.table("media_library")\
+                .select("*")\
+                .eq("nicho", fallback_nicho)\
+                .ilike("rede", rede.lower())\
+                .eq("estilo", estilo)\
+                .eq("ativo", True)\
+                .execute()
 
-                imagens = response.data
-                if imagens:
-                    print(f"📸 TOTAL IMAGENS FALLBACK para {fallback_nicho}: {len(imagens)}")
-                    break  # Sai no primeiro nicho que encontrar
+            imagens = response.data
+            if imagens:
+                valid_images = [img for img in imagens if img.get("image_url")]
+                if valid_images:
+                    selecionada = random.choice(valid_images)
+                    print(f"✅ IMAGEM FALLBACK SELECIONADA DO NICHO {fallback_nicho}: {selecionada['image_url']}")
+                    return selecionada["image_url"]
 
-        if not imagens:
-            print("❌ SEM IMAGENS DISPONÍVEIS")
-            return None
-
-        # Filtrar imagens com URL válida
-        valid_images = [img for img in imagens if img.get("image_url")]
-        if not valid_images:
-            print("❌ Nenhuma imagem com URL válida encontrada")
-            return None
-
-        imagem = random.choice(valid_images)
-        print("✅ IMAGEM SELECIONADA:", imagem["image_url"])
-
-        return imagem["image_url"]
+        print("❌ SEM IMAGENS DISPONÍVEIS NEM NO FALLBACK")
+        return None
 
     except Exception as e:
         print("❌ ERRO NO MEDIA SELECTOR:", str(e))
