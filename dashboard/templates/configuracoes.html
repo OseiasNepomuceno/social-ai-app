@@ -75,6 +75,7 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- LinkedIn -->
             <div class="bg-gray-900/60 border border-gray-700 rounded-xl p-4 flex items-center justify-between transition-all hover:border-gray-600">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 bg-[#0a66c2]/10 text-[#0a66c2] rounded-xl flex items-center justify-center text-xl">
@@ -95,41 +96,43 @@
                             Vincular <i class="fa-solid fa-arrow-right text-[10px]"></i>
                         </a>
                     {% else %}
-                        <!-- Conta conectada: não exibe texto "Pronto" -->
+                        <!-- Conta conectada: não exibe texto -->
                     {% endif %}
                 </div>
-
             </div>
 
+            {# Instagram removido para deixar inoperante #}
+            {#
             <div class="bg-gray-900/60 border border-gray-700 rounded-xl p-4 flex items-center justify-between transition-all hover:border-gray-600">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 bg-gradient-to-tr from-yellow-500 via-pink-500 to-purple-600 text-white rounded-xl flex items-center justify-center text-xl">
                         <i class="fa-brands fa-instagram"></i>
                     </div>
-                   {% if not user.instagram_connected %}
-            <a href="/instagram/login" class="block bg-gray-800 p-4 rounded-lg hover:bg-gray-700 transition">
+                    {% if not user.instagram_connected %}
+                        <a href="/instagram/login" class="block bg-gray-800 p-4 rounded-lg hover:bg-gray-700 transition">
+                            <div>
+                                <h4 class="text-sm font-bold text-gray-200">Instagram Business</h4>
+                                <p class="text-xs mt-0.5 text-gray-500">
+                                    <i class="fa-solid fa-circle-xmark mr-1"></i>
+                                    Clique aqui para conectar seu Instagram
+                                </p>
+                            </div>
+                        </a>
+                    {% else %}
+                        <div class="bg-gray-800 p-4 rounded-lg">
+                            <h4 class="text-sm font-bold text-gray-200">Instagram Business</h4>
+                            <p class="text-xs mt-0.5 text-emerald-400">
+                                <i class="fa-solid fa-circle-check mr-1"></i>
+                                Conta Conectada
+                            </p>
+                        </div>
+                    {% endif %}
+                </div>
                 <div>
-                    <h4 class="text-sm font-bold text-gray-200">Instagram Business</h4>
-                    <p class="text-xs mt-0.5 text-gray-500">
-                        <i class="fa-solid fa-circle-xmark mr-1"></i>
-                        Clique aqui para conectar seu Instagram
-                    </p>
-                </div>
-            </a>
-        {% else %}
-            <div class="bg-gray-800 p-4 rounded-lg">
-                <h4 class="text-sm font-bold text-gray-200">Instagram Business</h4>
-                <p class="text-xs mt-0.5 text-emerald-400">
-                    <i class="fa-solid fa-circle-check mr-1"></i>
-                    Conta Conectada
-                </p>
-            </div>
-        {% endif %}
-                </div>
-                <div>
-                    <!-- "Manual (UI)" removido conforme solicitado -->
+                    <!-- "Manual (UI)" removido -->
                 </div>
             </div>
+            #}
         </div>
     </div>
 
