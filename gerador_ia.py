@@ -145,8 +145,17 @@ response = client.chat.completions.create(
 
 conteudo = response.choices[0].message.content
 
+# =========================
+# FORMATAÇÃO PARA MELHORAR PARÁGRAFOS
+# =========================
+
+# Remove linhas em branco e garante duas quebras de linha entre parágrafos
+conteudo_formatado = "\n\n".join(
+    [paragrafo.strip() for paragrafo in conteudo.split("\n") if paragrafo.strip() != ""]
+)
+
 print("\n===== CONTEÚDO GERADO =====\n")
-print(conteudo)
+print(conteudo_formatado)
 
 # =========================
 # SALVAR NO SUPABASE (SaaS CORE)
@@ -154,7 +163,7 @@ print(conteudo)
 
 nome_arquivo = re.sub(r'[^a-zA-Z0-9_]', '', tema.replace(" ", "_").lower())
 
-}novo_post = {
+novo_post = {
     "user_id": user_id,
     "tema": tema,
     "rede": rede,
@@ -162,7 +171,7 @@ nome_arquivo = re.sub(r'[^a-zA-Z0-9_]', '', tema.replace(" ", "_").lower())
     "nicho": nicho_nome,
     "data": data_postagem,
     "hora": hora_postagem,
-    "conteudo": conteudo,
+    "conteudo": conteudo_formatado,
     "arquivo": f"ai_generated/{nome_arquivo}.txt",
     "status": "pendente",
 
