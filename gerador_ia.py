@@ -43,7 +43,7 @@ print("\nEscolha o modo do conteúdo:")
 modo_escolha = input("1-Viral 2-Autoridade 3-Vendas 4-Storytelling: ")
 
 print("\nEscolha o nicho:")
-nicho_escolha = input("1-Contabilidade 2-Advocacia 3-Saúde 4-Marketing 5-Imobiliária 6-Arquiteturaedesigndeinteriores 7-Diversidadeerepresentacao 8-Engenharia 9-Fitnessbem-estar 10-Fotografiadealimentos 11-Gestao_negocios 12-Limpeza 13-Psicologia 14-Saudementalemindfulness 15-Política : ")
+nicho_escolha = input("1-Contabilidade 2-Advocacia 3-Saúde 4-Marketing 5-Imobiliária 6-Arquiteturaedesigndeinteriores 7-Diversidadeerepresentacao 8-Engenharia 9-Fitnessbem-estar 10-Fotografiadealimentos 11-Gestao_negocios 12-Limpeza 13-Psicologia 14-Saudementalemindfulness 15-Politica: ")
 
 data_postagem = input("\nData (DD/MM/AAAA): ")
 hora_postagem = input("Hora (HH:MM): ")
@@ -81,77 +81,49 @@ modo_nome = modos.get(modo_escolha, "viral")
 nicho_nome = nichos.get(nicho_escolha, "marketing")
 
 # =========================
-# PROMPTS
+# CARREGAR PROMPT BASEADO NA REDE
 # =========================
 
 arquivo_prompt = f"prompts/{rede}.txt"
-arquivo_modo = f"modes/{modo_nome}.txt"
-arquivo_nicho = f"nichos/{nicho_nome}.txt"
 
+# Lê prompt base do arquivo, que deve conter o texto robusto para geração do LinkedIn adaptado por nicho e modo
 with open(arquivo_prompt, "r", encoding="utf-8") as f:
     prompt_base = f.read()
 
-with open(arquivo_modo, "r", encoding="utf-8") as f:
-    prompt_modo = f.read()
+# =========================
+# CONSTRUIR PROMPT FINAL PARA IA
+# =========================
 
-with open(arquivo_nicho, "r", encoding="utf-8") as f:
-    prompt_nicho = f.read()
-
-prompt = f"""
+prompt_final = f"""
 {prompt_base}
 
-{prompt_modo}
+Tema do post: {tema}
+Modo: {modo_nome}
+Nicho: {nicho_nome}
 
-{prompt_nicho}
-
-Tema:
-{tema}
-
+Crie o conteúdo conforme acima, entregando um texto pronto para publicação no {rede.capitalize()}.
 """
 
 # =========================
-# UPLOAD
-# =========================
-
-@app.route("/upload", methods=["POST"])
-def upload():
-
-    if "image" not in request.files:
-
-        return {
-            "success": False,
-            "error": "Nenhuma imagem enviada"
-        }, 400
-
-    file = request.files["image"]
-
-    result = upload_image(file)
-
-    if not result["success"]:
-
-        return result, 400
-
-    return result
-
-
-# =========================
-# IA GENERATION
+# CHAMADA À IA
 # =========================
 
 response = client.chat.completions.create(
     model="llama-3.3-70b-versatile",
-    messages=[{"role": "user", "content": prompt}]
+    messages=[{"role": "user", "content": prompt_final}]
 )
 
-conteudo = response.choices[0].message.content
+conteudo_ia = response.choices[0].message.content
 
 # =========================
-# FORMATAÇÃO PARA MELHORAR PARÁGRAFOS
+# FORMATAÇÃO DO CONTEÚDO (PARÁGRAFOS)
 # =========================
 
-# Remove linhas em branco e garante duas quebras de linha entre parágrafos
+# Garantir espaçamento profissional com linhas em branco entre parágrafos.
+# Remove linhas vazias e junta parágrafos com duas quebras de linha
+
 conteudo_formatado = "\n\n".join(
-    [paragrafo.strip() for paragrafo in conteudo.split("\n") if paragrafo.strip() != ""]
+    [paragrafo.strip() for paragrafo in conteudo_ia.split("\n") if paragrafo.strip() != ""]
 )
 
 print("\n===== CONTEÚDO GERADO =====\n")
@@ -174,9 +146,7 @@ novo_post = {
     "conteudo": conteudo_formatado,
     "arquivo": f"ai_generated/{nome_arquivo}.txt",
     "status": "pendente",
-
     "imagem_url": "",
-
     "created_at": str(datetime.now())
 }
 
