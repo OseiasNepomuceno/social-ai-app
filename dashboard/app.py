@@ -538,6 +538,8 @@ def encontrar_nicho_mais_proximo(entrada, lista_nichos):
             melhor_nicho = nicho
     return melhor_nicho
 
+
+
 # Alteração na rota `/ia` para GET preencher nicho sugerido automaticamente
 @app.route("/ia", methods=["GET", "POST"])
 def ia():
@@ -545,16 +547,86 @@ def ia():
         return redirect("/login")
 
     if request.method == "POST":
-        # [o conteúdo POST permanece igual, tratado anteriormente]
-        # ...
-        # (manter todo fluxo POST normal, não alterado)
+        try:
+            tema = request.form.get("tema")
+            rede = request.form.get("rede_social")
+            modo = request.form.get("modo")
+            nicho = request.form.get("nicho")
+            data_postagem = request.form.get("data_postagem")
+            hora_postagem = request.form.get("horario")
+
+            print(f"🚀 EXECUTOR IA ACIONADO: Tema='{tema}' | Rede='{rede}' | Modo='{modo}'")
+
+            status_post = "pendente"
+            imagem_url = None
+
+            file = request.files.get("imagem")
+            if file and file.filename != "":
+                print(f"📸 Imagem manual detectada: {file.filename}. Iniciando upload...")
+                upload_result = upload_image(file)
+                if upload_result.get("success"):
+                    imagem_url = upload_result.get("public_url")
+                    print(f"✅ Upload concluído com sucesso. URL: {imagem_url}")
+
+            if not imagem_url:
+                print("📂 Nenhuma imagem enviada. Buscando na Media Library do Supabase...")
+                imagem_url = selecionar_imagem(nicho=nicho, rede=rede, estilo="premium")
+                print(f"🎯 Imagem selecionada do banco: {imagem_url}")
+
+            # Valida a URL da imagem, substitui por padrão se inválida
+            IMAGEM_PADRAO = "https://coregov.com.br/static/imagem-padrao.png"
+            if not validar_url_imagem(imagem_url):
+                print("⚠️ URL da imagem inválida ou inacessível, usando imagem padrão.")
+                imagem_url = IMAGEM_PADRAO
+
+            resultado = gerar_conteudo(tema, rede, modo, nicho)
+
+            if not resultado.get("success"):
+                flash(f"Erro na inteligência artificial: {resultado.get('erro')}", "error")
+                return redirect(url_for("ia"))
+
+            conteudo = resultado["conteudo"]
+
+            payload = {
+                "tema": tema,
+                "rede": rede,
+                "conteudo": conteudo,
+                "modo": modo,
+                "nicho": nicho,
+                "imagem_url": imagem_url,
+                "data_postagem": data_postagem,
+                "hora_postagem": hora_postagem,
+                "status": status_post,
+                "user_id": session["user_id"]
+            }
+
+            supabase.table("posts").insert(payload).execute()
+            print("💾 Post inserido com sucesso na tabela 'posts' do Supabase.")
+
+            user_data = supabase.table("users").select("posts_usados").eq("id", session["user_id"]).execute()
+            if user_data.data:
+                atual_usados = user_data.data[0].get("posts_usados", 0)
+                novo_total = atual_usados + 1
+
+                supabase.table("users").update({
+                    "posts_usados": novo_total
+                }).eq("id", session["user_id"]).execute()
+                print(f"Contador atualizado! Total usado: {novo_total}")
+
+            flash("Postagem criada e enviada para agendamentos com sucesso!", "success")
+            return redirect(url_for("ia"))
+
+        except Exception as e:
+            print("❌ EXCEÇÃO DISPARADA NO EXECUTOR IA:", str(e))
+            flash(f"Ocorreu um erro interno no processo: {str(e)}", "error")
+            return redirect(url_for("ia"))
 
     else:
-        # GET: carrega nicho sugerido para facilitar escolha
-        nichos_ativos = buscar_nichos_ativos()
+        # GET: Busca nichos oficiais ativos no banco e sugere nicho automaticamente pelo tema, se fornecido
+        nichos_ativos = buscar_nichos_ativos()  # função que retorna lista de nomes de nichos ativos
         nicho_sugerido = None
 
-        tema = request.args.get("tema", "")  # caso queira receber via query param
+        tema = request.args.get("tema", "")  # pode receber tema por query param para sugestão automática
 
         if tema:
             nicho_sugerido = encontrar_nicho_mais_proximo(tema, nichos_ativos)
@@ -563,7 +635,6 @@ def ia():
         return render_template("ia.html",
                                nicho_sugerido=nicho_sugerido,
                                lista_nichos=nichos_ativos)
-
 
 # =========================
 # FUNÇÕES DE PAGAMENTO & SCHEDULER
