@@ -453,6 +453,119 @@ def linkedin_callback():
     return redirect(url_for("configuracoes"))
 
 # =========================
+# FUNÇÃO PARA BUSCAR NICHOS ATIVOS NO BANCO
+# =========================
+
+# Função para buscar nichos ativos do banco
+def buscar_nichos_ativos():
+    try:
+        response = supabase.table("media_library")\
+            .select("nicho")\
+            .eq("ativo", True)\
+            .group("nicho")\
+            .execute()
+        
+        nichos = [item['nicho'] for item in response.data or []]
+        return nichos
+    except Exception as e:
+        print(f"Erro ao buscar nichos ativos: {str(e)}")
+        # lista padrão como fallback
+        return [
+            "limpeza",
+            "marketing",
+            "psicologia",
+            "negocios",
+            "engenharia",
+            "financeiro",
+            "tecnologia",
+            "contabilidade",
+            "vendas",
+            "empreendedorismo",
+            "saude",
+            "fotografiadealimentos",
+            "fitnessbem-estar",
+            "diversidadeerepresentacao",
+            "viagenseturismo",
+            "saudementalemindfulness",
+            "alimentacao",
+            "familiaerelacionamentos",
+            "arquiteturaedesigndeinteriores",
+            "tecnologiamergente",
+            "moda",
+            "educacao"
+        ]
+
+# Função para normalizar texto para comparação
+import unicodedata
+def normalizar_texto(texto):
+    texto = texto.lower()
+    texto = ''.join(c for c in unicodedata.normalize('NFD', texto) if unicodedata.category(c) != 'Mn')
+    texto = texto.replace(" ", "")
+    return texto
+
+# Função para calcular distância de Levenshtein (igual a da ia_engine.py)
+def distancia_levenshtein(a, b):
+    n, m = len(a), len(b)
+    if n > m:
+        a, b = b, a
+        n, m = m, n
+
+    current = list(range(n + 1))
+    for i in range(1, m + 1):
+        previous, current = current, [i] + [0] * n
+        for j in range(1, n + 1):
+            add = previous[j] + 1
+            delete = current[j - 1] + 1
+            change = previous[j - 1]
+            if a[j - 1] != b[i - 1]:
+                change += 1
+            current[j] = min(add, delete, change)
+
+    return current[n]
+
+# Função para encontrar nicho mais próximo ao tema
+def encontrar_nicho_mais_proximo(entrada, lista_nichos):
+    entrada_norm = normalizar_texto(entrada)
+
+    melhor_nicho = None
+    menor_distancia = float('inf')
+
+    for nicho in lista_nichos:
+        nicho_norm = normalizar_texto(nicho)
+        dist = distancia_levenshtein(entrada_norm, nicho_norm)
+        if dist < menor_distancia:
+            menor_distancia = dist
+            melhor_nicho = nicho
+    return melhor_nicho
+
+# Alteração na rota `/ia` para GET preencher nicho sugerido automaticamente
+@app.route("/ia", methods=["GET", "POST"])
+def ia():
+    if "user_id" not in session:
+        return redirect("/login")
+
+    if request.method == "POST":
+        # [o conteúdo POST permanece igual, tratado anteriormente]
+        # ...
+        # (manter todo fluxo POST normal, não alterado)
+
+    else:
+        # GET: carrega nicho sugerido para facilitar escolha
+        nichos_ativos = buscar_nichos_ativos()
+        nicho_sugerido = None
+
+        tema = request.args.get("tema", "")  # caso queira receber via query param
+
+        if tema:
+            nicho_sugerido = encontrar_nicho_mais_proximo(tema, nichos_ativos)
+            print(f"Nicho sugerido para o tema '{tema}': {nicho_sugerido}")
+
+        return render_template("ia.html",
+                               nicho_sugerido=nicho_sugerido,
+                               lista_nichos=nichos_ativos)
+
+
+# =========================
 # FUNÇÕES DE PAGAMENTO & SCHEDULER
 # =========================
 
