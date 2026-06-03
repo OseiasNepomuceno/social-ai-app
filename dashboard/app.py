@@ -798,6 +798,20 @@ def logout():
     return redirect("/login")
 
 # =========================
+# GERADOR VALIDAR IMAGEM
+# =========================
+
+# Função para validar url da imagem
+def validar_url_imagem(url):
+    if not url:
+        return False
+    try:
+        resposta = requests.head(url, timeout=5)
+        return resposta.status_code == 200
+    except:
+        return False
+
+# =========================
 # GERADOR INTELIGENTE DE POSTS (IA)
 # =========================
 
