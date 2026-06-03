@@ -5,6 +5,7 @@ print("#################################")
 import os
 import sys
 import time
+import requests
 
 ROOT_DIR = os.path.dirname(
     os.path.dirname(
@@ -65,7 +66,6 @@ print("URL USADA:")
 print(SUPABASE_URL)
 
 if not SUPABASE_URL or not SUPABASE_KEY:
-
     raise Exception(
         "Variáveis Supabase ausentes"
     )
@@ -82,28 +82,33 @@ supabase = create_client(
 print("SUPABASE CONECTADO")
 
 # =========================
+# VALIDAR URL IMAGEM
+# =========================
+
+IMAGEM_PADRAO = "https://coregov.com.br/static/imagem-padrao.png"  # Atualize para uma imagem padrão pública válida
+
+def validar_url_imagem(url):
+    try:
+        resposta = requests.head(url, timeout=5)
+        if resposta.status_code == 200:
+            return True
+        else:
+            print(f"⚠️ Imagem inválida, status: {resposta.status_code} URL: {url}")
+            return False
+    except Exception as e:
+        print(f"⚠️ Erro ao validar URL da imagem: {str(e)} URL: {url}")
+        return False
+
+# =========================
 # VERIFICAR LIMITE
 # =========================
 
 def pode_publicar(user):
-
-    plano = user.get(
-        "plano",
-        "free"
-    )
-
-    usados = user.get(
-        "posts_usados",
-        0
-    )
-
-    limite = user.get(
-        "posts_limite",
-        10
-    )
+    plano = user.get("plano", "free")
+    usados = user.get("posts_usados", 0)
+    limite = user.get("posts_limite", 10)
 
     if plano == "business":
-
         return True
 
     return usados < limite
@@ -113,48 +118,26 @@ def pode_publicar(user):
 # =========================
 
 def executar_post(post, user):
-
     try:
-
         print("\n🚀 EXECUTANDO POST")
+        print("Usuário:", user.get("email"))
+        print("Tema:", post.get("tema"))
+        print("Rede:", post.get("rede"))
 
-        print(
-            "Usuário:",
-            user.get("email")
-        )
+        conteudo = post.get("conteudo", "")
+        imagem_url = post.get("imagem_url")
 
-        print(
-            "Tema:",
-            post.get("tema")
-        )
-
-        print(
-            "Rede:",
-            post.get("rede")
-        )
-
-        conteudo = post.get(
-            "conteudo",
-            ""
-        )
-
-        imagem_url = post.get(
-            "imagem_url"
-        )
+        # Valida a imagem e substitui, se necessário
+        if imagem_url and not validar_url_imagem(imagem_url):
+            print("⚠️ Substituindo imagem inválida por imagem padrão.")
+            imagem_url = IMAGEM_PADRAO
 
         print("\n===== CONTEÚDO =====")
-
         print(conteudo)
-
         print("\n===== IMAGEM =====")
-
         print(imagem_url)
 
-        rede = post.get(
-            "rede",
-            ""
-        ).lower()
-
+        rede = post.get("rede", "").lower()
         sucesso = False
 
         # =========================
@@ -162,40 +145,11 @@ def executar_post(post, user):
         # =========================
 
         if rede == "linkedin":
-
-            print(
-                "🚀 Publicando no LinkedIn..."
-            )
-
-            sucesso = publicar_linkedin(
-
-                user["id"],
-
-                conteudo,
-
-                imagem_url
-
-            )
-
+            print("🚀 Publicando no LinkedIn...")
+            sucesso = publicar_linkedin(user["id"], conteudo, imagem_url)
             if not sucesso:
-
-                print(
-                    "❌ Falha publicação LinkedIn"
-                )
-
-                supabase.table(
-                    "posts"
-                ).update({
-
-                    "status": "erro"
-
-                }).eq(
-
-                    "id",
-                    post["id"]
-
-                ).execute()
-
+                print("❌ Falha publicação LinkedIn")
+                supabase.table("posts").update({"status": "erro"}).eq("id", post["id"]).execute()
                 return
 
         # =========================
@@ -203,50 +157,13 @@ def executar_post(post, user):
         # =========================
 
         elif rede == "instagram":
-
-            print(
-                "🚀 Publicando Instagram"
-            )
-
-            print(
-                "USER_ID:",
-                post["user_id"]
-            )
-
-            print(
-                "IMAGEM:",
-                imagem_url
-            )
-
-            sucesso = publicar_instagram(
-
-                post["user_id"],
-
-                conteudo,
-
-                imagem_url
-
-            )
-
+            print("🚀 Publicando Instagram")
+            print("USER_ID:", post["user_id"])
+            print("IMAGEM:", imagem_url)
+            sucesso = publicar_instagram(post["user_id"], conteudo, imagem_url)
             if not sucesso:
-
-                print(
-                    "❌ Falha Instagram"
-                )
-
-                supabase.table(
-                    "posts"
-                ).update({
-
-                    "status": "erro"
-
-                }).eq(
-
-                    "id",
-                    post["id"]
-
-                ).execute()
-
+                print("❌ Falha Instagram")
+                supabase.table("posts").update({"status": "erro"}).eq("id", post["id"]).execute()
                 return
 
         # =========================
@@ -254,356 +171,100 @@ def executar_post(post, user):
         # =========================
 
         else:
-
-            print(
-                "❌ Rede social inválida:"
-            )
-
-            print(rede)
-
-            supabase.table(
-                "posts"
-            ).update({
-
-                "status": "erro"
-
-            }).eq(
-
-                "id",
-                post["id"]
-
-            ).execute()
-
+            print("❌ Rede social inválida:", rede)
+            supabase.table("posts").update({"status": "erro"}).eq("id", post["id"]).execute()
             return
 
         # =========================
-        # ALTERAR STATUS
+        # STATUS E CONTAGEM
         # =========================
 
-        supabase.table(
-            "posts"
-        ).update({
+        supabase.table("posts").update({"status": "executado"}).eq("id", post["id"]).execute()
 
-            "status": "executado"
-
-        }).eq(
-
-            "id",
-            post["id"]
-
-        ).execute()
-
-        # =========================
-        # INCREMENTAR USO
-        # =========================
-
-        usuario = supabase.table(
-            "users"
-        ).select("*").eq(
-            "id",
-            user["id"]
-        ).execute()
-
+        usuario = supabase.table("users").select("*").eq("id", user["id"]).execute()
         if usuario.data:
-
             u = usuario.data[0]
-
-            novo_total = u.get(
-                "posts_usados",
-                0
-            ) + 1
-
-            supabase.table(
-                "users"
-            ).update({
-
-                "posts_usados": novo_total
-
-            }).eq(
-
-                "id",
-                user["id"]
-
-            ).execute()
+            novo_total = u.get("posts_usados", 0) + 1
+            supabase.table("users").update({"posts_usados": novo_total}).eq("id", user["id"]).execute()
 
         print("✅ Post executado")
 
     except Exception as e:
-
-        print(
-            "❌ ERRO EXECUTANDO POST:"
-        )
-
-        print(str(e))
-
-        supabase.table(
-            "posts"
-        ).update({
-
-            "status": "erro"
-
-        }).eq(
-
-            "id",
-            post["id"]
-
-        ).execute()
+        print("❌ ERRO EXECUTANDO POST:", str(e))
+        supabase.table("posts").update({"status": "erro"}).eq("id", post["id"]).execute()
 
 # =========================
 # LOOP PRINCIPAL
 # =========================
 
 def loop_executor():
-
     while True:
-
         try:
-
-            print(
-                "\n⏰ Verificando posts pendentes..."
-            )
-
-            posts = supabase.table(
-                "posts"
-            ).select("*").eq(
-                "status",
-                "pendente"
-            ).execute()
-
+            print("\n⏰ Verificando posts pendentes...")
+            posts = supabase.table("posts").select("*").eq("status", "pendente").execute()
             posts = posts.data
 
             if not posts:
-
-                print(
-                    "Nenhum post pendente"
-                )
-
+                print("Nenhum post pendente")
                 time.sleep(10)
-
                 continue
 
-            # =========================
-            # LOOP POSTS
-            # =========================
-
             for post in posts:
-
                 try:
-
-                    user_id = post.get(
-                        "user_id"
-                    )
-
-                    print("USER_ID POST:")
-                    print(user_id)
-
+                    user_id = post.get("user_id")
+                    print("USER_ID POST:", user_id)
                     print(type(user_id))
 
                     if not user_id:
-
-                        print(
-                            "❌ Post sem user_id"
-                        )
-
+                        print("❌ Post sem user_id")
                         continue
 
-                    # =========================
-                    # BUSCAR USER
-                    # =========================
-
-                    user_res = supabase.table(
-                        "users"
-                    ).select("*").eq(
-                        "id",
-                        user_id
-                    ).execute()
-
-                    print("RESULTADO USER:")
-                    print(user_res.data)
-
+                    user_res = supabase.table("users").select("*").eq("id", user_id).execute()
+                    print("RESULTADO USER:", user_res.data)
                     print("BUSCANDO USER...")
 
                     if not user_res.data:
-
-                        print(
-                            "❌ Usuário não encontrado"
-                        )
-
+                        print("❌ Usuário não encontrado")
                         continue
 
                     user = user_res.data[0]
 
-                    # =========================
-                    # VALIDAR LIMITE
-                    # =========================
-
-                    permitido = pode_publicar(
-                        user
-                    )
-
+                    permitido = pode_publicar(user)
                     if not permitido:
-
-                        print(
-                            "🚫 Limite atingido:"
-                        )
-
-                        print(
-                            user.get("email")
-                        )
-
-                        supabase.table(
-                            "posts"
-                        ).update({
-
-                            "status": "bloqueado"
-
-                        }).eq(
-
-                            "id",
-                            post["id"]
-
-                        ).execute()
-
+                        print("🚫 Limite atingido:", user.get("email"))
+                        supabase.table("posts").update({"status": "bloqueado"}).eq("id", post["id"]).execute()
                         continue
 
-                    # =========================
-                    # VALIDAR DATA/HORA
-                    # =========================
-
-                    data_post = post.get(
-                        "data_postagem"
-                    ) or post.get(
-                        "data"
-                    )
-
-                    hora_post = post.get(
-                        "hora_postagem"
-                    ) or post.get(
-                        "hora"
-                    )
+                    data_post = post.get("data_postagem") or post.get("data")
+                    hora_post = post.get("hora_postagem") or post.get("hora")
 
                     if not data_post or not hora_post:
-
-                        print(
-                            "❌ Data/Hora ausente"
-                        )
-
-                        supabase.table(
-                            "posts"
-                        ).update({
-
-                            "status": "erro"
-
-                        }).eq(
-
-                            "id",
-                            post["id"]
-
-                        ).execute()
-
+                        print("❌ Data/Hora ausente")
+                        supabase.table("posts").update({"status": "erro"}).eq("id", post["id"]).execute()
                         continue
-
-                    # =========================
-                    # CONVERTER DATA
-                    # =========================
 
                     try:
-
-                        data_hora = datetime.strptime(
-
-                            f"{data_post} {hora_post}",
-
-                            "%Y-%m-%d %H:%M:%S"
-
-                        )
-
+                        data_hora = datetime.strptime(f"{data_post} {hora_post}", "%Y-%m-%d %H:%M:%S")
                     except:
+                        data_hora = datetime.strptime(f"{data_post} {hora_post}", "%Y-%m-%d %H:%M")
 
-                        data_hora = datetime.strptime(
-
-                            f"{data_post} {hora_post}",
-
-                            "%Y-%m-%d %H:%M"
-
-                        )
-
-                    agora = datetime.now(
-
-                        ZoneInfo(
-                            "America/Sao_Paulo"
-                        )
-
-                    ).replace(
-                        tzinfo=None
-                    )
-
-                    print(
-                        "🕒 Agora:",
-                        agora
-                    )
-
-                    print(
-                        "📅 Agendado:",
-                        data_hora
-                    )
-
-                    # =========================
-                    # AINDA NÃO CHEGOU
-                    # =========================
+                    agora = datetime.now(ZoneInfo("America/Sao_Paulo")).replace(tzinfo=None)
+                    print("🕒 Agora:", agora)
+                    print("📅 Agendado:", data_hora)
 
                     if agora < data_hora:
-
-                        print(
-                            "⌛ Aguardando horário..."
-                        )
-
+                        print("⌛ Aguardando horário...")
                         continue
 
-                    # =========================
-                    # EVITAR DUPLICAÇÃO
-                    # =========================
+                    supabase.table("posts").update({"status": "processando"}).eq("id", post["id"]).execute()
 
-                    supabase.table(
-                        "posts"
-                    ).update({
-
-                        "status": "processando"
-
-                    }).eq(
-
-                        "id",
-                        post["id"]
-
-                    ).execute()
-
-                    # =========================
-                    # EXECUTAR POST
-                    # =========================
-
-                    executar_post(
-                        post,
-                        user
-                    )
+                    executar_post(post, user)
 
                 except Exception as e:
-
-                    print(
-                        "❌ Erro no loop do post:"
-                    )
-
-                    print(str(e))
+                    print("❌ Erro no loop do post:", str(e))
 
         except Exception as e:
-
-            print(
-                "❌ ERRO GERAL:"
-            )
-
-            print(str(e))
-
-        # =========================
-        # INTERVALO
-        # =========================
+            print("❌ ERRO GERAL:", str(e))
 
         time.sleep(10)
 
@@ -612,5 +273,4 @@ def loop_executor():
 # =========================
 
 if __name__ == "__main__":
-
     loop_executor()
