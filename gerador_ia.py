@@ -43,7 +43,7 @@ print("\nEscolha o modo do conteúdo:")
 modo_escolha = input("1-Viral 2-Autoridade 3-Vendas 4-Storytelling: ")
 
 print("\nEscolha o nicho:")
-nicho_escolha = input("1-Contabilidade 2-Advocacia 3-Saúde 4-Marketing 5-Imobiliária 6-Política: ")
+nicho_escolha = input("1-Contabilidade 2-Advocacia 3-Saúde 4-Marketing 5-Imobiliária 6-Arquiteturaedesigndeinteriores 7-Diversidadeerepresentacao 8-Engenharia 9-Fitnessbem-estar 10-Fotografiadealimentos 11-Gestao_negocios 12-Limpeza 13-Psicologia 14-Saudementalemindfulness 15-Política : ")
 
 data_postagem = input("\nData (DD/MM/AAAA): ")
 hora_postagem = input("Hora (HH:MM): ")
@@ -65,7 +65,16 @@ nichos = {
     "3": "saude",
     "4": "marketing",
     "5": "imobiliaria",
-    "6": "politica"
+    "6": "arquiteturaedesigndeinteriores",
+    "7": "diversidadeerepresentacao",
+    "8": "engenharia",
+    "9": "fitnessbem-estar",
+    "10": "fotografiadealimentos",
+    "11": "gestao_negocios",
+    "12": "limpeza",
+    "13": "psicologia",
+    "14": "saudementalemindfulness",
+    "15": "politica"
 }
 
 modo_nome = modos.get(modo_escolha, "viral")
