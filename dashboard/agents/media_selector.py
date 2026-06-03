@@ -14,10 +14,7 @@ SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 # SUPABASE
 # =========================
 
-supabase = create_client(
-    SUPABASE_URL,
-    SUPABASE_KEY
-)
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # =========================
 # SELECIONAR IMAGEM
@@ -49,9 +46,9 @@ def selecionar_imagem(nicho="marketing", rede="linkedin", estilo="premium"):
                 print("✅ IMAGEM SELECIONADA:", selecionada["image_url"])
                 return selecionada["image_url"]
 
-        # Busca todos os nichos ativos para fallback, exceto o nicho atual
+        # Busca todos os nichos ativos sem distinct, deduplicando em Python
         nichos_resp = supabase.table("media_library")\
-            .select("nicho", distinct=True)\
+            .select("nicho")\
             .eq("ativo", True)\
             .execute()
 
