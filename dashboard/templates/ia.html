@@ -65,15 +65,16 @@
                     </select>
                 </div>
 
-                <div class="space-y-2 sm:col-span-2">
-                    <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider block">Nicho / Segmento</label>
-                    <select id="nicho" name="nicho" required class="...">
-                      <option value="" disabled selected>Selecione um nicho</option>
-                      {% for n in lista_nichos %}
-                        <option value="{{ n }}"
+                <select id="nicho" name="nicho" required
+                    class="bg-gray-800 text-white border border-gray-600 rounded px-2 py-1 w-full
+                           focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="" disabled selected class="bg-gray-800 text-gray-400">Selecione um nicho</option>
+                    {% for n in lista_nichos %}
+                        <option value="{{ n }}" class="bg-gray-800 text-white"
                             {% if request.form.nicho == n %}selected{% endif %}>{{ n | capitalize }}</option>
-                      {% endfor %}
-                    </select>
+                    {% endfor %}
+                </select>
+
 
 
                 </div>
