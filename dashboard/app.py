@@ -590,6 +590,7 @@ def ia():
     else:
         # GET: Busca nichos oficiais ativos no banco e sugere nicho automaticamente pelo tema, se fornecido
         nichos_ativos = buscar_nichos_ativos()  # função que retorna lista de nomes de nichos ativos
+        print("Nichos Ativos encontrados:", nichos_ativos)  # <-- adicione esta linha
         nicho_sugerido = None
 
         tema = request.args.get("tema", "")  # pode receber tema por query param para sugestão automática
