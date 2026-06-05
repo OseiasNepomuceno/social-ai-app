@@ -407,42 +407,60 @@ def linkedin_callback():
 # FUNÇÃO PARA BUSCAR NICHOS ATIVOS NO BANCO (corrigida sem .group)
 # =========================
 
+def formatar_nicho(nome):
+    nome = nome.lower()
+    substituicoes = {
+        "fotografiadealimentos": "Fotografia de Alimentos",
+        "fitnessbem-estar": "Fitness e Bem-estar",
+        "diversidadeerepresentacao": "Diversidade e Representação",
+        "viagenseturismo": "Viagens e Turismo",
+        "saudementalemindfulness": "Saúde Mental e Mindfulness",
+        "familiaerelacionamentos": "Família e Relacionamentos",
+        "arquiteturaedesigndeinteriores": "Arquitetura e Design de Interiores",
+        "tecnologiamergente": "Tecnologia Emergente"
+    }
+    if nome in substituicoes:
+        return substituicoes[nome]
+
+    # Capitaliza cada palavra
+    return " ".join(p.capitalize() for p in nome.split())
+
 def buscar_nichos_ativos():
     try:
         response = supabase.table("media_library")\
             .select("nicho")\
             .eq("ativo", True)\
             .execute()
-        
-        # Usando set para garantir nichos únicos:
-        nichos = list({item['nicho'] for item in response.data or []})
-        return nichos
+
+        nichos_originais = list({item['nicho'] for item in response.data or []})
+        nichos_formatados = [formatar_nicho(n) for n in nichos_originais]
+        return nichos_formatados
+
     except Exception as e:
         print(f"Erro ao buscar nichos ativos: {str(e)}")
-        # lista padrão como fallback
         return [
-            "limpeza",
-            "marketing",
-            "psicologia",
-            "negocios",
-            "engenharia",
-            "financeiro",
-            "tecnologia",
-            "contabilidade",
-            "vendas",
-            "empreendedorismo",
-            "saude",
-            "fotografiadealimentos",
-            "fitnessbem-estar",
-            "diversidadeerepresentacao",
-            "viagenseturismo",
-            "saudementalemindfulness",
-            "alimentacao",
-            "familiaerelacionamentos",
-            "arquiteturaedesigndeinteriores",
-            "tecnologiamergente",
-            "moda",
-            "educacao"
+            "Limpeza",
+            "Marketing",
+            "Psicologia",
+            "Negócios",
+            "Engenharia",
+            "Financeiro",
+            "Tecnologia",
+            "Contabilidade",
+            "Vendas",
+            "Empreendedorismo",
+            "Saúde",
+            "Fotografia de Alimentos",
+            "Fitness e Bem-estar",
+            "Diversidade e Representação",
+            "Viagens e Turismo",
+            "Saúde Mental e Mindfulness",
+            "Alimentação",
+            "Família e Relacionamentos",
+            "Arquitetura e Design de Interiores",
+            "Tecnologia Emergente",
+            "Moda",
+            "Educação"
         ]
 
 # Função para normalizar texto para comparação
