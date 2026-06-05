@@ -138,13 +138,10 @@ def instagram_login():
 def facebook_callback():
     user_id = request.args.get("state")
     code = request.args.get("code")
-
     if not code:
         return "Código OAuth não recebido", 400
-
     FACEBOOK_APP_ID = os.getenv("FACEBOOK_APP_ID")
     FACEBOOK_APP_SECRET = os.getenv("FACEBOOK_APP_SECRET")
-
     token_url = (
         "https://graph.facebook.com/v21.0/oauth/access_token"
         f"?client_id={FACEBOOK_APP_ID}"
@@ -152,52 +149,35 @@ def facebook_callback():
         f"&client_secret={FACEBOOK_APP_SECRET}"
         f"&code={code}"
     )
-
     token_response = requests.get(token_url)
     token_data = token_response.json()
-
     print("TOKEN RESPONSE:", token_data)
-
     if "access_token" not in token_data:
         return f"Erro ao obter token: {token_data}", 400
-
     access_token = token_data["access_token"]
-
-    # Após pegar o access_token, verifique a resposta antes de usar
     me_url = f"https://graph.facebook.com/v21.0/me/accounts?access_token={access_token}"
     response = requests.get(me_url)
     pages = response.json()
-
     print("PAGES RESPONSE:")
     print(pages)
     print("ACCESS TOKEN:")
     print(access_token[:20])
-
-    # PROTEÇÃO AQUI:
     if 'data' not in pages:
         return f"Erro na API do Facebook: {pages.get('error', 'Sem dados de páginas')}", 400
-
     if len(pages['data']) == 0:
         return "Você não selecionou nenhuma página na tela do Facebook!", 400
-
     page_id = pages['data'][0]['id']
     page_token = pages['data'][0]['access_token']
-
-    # Agora buscamos o ID da conta do Instagram atrelada a essa página
     insta_url = f"https://graph.facebook.com/v21.0/{page_id}?fields=instagram_business_account&access_token={page_token}"
     insta_data = requests.get(insta_url).json()
-
     if "instagram_business_account" not in insta_data:
         return f"Instagram não vinculado à página: {insta_data}", 400
-
     insta_id = insta_data["instagram_business_account"]["id"]
-
-    # PASSO 4: Armazenar tudo no Supabase
- supabase.table("users").update({
+    # Aqui a indentação estava incorreta, corrigida para dentro da função, com indentação adequada
+    supabase.table("users").update({
         "instagram_token": access_token,
         "instagram_business_id": insta_id
     }).eq("id", user_id).execute()
-
     return "Conectado com sucesso! Agora você pode voltar ao sistema."
 
 # =========================
@@ -256,12 +236,9 @@ ADMIN_EMAIL = "oseiasnepom@gmail.com"
 def monitoramento():
     if "user_id" not in session:
         return redirect("/login")
-
     if session.get("email") != ADMIN_EMAIL:
         print(f"🚨 Tentativa de acesso não autorizado ao monitoramento por: {session.get('email')}")
         return redirect("/")
-
-    # ⚡ SOLUÇÃO DE TIMEOUT: Mantendo seu robô assíncrono em segundo plano ativo e seguro
     try:
         print("⚡ Gatilho detectado via Painel Admin: Disparando robô multiplicador...")
         thread_agente = threading.Thread(
@@ -272,8 +249,6 @@ def monitoramento():
         thread_agente.start()
     except Exception as err_agente:
         print(f"⚠️ Falha ao criar a thread de multiplicação: {str(err_agente)}")
-
-    # Inicialização das variáveis limpas para evitar quebras
     usuarios_online = 0
     usuarios_hoje = 0
     usuarios_mes = 0
@@ -282,54 +257,39 @@ def monitoramento():
     lista_mes = []
     grafico_labels = []
     grafico_dados = []
-
     try:
         agora = datetime.utcnow()
-
-        # --- 1. USUÁRIOS ONLINE (Últimos 5 minutos) ---
         cinco_minutos_atras = (agora - timedelta(minutes=5)).isoformat()
         res_online = supabase.table("users").select("id", "email").gte("ultima_atividade", cinco_minutos_atras).execute()
         if res_online.data:
             lista_online = res_online.data
             usuarios_online = len(lista_online)
-
-        # --- 2. ACESSOS HOJE ---
         hoje_str = agora.strftime("%Y-%m-%d")
         res_hoje = supabase.table("analytics_acessos").select("user_id", "users(email)").eq("data_acesso", hoje_str).execute()
         if res_hoje.data:
             lista_hoje = [{"email": item["users"]["email"]} for item in res_hoje.data if item.get("users")]
             usuarios_hoje = len(lista_hoje)
-
-        # --- 3. ACESSOS NO MÊS (Últimos 30 dias) ---
         trinta_dias_atras = (agora - timedelta(days=30)).strftime("%Y-%m-%d")
         res_mes = supabase.table("analytics_acessos").select("user_id", "users(email)").gte("data_acesso", trinta_dias_atras).execute()
         if res_mes.data:
             emails_unicos_mes = {item["users"]["email"] for item in res_mes.data if item.get("users")}
-            lista_mes =email": email} for email in emails_unicos_mes]
+            lista_mes = [{"email": email} for email in emails_unicos_mes]  # corrigido aqui: abriu colchete
             usuarios_mes = len(lista_mes)
-
-        # --- 4. CONSTRUÇÃO DO GRÁFICO (ÚLTIMOS 7 DIAS) ---
         for i in range(6, -1, -1):
             dia_alvo = agora - timedelta(days=i)
             dia_alvo_str = dia_alvo.strftime("%Y-%m-%d")
             dia_exibicao = dia_alvo.strftime("%d/%m")
-
             res_dia = supabase.table("analytics_acessos").select("user_id", count="exact").eq("data_acesso", dia_alvo_str).execute()
             total_dia = res_dia.count if res_dia.count is not None else 0
-
             grafico_labels.append(dia_exibicao)
             grafico_dados.append(total_dia)
-
     except Exception as err_metrics:
         print(f"⚠️ Falha crítica ao computar métricas de usuários: {str(err_metrics)}")
-
-    # --- 5. SAÚDE DOS AGENTES ---
     try:
         relatorio = gerar_relatorio_completo()
     except Exception as e:
         print("Erro ao gerar relatório do monitoramento:", str(e))
         relatorio = {}
-
     return render_template(
         'monitoramento.html',
         data=relatorio,
