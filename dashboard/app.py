@@ -451,21 +451,19 @@ def linkedin_callback():
         flash(f"Instabilidade temporária ao conectar com o LinkedIn: {str(e)}", "danger")
         
     return redirect(url_for("configuracoes"))
-
 # =========================
-# FUNÇÃO PARA BUSCAR NICHOS ATIVOS NO BANCO
+# FUNÇÃO PARA BUSCAR NICHOS ATIVOS NO BANCO (corrigida sem .group)
 # =========================
 
-# Função para buscar nichos ativos do banco
 def buscar_nichos_ativos():
     try:
         response = supabase.table("media_library")\
             .select("nicho")\
             .eq("ativo", True)\
-            .group("nicho")\
             .execute()
         
-        nichos = [item['nicho'] for item in response.data or []]
+        # Usando set para garantir nichos únicos:
+        nichos = list({item['nicho'] for item in response.data or []})
         return nichos
     except Exception as e:
         print(f"Erro ao buscar nichos ativos: {str(e)}")
@@ -495,54 +493,10 @@ def buscar_nichos_ativos():
             "educacao"
         ]
 
-# Função para normalizar texto para comparação
-import unicodedata
-def normalizar_texto(texto):
-    texto = texto.lower()
-    texto = ''.join(c for c in unicodedata.normalize('NFD', texto) if unicodedata.category(c) != 'Mn')
-    texto = texto.replace(" ", "")
-    return texto
-
-# Função para calcular distância de Levenshtein (igual a da ia_engine.py)
-def distancia_levenshtein(a, b):
-    n, m = len(a), len(b)
-    if n > m:
-        a, b = b, a
-        n, m = m, n
-
-    current = list(range(n + 1))
-    for i in range(1, m + 1):
-        previous, current = current, [i] + [0] * n
-        for j in range(1, n + 1):
-            add = previous[j] + 1
-            delete = current[j - 1] + 1
-            change = previous[j - 1]
-            if a[j - 1] != b[i - 1]:
-                change += 1
-            current[j] = min(add, delete, change)
-
-    return current[n]
-
-# Função para encontrar nicho mais próximo ao tema
-def encontrar_nicho_mais_proximo(entrada, lista_nichos):
-    entrada_norm = normalizar_texto(entrada)
-
-    melhor_nicho = None
-    menor_distancia = float('inf')
-
-    for nicho in lista_nichos:
-        nicho_norm = normalizar_texto(nicho)
-        dist = distancia_levenshtein(entrada_norm, nicho_norm)
-        if dist < menor_distancia:
-            menor_distancia = dist
-            melhor_nicho = nicho
-    return melhor_nicho
-
 # =========================
-# GERADOR INTELIGENTE DE POSTS (IA)
+# GERADOR INTELIGENTE DE POSTS (IA) com validação de limite de posts
 # =========================
 
-# Alteração na rota `/ia` para GET preencher nicho sugerido automaticamente
 @app.route("/ia", methods=["GET", "POST"])
 def ia():
     if "user_id" not in session:
@@ -558,6 +512,20 @@ def ia():
             hora_postagem = request.form.get("horario")
 
             print(f"🚀 EXECUTOR IA ACIONADO: Tema='{tema}' | Rede='{rede}' | Modo='{modo}'")
+
+            # Buscar dados atuais do usuário para validar limite
+            user_data_res = supabase.table("users").select("posts_usados", "posts_limite").eq("id", session["user_id"]).execute()
+            if not user_data_res.data:
+                flash("Usuário não encontrado. Faça login novamente.", "danger")
+                return redirect(url_for("login"))
+            
+            user_info = user_data_res.data[0]
+            posts_usados = user_info.get("posts_usados", 0)
+            posts_limite = user_info.get("posts_limite", 10)  # padrão 10 para free
+            
+            if posts_usados >= posts_limite:
+                flash(f"Você atingiu o limite máximo de {posts_limite} postagens do seu plano atual. Para continuar criando novos posts, atualize seu plano.", "warning")
+                return redirect(url_for("ia"))
 
             status_post = "pendente"
             imagem_url = None
@@ -605,15 +573,11 @@ def ia():
             supabase.table("posts").insert(payload).execute()
             print("💾 Post inserido com sucesso na tabela 'posts' do Supabase.")
 
-            user_data = supabase.table("users").select("posts_usados").eq("id", session["user_id"]).execute()
-            if user_data.data:
-                atual_usados = user_data.data[0].get("posts_usados", 0)
-                novo_total = atual_usados + 1
-
-                supabase.table("users").update({
-                    "posts_usados": novo_total
-                }).eq("id", session["user_id"]).execute()
-                print(f"Contador atualizado! Total usado: {novo_total}")
+            novo_total = posts_usados + 1
+            supabase.table("users").update({
+                "posts_usados": novo_total
+            }).eq("id", session["user_id"]).execute()
+            print(f"Contador atualizado! Total usado: {novo_total}")
 
             flash("Postagem criada e enviada para agendamentos com sucesso!", "success")
             return redirect(url_for("ia"))
@@ -637,6 +601,7 @@ def ia():
         return render_template("ia.html",
                                nicho_sugerido=nicho_sugerido,
                                lista_nichos=nichos_ativos)
+
 
 # =========================
 # FUNÇÕES DE PAGAMENTO & SCHEDULER
