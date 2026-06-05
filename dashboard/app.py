@@ -124,7 +124,7 @@ def instagram_login():
     auth_url = (
         f"https://www.facebook.com/v21.0/dialog/oauth?"
         f"client_id={os.getenv('FACEBOOK_APP_ID')}"
-        f"&redirect_uri=https://app.coregov.com.br/facebook/callback"
+       # f"&redirect_uri=https://app.coregov.com.br/facebook/callback"
         f"&scope={scope}"
         f"&response_type=code"
         f"&state={session.get('user_id', 'init')}"
@@ -134,51 +134,51 @@ def instagram_login():
 
 # --- ROTA 2, 3 e 4: O CALLBACK (Onde a mágica acontece) ---
 
-@app.route('/facebook/callback')
-def facebook_callback():
-    user_id = request.args.get("state")
-    code = request.args.get("code")
-    if not code:
-        return "Código OAuth não recebido", 400
-    FACEBOOK_APP_ID = os.getenv("FACEBOOK_APP_ID")
-    FACEBOOK_APP_SECRET = os.getenv("FACEBOOK_APP_SECRET")
-    token_url = (
-        "https://graph.facebook.com/v21.0/oauth/access_token"
-        f"?client_id={FACEBOOK_APP_ID}"
-        f"&redirect_uri=https://app.coregov.com.br/facebook/callback"
-        f"&client_secret={FACEBOOK_APP_SECRET}"
-        f"&code={code}"
-    )
-    token_response = requests.get(token_url)
-    token_data = token_response.json()
-    print("TOKEN RESPONSE:", token_data)
-    if "access_token" not in token_data:
-        return f"Erro ao obter token: {token_data}", 400
-    access_token = token_data["access_token"]
-    me_url = f"https://graph.facebook.com/v21.0/me/accounts?access_token={access_token}"
-    response = requests.get(me_url)
-    pages = response.json()
-    print("PAGES RESPONSE:")
-    print(pages)
-    print("ACCESS TOKEN:")
-    print(access_token[:20])
-    if 'data' not in pages:
-        return f"Erro na API do Facebook: {pages.get('error', 'Sem dados de páginas')}", 400
-    if len(pages['data']) == 0:
-        return "Você não selecionou nenhuma página na tela do Facebook!", 400
-    page_id = pages['data'][0]['id']
-    page_token = pages['data'][0]['access_token']
-    insta_url = f"https://graph.facebook.com/v21.0/{page_id}?fields=instagram_business_account&access_token={page_token}"
-    insta_data = requests.get(insta_url).json()
-    if "instagram_business_account" not in insta_data:
-        return f"Instagram não vinculado à página: {insta_data}", 400
-    insta_id = insta_data["instagram_business_account"]["id"]
+#@app.route('/facebook/callback')
+#def facebook_callback():
+   # user_id = request.args.get("state")
+   # code = request.args.get("code")
+   # if not code:
+   #     return "Código OAuth não recebido", 400
+   # FACEBOOK_APP_ID = os.getenv("FACEBOOK_APP_ID")
+   # FACEBOOK_APP_SECRET = os.getenv("FACEBOOK_APP_SECRET")
+  #  token_url = (
+  #      "https://graph.facebook.com/v21.0/oauth/access_token"
+  #      f"?client_id={FACEBOOK_APP_ID}"
+  ##      f"&redirect_uri=https://app.coregov.com.br/facebook/callback"
+  #      f"&client_secret={FACEBOOK_APP_SECRET}"
+   #     f"&code={code}"
+#    )
+ #   token_response = requests.get(token_url)
+  #  token_data = token_response.json()
+ ##   print("TOKEN RESPONSE:", token_data)
+  #  if "access_token" not in token_data:
+#     return f"Erro ao obter token: {token_data}", 400
+ #   access_token = token_data["access_token"]
+#    me_url = f"https://graph.facebook.com/v21.0/me/accounts?access_token={access_token}"
+#    response = requests.get(me_url)
+ #   pages = response.json()
+  #  print("PAGES RESPONSE:")
+ #   print(pages)
+  #  print("ACCESS TOKEN:")
+   # print(access_token[:20])
+    #if 'data' not in pages:
+     #   return f"Erro na API do Facebook: {pages.get('error', 'Sem dados de páginas')}", 400
+   # if len(pages['data']) == 0:
+    #    return "Você não selecionou nenhuma página na tela do Facebook!", 400
+    #page_id = pages['data'][0]['id']
+    #page_token = pages['data'][0]['access_token']
+    #insta_url = f"https://graph.facebook.com/v21.0/{page_id}?fields=instagram_business_account&access_token={page_token}"
+    #insta_data = requests.get(insta_url).json()
+    #if "instagram_business_account" not in insta_data:
+       # return f"Instagram não vinculado à página: {insta_data}", 400
+#    insta_id = insta_data["instagram_business_account"]["id"]
     # Aqui a indentação estava incorreta, corrigida para dentro da função, com indentação adequada
-    supabase.table("users").update({
-        "instagram_token": access_token,
-        "instagram_business_id": insta_id
-    }).eq("id", user_id).execute()
-    return "Conectado com sucesso! Agora você pode voltar ao sistema."
+ #   supabase.table("users").update({
+  #      "instagram_token": access_token,
+  #      "instagram_business_id": insta_id
+ #   }).eq("id", user_id).execute()
+ #   return "Conectado com sucesso! Agora você pode voltar ao sistema."
 
 # =========================
 # ROBOTS.TXT
