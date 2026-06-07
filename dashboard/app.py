@@ -28,6 +28,7 @@ from services.supabase_storage import upload_image
 from dashboard.agents.media_selector import selecionar_imagem
 from dashboard.ia_engine import gerar_conteudo
 from dashboard.picoclaw_agent import gerar_post_picoclaw
+from dashboard.picoclaw_agent import gerar_post_picoclaw, inferir_nicho
 
 #Segurança por Telegram
 from dashboard.telegram_alerts import (
@@ -491,7 +492,8 @@ def ia():
             tema = request.form.get("tema")
             rede = request.form.get("rede_social")
             modo = request.form.get("modo")
-            nicho = request.form.get("nicho")
+            nicho = inferir_nicho(tema, buscar_nichos_ativos())
+            print(f"🎯 Nicho inferido automaticamente: {nicho}")
             data_postagem = request.form.get("data_postagem")
             hora_postagem = request.form.get("horario")
             print(f"🚀 EXECUTOR IA ACIONADO: Tema='{tema}' | Rede='{rede}' | Modo='{modo}'")
