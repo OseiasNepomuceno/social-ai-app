@@ -39,13 +39,13 @@
                 <h2 class="text-lg font-bold text-gray-200">Parâmetros do Conteúdo</h2>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div class="space-y-2 sm:col-span-2">
-                    <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider block">Tema do Post</label>
-                    <input type="text" id="tema" name="tema" placeholder="Ex: O Raio-X do MEI ou Mapeamento Inteligente..." required
-                        class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-all text-sm"
-                        value="{{ request.form.tema or '' }}">
-                </div>
+            <div class="space-y-2 sm:col-span-2">
+                <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider block">Tema do Post</label>
+                <input type="text" id="tema" name="tema" placeholder="Descreva o tema específico do seu negócio ou área de atuação. Ex: Como o MEI pode reduzir impostos legalmente..." required
+                    class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-all text-sm"
+                    value="{{ request.form.tema or '' }}">
+                <p class="text-xs text-gray-500 mt-1">💡 Quanto mais específico o tema, melhor o conteúdo gerado para seu negócio.</p>
+            </div>
 
                 <div class="space-y-2">
                     <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider block">Rede Social</label>
@@ -65,28 +65,7 @@
                     </select>
                 </div>
 
-               <div class="space-y-2 sm:col-span-2">
-                  <label for="nicho" class="text-xs font-semibold text-gray-400 uppercase tracking-wider block">
-                    Nicho / Segmento
-                  </label>
-                  <select id="nicho" name="nicho" required
-                      class="bg-gray-800 text-white border border-gray-600 rounded px-2 py-1 w-full
-                             focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="" disabled selected class="bg-gray-800 text-gray-400">
-                      Selecione um nicho
-                    </option>
-                    {% for n in lista_nichos %}
-                      <option value="{{ n }}"
-                          {% if request.form.nicho == n %}selected{% endif %}
-                          class="bg-gray-800 text-white">
-                        {{ n }}
-                      </option>
-                    {% endfor %}
-                  </select>
-                </div>
-
-
-
+              
 
                 </div>
             </div>
