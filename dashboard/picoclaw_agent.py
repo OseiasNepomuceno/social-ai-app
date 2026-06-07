@@ -1,12 +1,9 @@
 import subprocess
-import re
-
-
-print("🦞 PICOCLAW ACIONADO")
 
 PICOCLAW_BIN = '/opt/render/project/src/tools/picoclaw'
 
-def chamar_picoclaw(mensagem: str, timeout: int = 60) -> dict:
+def chamar_picoclaw(mensagem: str, timeout: int = 90) -> dict:
+    print("🦞 PICOCLAW ACIONADO")
     try:
         resultado = subprocess.run(
             [PICOCLAW_BIN, 'agent', '-m', mensagem],
@@ -15,7 +12,6 @@ def chamar_picoclaw(mensagem: str, timeout: int = 60) -> dict:
             timeout=timeout
         )
 
-        # Remove o banner ASCII da saída
         saida = resultado.stdout.strip()
         linhas = saida.split('\n')
         linhas_limpas = [
@@ -27,50 +23,46 @@ def chamar_picoclaw(mensagem: str, timeout: int = 60) -> dict:
             and '╗' not in l
             and '╝' not in l
             and '🦞' not in l
-            and not l.startswith('0')  # remove timestamps de log
+            and not l.startswith('0')
         ]
 
         resposta = '\n'.join(linhas_limpas).strip()
 
         if resultado.returncode != 0 or not resposta:
+            print(f"❌ PICOCLAW ERRO: {resultado.stderr.strip()}")
             return {
                 "success": False,
                 "erro": resultado.stderr.strip() or "Sem resposta do agente"
             }
 
+        print(f"✅ PICOCLAW RESPONDEU: {len(resposta)} caracteres")
         return {
             "success": True,
             "conteudo": resposta
         }
 
     except subprocess.TimeoutExpired:
+        print("⏱️ PICOCLAW TIMEOUT")
         return {"success": False, "erro": "Timeout: PicoClaw demorou demais para responder"}
     except Exception as e:
+        print(f"❌ PICOCLAW EXCEÇÃO: {str(e)}")
         return {"success": False, "erro": str(e)}
 
 
 def gerar_post_picoclaw(tema: str, rede: str, modo: str, nicho: str) -> dict:
-    prompt = f"""
-Crie um post profissional para {rede} sobre o tema: {tema}.
-Nicho: {nicho}.
-Formato: {modo}.
-Escreva apenas o conteúdo do post, sem explicações adicionais.
-Use emojis relevantes e hashtags no final.
-Linguagem: Português do Brasil.def gerar_post_picoclaw(tema: str, rede: str, modo: str, nicho: str) -> dict:
-    prompt = f"""
-Crie um post profissional para {rede} sobre o tema: {tema}.
-Nicho: {nicho}.
-Objetivo: {modo}.
-Linguagem: Português do Brasil.
+    print(f"📝 GERANDO POST PICOCLAW: tema='{tema}' rede='{rede}' modo='{modo}' nicho='{nicho}'")
+    prompt = f"""Crie um post profissional para {rede} sobre: {tema}
+Nicho: {nicho}
+Objetivo: {modo}
+Idioma: Português do Brasil
 
-REGRAS OBRIGATÓRIAS DE FORMATAÇÃO:
+FORMATAÇÃO OBRIGATÓRIA:
 - Título impactante na primeira linha
 - Uma linha em branco entre cada parágrafo
-- Máximo 3 parágrafos curtos (2-3 linhas cada)
-- Emojis no início de cada parágrafo
-- Hashtags relevantes na última linha separadas por espaço
-- NÃO use markdown como ** ou * 
-- Texto limpo, direto e humanizado
-- Linguagem conversacional, não corporativa
-"""
-    return chamar_picoclaw(prompt.strip())
+- Máximo 3 parágrafos curtos e diretos
+- Emoji no início de cada parágrafo
+- Hashtags na última linha
+- SEM markdown como ** ou *
+- Texto humanizado e conversacional"""
+
+    return chamar_picoclaw(prompt)
