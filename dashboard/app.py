@@ -56,6 +56,20 @@ app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 # =========================
+# ROTA de SEGURANÇA E BLOQUEIO ATIVO:
+# =========================
+
+@app.route('/.env')
+@app.route('/.env.bak')
+@app.route('/wp-config.php')
+@app.route('/.aws/credentials')
+def bloquear_scan():
+    ip = request.remote_addr
+    print(f"🚨 TENTATIVA DE ATAQUE BLOQUEADA: {ip} → {request.path}")
+    return "Not Found", 404
+
+
+# =========================
 # ROTA DO FAVICON:
 # =========================
 
