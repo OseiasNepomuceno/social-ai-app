@@ -29,6 +29,15 @@ from dashboard.agents.media_selector import selecionar_imagem
 from dashboard.ia_engine import gerar_conteudo
 from dashboard.picoclaw_agent import gerar_post_picoclaw
 
+#Segurança por Telegram
+from dashboard.telegram_alerts import (
+    alerta_ataque,
+    alerta_rate_limit,
+    alerta_picoclaw_falhou,
+    alerta_pagamento_aprovado,
+    alerta_erro_critico
+)
+
 # =========================
 # CONFIGURAÇÃO DO FLASK
 # =========================
@@ -49,6 +58,27 @@ app.config['SESSION_COOKIE_NAME'] = 'social_ai_session'
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+
+# =========================
+# ERRO HANDLER 429
+# =========================
+
+@app.errorhandler(429)
+def rate_limit_exceeded(e):
+    ip = request.remote_addr
+    print(f"🚨 RATE LIMIT ATINGIDO: IP={ip} Rota={request.path}")
+    alerta_rate_limit(ip, request.path)
+    return render_template_string('''...'''), 429
+
+# =========================
+# BLOQUEAR SCAN
+# =========================
+
+def bloquear_scan():
+    ip = request.remote_addr
+    print(f"🚨 TENTATIVA DE ATAQUE BLOQUEADA: {ip} → {request.path}")
+    alerta_ataque(ip, request.path)
+    return "Not Found", 404
 
 # =========================
 # RATE LIMITING E SEGURANÇA
@@ -492,6 +522,7 @@ def ia():
             resultado = gerar_post_picoclaw(tema, rede, modo, nicho)
             if not resultado.get("success"):
                 print(f"⚠️ PICOCLAW FALHOU ({resultado.get('erro')}) - Usando ia_engine como fallback")
+                alerta_picoclaw_falhou(resultado.get('erro', 'Erro desconhecido'))
                 resultado = gerar_conteudo(tema, rede, modo, nicho)
             if not resultado.get("success"):
                 flash(f"Erro na inteligência artificial: {resultado.get('erro')}", "error")
@@ -550,6 +581,7 @@ def verificar_e_atualizar_pagamento(user_id):
                     "posts_limite": 60
                 }).eq("id", user_id).execute()
                 print(f"🚀 PLANO PRO ATIVADO - {user_id}")
+                alerta_pagamento_aprovado(user_id)
                 return {"success": True, "message": "Plano atualizado", "payment_id": payment_id}
         return {"success": False, "message": "Nenhum pagamento aprovado"}
     except Exception as e:
