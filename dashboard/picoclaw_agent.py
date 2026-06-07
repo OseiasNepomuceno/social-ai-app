@@ -1,4 +1,5 @@
 import subprocess
+import re
 
 PICOCLAW_BIN = '/opt/render/project/src/tools/picoclaw'
 
@@ -27,6 +28,15 @@ def chamar_picoclaw(mensagem: str, timeout: int = 90) -> dict:
         ]
 
         resposta = '\n'.join(linhas_limpas).strip()
+        # Remove códigos ANSI de cor/formatação do terminal
+        
+        resposta = re.sub(r'\x1b\[[0-9;]*m', '', resposta)
+        resposta = re.sub(r'\[0m', '', resposta)
+
+        # Garante linha em branco entre parágrafos para LinkedIn
+        resposta = '\n\n'.join(
+            p.strip() for p in resposta.split('\n') if p.strip()
+        )
 
         if resultado.returncode != 0 or not resposta:
             print(f"❌ PICOCLAW ERRO: {resultado.stderr.strip()}")
