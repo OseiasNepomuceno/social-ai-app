@@ -59,6 +59,22 @@ def chamar_picoclaw(mensagem: str, timeout: int = 90) -> dict:
         return {"success": False, "erro": str(e)}
 
 
+def inferir_nicho(tema: str, lista_nichos: list) -> str:
+    prompt = f"""Com base no tema abaixo, identifique qual é o nicho/segmento mais adequado.
+Tema: {tema}
+Nichos disponíveis: {', '.join(lista_nichos)}
+Responda APENAS com o nome exato do nicho da lista, sem explicações."""
+    
+    resultado = chamar_picoclaw(prompt, timeout=30)
+    if resultado.get("success"):
+        nicho_inferido = resultado["conteudo"].strip()
+        # Verifica se o nicho inferido está na lista
+        for n in lista_nichos:
+            if n.lower() in nicho_inferido.lower() or nicho_inferido.lower() in n.lower():
+                return n
+    return "Negócios"  # fallback padrão
+
+
 def gerar_post_picoclaw(tema: str, rede: str, modo: str, nicho: str) -> dict:
     print(f"📝 GERANDO POST PICOCLAW: tema='{tema}' rede='{rede}' modo='{modo}' nicho='{nicho}'")
     prompt = f"""Crie um post profissional para {rede} sobre: {tema}
