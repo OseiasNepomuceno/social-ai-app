@@ -24,6 +24,8 @@ from dashboard.agents.analisador_media import gerar_relatorio_completo
 from services.supabase_storage import upload_image
 from dashboard.agents.media_selector import selecionar_imagem
 from dashboard.ia_engine import gerar_conteudo
+from dashboard.picoclaw_agent import gerar_post_picoclaw
+
 
 # AGENTE DE VARIAÇÃO: Importando o pipeline de multiplicação automática
 # from dashboard.agents.media_variation_agent import iniciar_multiplicacao_banco_existente
@@ -562,7 +564,7 @@ def ia():
                 print("⚠️ URL da imagem inválida ou inacessível, usando imagem padrão.")
                 imagem_url = IMAGEM_PADRAO
 
-            resultado = gerar_conteudo(tema, rede, modo, nicho)
+            resultado = gerar_post_picoclaw(tema, rede, modo, nicho)
 
             if not resultado.get("success"):
                 flash(f"Erro na inteligência artificial: {resultado.get('erro')}", "error")
