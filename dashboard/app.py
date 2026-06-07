@@ -75,7 +75,9 @@ def rate_limit_exceeded(e):
 # =========================
 
 def bloquear_scan():
-    ip = request.remote_addr
+    ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+    if ',' in ip:
+        ip = ip.split(',')[0].strip()
     print(f"🚨 TENTATIVA DE ATAQUE BLOQUEADA: {ip} → {request.path}")
     alerta_ataque(ip, request.path)
     return "Not Found", 404
