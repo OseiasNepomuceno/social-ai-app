@@ -1,6 +1,9 @@
 import subprocess
 import re
 
+
+print("🦞 PICOCLAW ACIONADO")
+
 PICOCLAW_BIN = '/opt/render/project/src/tools/picoclaw'
 
 def chamar_picoclaw(mensagem: str, timeout: int = 60) -> dict:
