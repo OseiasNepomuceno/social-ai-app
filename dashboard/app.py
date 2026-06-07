@@ -565,6 +565,9 @@ def ia():
                 imagem_url = IMAGEM_PADRAO
 
             resultado = gerar_post_picoclaw(tema, rede, modo, nicho)
+            if not resultado.get("success"):
+                print(f"⚠️ PICOCLAW FALHOU ({resultado.get('erro')}) - Usando ia_engine como fallback")
+                resultado = gerar_conteudo(tema, rede, modo, nicho)
 
             if not resultado.get("success"):
                 flash(f"Erro na inteligência artificial: {resultado.get('erro')}", "error")
