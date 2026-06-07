@@ -56,6 +56,21 @@ Nicho: {nicho}.
 Formato: {modo}.
 Escreva apenas o conteúdo do post, sem explicações adicionais.
 Use emojis relevantes e hashtags no final.
+Linguagem: Português do Brasil.def gerar_post_picoclaw(tema: str, rede: str, modo: str, nicho: str) -> dict:
+    prompt = f"""
+Crie um post profissional para {rede} sobre o tema: {tema}.
+Nicho: {nicho}.
+Objetivo: {modo}.
 Linguagem: Português do Brasil.
+
+REGRAS OBRIGATÓRIAS DE FORMATAÇÃO:
+- Título impactante na primeira linha
+- Uma linha em branco entre cada parágrafo
+- Máximo 3 parágrafos curtos (2-3 linhas cada)
+- Emojis no início de cada parágrafo
+- Hashtags relevantes na última linha separadas por espaço
+- NÃO use markdown como ** ou * 
+- Texto limpo, direto e humanizado
+- Linguagem conversacional, não corporativa
 """
     return chamar_picoclaw(prompt.strip())
