@@ -478,6 +478,53 @@ def validar_url_imagem(url):
     except:
         return False
 
+
+def inferir_nicho_por_tema(tema: str, nichos_ativos: list) -> str:
+    tema_lower = tema.lower()
+    
+    mapeamento = {
+        'advogad': 'Direito',
+        'juridic': 'Direito',
+        'lei ': 'Direito',
+        'mei': 'Empreendedorismo',
+        'microempres': 'Empreendedorismo',
+        'empreend': 'Empreendedorismo',
+        'negoc': 'Negócios',
+        'empresa': 'Negócios',
+        'vendas': 'Vendas',
+        'vender': 'Vendas',
+        'market': 'Marketing',
+        'saude': 'Saúde',
+        'saúde': 'Saúde',
+        'medic': 'Saúde',
+        'psicolog': 'Psicologia',
+        'financ': 'Financeiro',
+        'invest': 'Financeiro',
+        'impost': 'Financeiro',
+        'contab': 'Contabilidade',
+        'tecnolog': 'Tecnologia',
+        'software': 'Tecnologia',
+        'instagram': 'Marketing',
+        'linkedin': 'Marketing',
+        'rede social': 'Marketing',
+        'educac': 'Educação',
+        'aprendiz': 'Educação',
+        'moda': 'Moda',
+        'roupa': 'Moda',
+        'aliment': 'Alimentação',
+        'nutri': 'Saúde',
+        'fitness': 'Fitness e Bem-estar',
+        'exercic': 'Fitness e Bem-estar',
+    }
+    
+    for palavra, nicho in mapeamento.items():
+        if palavra in tema_lower:
+            for n in nichos_ativos:
+                if nicho.lower() in n.lower() or n.lower() in nicho.lower():
+                    return n
+    
+    return encontrar_nicho_mais_proximo(tema, nichos_ativos)
+
 # =========================
 # ROTA IA — GERADOR DE POSTS
 # =========================
@@ -493,7 +540,7 @@ def ia():
             rede = request.form.get("rede_social")
             modo = request.form.get("modo")
             nichos_ativos = buscar_nichos_ativos()
-            nicho = encontrar_nicho_mais_proximo(tema, nichos_ativos)
+            nicho = inferir_nicho_por_tema(tema, nichos_ativos)
             print(f"🎯 Nicho inferido automaticamente: {nicho}")
             data_postagem = request.form.get("data_postagem")
             hora_postagem = request.form.get("horario")
