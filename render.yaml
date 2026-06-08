@@ -12,7 +12,7 @@ services:
     name: social-ai-gateway
     env: python
     buildCommand: ""
-    startCommand: /opt/render/project/src/tools/picoclaw gateway
+    startCommand: python3 setup_picoclaw.py && /opt/render/project/src/tools/picoclaw gateway
     envVars:
       - key: PORT
         value: 18800
