@@ -1,78 +1,90 @@
 import re
+import subprocess
 import difflib
 import unicodedata
-import requests
-import os
 
-DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
-DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions"
-DEEPSEEK_MODEL = "deepseek-v4-flash"
+PICOCLAW_BIN = '/opt/render/project/src/tools/picoclaw'
 
 
-def chamar_deepseek(prompt: str, timeout: int = 90, max_tokens: int = 1500) -> dict:
-    """Chama a API DeepSeek e retorna o conteúdo gerado."""
-    print(f"🤖 DEEPSEEK ACIONADO — {len(prompt)} chars no prompt")
-
-    if not DEEPSEEK_API_KEY:
-        return {"success": False, "erro": "DEEPSEEK_API_KEY não configurada"}
-
-    headers = {
-        "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
-        "Content-Type": "application/json",
-    }
-
-    payload = {
-        "model": DEEPSEEK_MODEL,
-        "max_tokens": max_tokens,
-        "messages": [{"role": "user", "content": prompt}],
-    }
-
+# ─────────────────────────────────────────────
+# NÚCLEO — chama o PicoClaw gateway
+# ─────────────────────────────────────────────
+def chamar_picoclaw(mensagem: str, timeout: int = 90) -> dict:
+    """Envia prompt ao PicoClaw gateway e retorna conteúdo limpo."""
+    print(f"🦞 PICOCLAW ACIONADO — {len(mensagem)} chars no prompt")
     try:
-        response = requests.post(
-            DEEPSEEK_API_URL,
-            headers=headers,
-            json=payload,
-            timeout=timeout,
+        resultado = subprocess.run(
+            [PICOCLAW_BIN, 'agent', '-m', mensagem],
+            capture_output=True,
+            text=True,
+            timeout=timeout
         )
-        response.raise_for_status()
-        data = response.json()
+        saida = resultado.stdout.strip()
 
-        conteudo = data["choices"][0]["message"]["content"].strip()
+        # Remove linhas de UI do terminal (bordas, ícones, progresso)
+        linhas = saida.split('\n')
+        linhas_limpas = [
+            l for l in linhas
+            if l.strip()
+            and '█' not in l
+            and '╚' not in l
+            and '╔' not in l
+            and '╗' not in l
+            and '╝' not in l
+            and '🦞' not in l
+            and not l.startswith('0')
+        ]
+        resposta = '\n'.join(linhas_limpas).strip()
 
-        # Limpa marcações desnecessárias
-        conteudo = re.sub(r"\*\*(.*?)\*\*", r"\1", conteudo)  # remove **negrito**
-        conteudo = re.sub(r"\*(.*?)\*", r"\1", conteudo)       # remove *itálico*
-        conteudo = conteudo.strip()
+        # Remove códigos ANSI de cor/formatação do terminal
+        resposta = re.sub(r'\x1b\[[0-9;]*m', '', resposta)
+        resposta = re.sub(r'\[0m', '', resposta)
 
-        print(f"✅ DEEPSEEK RESPONDEU: {len(conteudo)} caracteres")
-        return {"success": True, "conteudo": conteudo}
+        # Remove markdown desnecessário
+        resposta = re.sub(r'\*\*(.*?)\*\*', r'\1', resposta)
+        resposta = re.sub(r'\*(.*?)\*', r'\1', resposta)
 
-    except requests.exceptions.Timeout:
-        print("⏱️ DEEPSEEK TIMEOUT")
-        return {"success": False, "erro": "Timeout: DeepSeek demorou demais para responder"}
-    except requests.exceptions.HTTPError as e:
-        print(f"❌ DEEPSEEK HTTP ERRO: {e}")
-        return {"success": False, "erro": f"Erro HTTP: {str(e)}"}
+        # Garante parágrafos separados por linha em branco
+        resposta = '\n\n'.join(
+            p.strip() for p in resposta.split('\n') if p.strip()
+        )
+
+        if resultado.returncode != 0 or not resposta:
+            print(f"❌ PICOCLAW ERRO: {resultado.stderr.strip()}")
+            return {
+                "success": False,
+                "erro": resultado.stderr.strip() or "Sem resposta do agente"
+            }
+
+        print(f"✅ PICOCLAW RESPONDEU: {len(resposta)} caracteres")
+        return {"success": True, "conteudo": resposta}
+
+    except subprocess.TimeoutExpired:
+        print("⏱️ PICOCLAW TIMEOUT")
+        return {"success": False, "erro": "Timeout: PicoClaw demorou demais para responder"}
     except Exception as e:
-        print(f"❌ DEEPSEEK EXCEÇÃO: {str(e)}")
+        print(f"❌ PICOCLAW EXCEÇÃO: {str(e)}")
         return {"success": False, "erro": str(e)}
 
 
+# ─────────────────────────────────────────────
+# UTILITÁRIOS
+# ─────────────────────────────────────────────
 def normalize(text: str) -> str:
-    return "".join(
-        c for c in unicodedata.normalize("NFD", text)
-        if unicodedata.category(c) != "Mn"
+    return ''.join(
+        c for c in unicodedata.normalize('NFD', text)
+        if unicodedata.category(c) != 'Mn'
     ).lower()
 
 
 def inferir_nicho(tema: str, lista_nichos: list) -> str:
-    """Infere o nicho mais adequado para o tema dado."""
+    """Usa o PicoClaw para inferir o nicho mais adequado ao tema."""
     prompt = f"""Com base no tema abaixo, identifique qual é o nicho/segmento mais adequado.
 Tema: {tema}
 Nichos disponíveis: {', '.join(lista_nichos)}
 Responda APENAS com o nome exato do nicho da lista, sem explicações."""
 
-    resultado = chamar_deepseek(prompt, timeout=30, max_tokens=50)
+    resultado = chamar_picoclaw(prompt, timeout=30)
     if resultado.get("success"):
         nicho_inferido = resultado["conteudo"].strip()
         nicho_inferido_norm = normalize(nicho_inferido)
@@ -94,7 +106,7 @@ Responda APENAS com o nome exato do nicho da lista, sem explicações."""
 # GERAÇÃO DE POST
 # ─────────────────────────────────────────────
 def gerar_post(tema: str, rede: str, modo: str, nicho: str) -> dict:
-    """Gera post para redes sociais (LinkedIn, Instagram, Facebook, etc.)."""
+    """Gera post para redes sociais via PicoClaw."""
     print(f"📝 GERANDO POST: tema='{tema}' rede='{rede}' modo='{modo}' nicho='{nicho}'")
 
     prompt = f"""Crie um post profissional para {rede} sobre: {tema}
@@ -112,14 +124,14 @@ FORMATAÇÃO OBRIGATÓRIA:
 - Texto humanizado e conversacional
 - Tom de autoridade no nicho"""
 
-    return chamar_deepseek(prompt)
+    return chamar_picoclaw(prompt)
 
 
 # ─────────────────────────────────────────────
 # GERAÇÃO DE ROTEIRO TIKTOK
 # ─────────────────────────────────────────────
 def gerar_roteiro_tiktok(tema: str, nicho: str = "geral", duracao: int = 60) -> dict:
-    """Gera roteiro para vídeo no TikTok."""
+    """Gera roteiro para vídeo no TikTok via PicoClaw."""
     print(f"🎬 GERANDO ROTEIRO TIKTOK: tema='{tema}' nicho='{nicho}' duração={duracao}s")
 
     prompt = f"""Crie um roteiro de vídeo para TikTok sobre: {tema}
@@ -146,14 +158,14 @@ REGRAS:
 - SEM markdown
 - Inclua sugestão de legenda e 5 hashtags no final"""
 
-    return chamar_deepseek(prompt, max_tokens=1200)
+    return chamar_picoclaw(prompt, timeout=90)
 
 
 # ─────────────────────────────────────────────
 # GERAÇÃO DE CTA
 # ─────────────────────────────────────────────
 def gerar_cta(tema: str, nicho: str, objetivo: str, canal: str = "site") -> dict:
-    """Gera Call To Action para diferentes canais."""
+    """Gera Call To Action para diferentes canais via PicoClaw."""
     print(f"📣 GERANDO CTA: tema='{tema}' nicho='{nicho}' objetivo='{objetivo}' canal='{canal}'")
 
     prompt = f"""Crie 5 variações de Call To Action (CTA) para: {tema}
@@ -174,19 +186,25 @@ REGRAS:
 - Gere urgência ou benefício claro
 - SEM markdown"""
 
-    return chamar_deepseek(prompt, max_tokens=800)
+    return chamar_picoclaw(prompt, timeout=60)
 
 
 # ─────────────────────────────────────────────
 # GERAÇÃO DE E-BOOK
 # ─────────────────────────────────────────────
 def gerar_ebook(tema: str, nicho: str, publico_alvo: str, num_capitulos: int = 5) -> dict:
-    """Gera estrutura completa e conteúdo de e-book."""
+    """Gera estrutura completa e conteúdo de e-book via PicoClaw."""
     print(f"📚 GERANDO E-BOOK: tema='{tema}' nicho='{nicho}' público='{publico_alvo}'")
+
+    capitulos = ''.join([
+        f"CAPÍTULO {i+1}: [título do capítulo]\n"
+        f"(3 parágrafos com conteúdo relevante, dicas práticas e exemplos)\n\n"
+        for i in range(num_capitulos)
+    ])
 
     prompt = f"""Crie um e-book completo sobre: {tema}
 Nicho: {nicho}
-Público-alvo: {publico_alvo}
+P�blico-alvo: {publico_alvo}
 Número de capítulos: {num_capitulos}
 Idioma: Português do Brasil
 
@@ -201,8 +219,7 @@ SUBTÍTULO:
 INTRODUÇÃO:
 (2 parágrafos apresentando o problema e a promessa do e-book)
 
-{"".join([f"CAPÍTULO {i+1}: [título do capítulo]{chr(10)}(3 parágrafos com conteúdo relevante, dicas práticas e exemplos){chr(10)}{chr(10)}" for i in range(num_capitulos)])}
-
+{capitulos}
 CONCLUSÃO:
 (1 parágrafo com recapitulação e CTA final)
 
@@ -212,14 +229,14 @@ REGRAS:
 - SEM markdown como ** ou *
 - Cada capítulo com conteúdo real, não resumo"""
 
-    return chamar_deepseek(prompt, max_tokens=3000, timeout=120)
+    return chamar_picoclaw(prompt, timeout=120)
 
 
 # ─────────────────────────────────────────────
-# GERAÇÃO DE INFOGRÁFICO (roteiro/texto)
+# GERAÇÃO DE INFOGRÁFICO
 # ─────────────────────────────────────────────
 def gerar_infografico(tema: str, nicho: str, formato: str = "lista") -> dict:
-    """Gera o conteúdo textual/roteiro para infográfico."""
+    """Gera conteúdo textual para infográfico via PicoClaw."""
     print(f"📊 GERANDO INFOGRÁFICO: tema='{tema}' nicho='{nicho}' formato='{formato}'")
 
     prompt = f"""Crie o conteúdo para um infográfico sobre: {tema}
@@ -252,21 +269,14 @@ REGRAS:
 - Linguagem direta e escaneável
 - SEM markdown"""
 
-    return chamar_deepseek(prompt, max_tokens=1200)
+    return chamar_picoclaw(prompt, timeout=90)
 
 
 # ─────────────────────────────────────────────
 # GERAÇÃO DE TEMPLATE
 # ─────────────────────────────────────────────
-# ─────────────────────────────────────────────
-# ALIASES DE COMPATIBILIDADE (legado)
-# ─────────────────────────────────────────────
-gerar_post_picoclaw = gerar_post
-chamar_picoclaw = chamar_deepseek
-
-
 def gerar_template(tipo: str, nicho: str, tema: str) -> dict:
-    """Gera template reutilizável de conteúdo (post, email, legenda, etc.)."""
+    """Gera template reutilizável de conteúdo via PicoClaw."""
     print(f"📋 GERANDO TEMPLATE: tipo='{tipo}' nicho='{nicho}' tema='{tema}'")
 
     prompt = f"""Crie um template reutilizável de {tipo} para o nicho: {nicho}
@@ -286,4 +296,11 @@ REGRAS:
 - Variáveis claramente identificadas com [COLCHETES]
 - SEM markdown"""
 
-    return chamar_deepseek(prompt, max_tokens=1000)
+    return chamar_picoclaw(prompt, timeout=60)
+
+
+# ─────────────────────────────────────────────
+# ALIASES DE COMPATIBILIDADE (legado)
+# ─────────────────────────────────────────────
+gerar_post_picoclaw = gerar_post
+chamar_deepseek = chamar_picoclaw
