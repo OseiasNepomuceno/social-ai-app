@@ -171,6 +171,122 @@ PLANOS = {
 }
 
 # =========================
+# ROTAS DE CONTEÚDO — Posts, Roteiros, CTAs, E-books, Infográficos, Templates
+# Adicionar após a rota /planos no dashboard/app.py
+# =========================
+
+POR_PAGINA = 12
+
+def paginar(lista: list, pagina: int, por_pagina: int = POR_PAGINA):
+    """Fatia uma lista para paginação e retorna dados + total de páginas."""
+    total = len(lista)
+    total_pages = max(1, -(-total // por_pagina))  # ceil division
+    pagina = max(1, min(pagina, total_pages))
+    inicio = (pagina - 1) * por_pagina
+    fim = inicio + por_pagina
+    return lista[inicio:fim], total_pages, pagina
+
+def buscar_conteudos(tipo: str, q: str = "") -> list:
+    """Busca conteúdos publicados do Supabase por tipo, com filtro opcional."""
+    try:
+        query = supabase.table("conteudos").select("*") \
+            .eq("tipo", tipo) \
+            .eq("status", "publicado") \
+            .order("created_at", desc=True)
+        resultado = query.execute()
+        dados = resultado.data or []
+        if q:
+            q_lower = q.lower()
+            dados = [
+                d for d in dados
+                if q_lower in (d.get("titulo") or "").lower()
+                or q_lower in (d.get("conteudo") or "").lower()
+            ]
+        return dados
+    except Exception as e:
+        print(f"❌ Erro ao buscar conteúdos tipo '{tipo}': {e}")
+        return []
+
+
+@app.route("/posts-site")
+def posts_site():
+    if "user_id" not in session:
+        return redirect("/login")
+    q = request.args.get("q", "").strip()
+    pagina = int(request.args.get("page", 1))
+    dados = buscar_conteudos("post", q)
+    posts, total_pages, pagina = paginar(dados, pagina)
+    return render_template("posts.html",
+        posts=posts, page=pagina,
+        total_pages=total_pages, q=q)
+
+
+@app.route("/roteiros-tiktok-site")
+def roteiros_tiktok_site():
+    if "user_id" not in session:
+        return redirect("/login")
+    q = request.args.get("q", "").strip()
+    pagina = int(request.args.get("page", 1))
+    dados = buscar_conteudos("roteiro_tiktok", q)
+    roteiros, total_pages, pagina = paginar(dados, pagina)
+    return render_template("roteiros.html",
+        roteiros=roteiros, page=pagina,
+        total_pages=total_pages, q=q)
+
+
+@app.route("/ctas-site")
+def ctas_site():
+    if "user_id" not in session:
+        return redirect("/login")
+    q = request.args.get("q", "").strip()
+    pagina = int(request.args.get("page", 1))
+    dados = buscar_conteudos("cta", q)
+    ctas, total_pages, pagina = paginar(dados, pagina)
+    return render_template("ctas.html",
+        ctas=ctas, page=pagina,
+        total_pages=total_pages, q=q)
+
+
+@app.route("/ebooks-site")
+def ebooks_site():
+    if "user_id" not in session:
+        return redirect("/login")
+    q = request.args.get("q", "").strip()
+    pagina = int(request.args.get("page", 1))
+    dados = buscar_conteudos("ebook", q)
+    ebooks, total_pages, pagina = paginar(dados, pagina)
+    return render_template("e-books.html",
+        ebooks=ebooks, page=pagina,
+        total_pages=total_pages, q=q)
+
+
+@app.route("/infograficos-site")
+def infograficos_site():
+    if "user_id" not in session:
+        return redirect("/login")
+    q = request.args.get("q", "").strip()
+    pagina = int(request.args.get("page", 1))
+    dados = buscar_conteudos("infografico", q)
+    infograficos, total_pages, pagina = paginar(dados, pagina)
+    return render_template("infografico.html",
+        infograficos=infograficos, page=pagina,
+        total_pages=total_pages, q=q)
+
+
+@app.route("/templates-site")
+def templates_site():
+    if "user_id" not in session:
+        return redirect("/login")
+    q = request.args.get("q", "").strip()
+    pagina = int(request.args.get("page", 1))
+    dados = buscar_conteudos("template", q)
+    templates_list, total_pages, pagina = paginar(dados, pagina)
+    return render_template("templates.html",
+        templates_list=templates_list, page=pagina,
+        total_pages=total_pages, q=q)
+
+
+# =========================
 # INSTAGRAM LOGIN
 # =========================
 
