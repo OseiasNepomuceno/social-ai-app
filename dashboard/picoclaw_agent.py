@@ -258,6 +258,13 @@ REGRAS:
 # ─────────────────────────────────────────────
 # GERAÇÃO DE TEMPLATE
 # ─────────────────────────────────────────────
+# ─────────────────────────────────────────────
+# ALIASES DE COMPATIBILIDADE (legado)
+# ─────────────────────────────────────────────
+gerar_post_picoclaw = gerar_post
+chamar_picoclaw = chamar_deepseek
+
+
 def gerar_template(tipo: str, nicho: str, tema: str) -> dict:
     """Gera template reutilizável de conteúdo (post, email, legenda, etc.)."""
     print(f"📋 GERANDO TEMPLATE: tipo='{tipo}' nicho='{nicho}' tema='{tema}'")
