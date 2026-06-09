@@ -1,75 +1,118 @@
-{{/*
-    SUBSTITUIR o bloco <nav class="space-y-2"> existente no base.html
-    pelo trecho abaixo — mantém tudo que já existe e adiciona
-    a seção "Conteúdo IA" com os 6 novos links
-*/}}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Social CoreGov{% endblock %}</title>
+    
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}?v=1" type="image/x-icon">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}?v=1" type="image/x-icon">
 
-<nav class="space-y-2">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    {% block head %}{% endblock %}
+</head>
+<body class="bg-gray-900 text-gray-100 font-sans min-h-screen flex flex-col md:flex-row">
 
-    {{/* ── Seção principal (já existia) ── */}}
-    <a href="/" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
-        <i class="fa-solid fa-chart-pie w-5 text-center"></i>
-        <span>Dashboard</span>
-    </a>
-    <a href="/ia" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
-        <i class="fa-solid fa-wand-magic-sparkles w-5 text-center"></i>
-        <span>Criar Post com IA</span>
-    </a>
-    <a href="/agendamentos" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
-        <i class="fa-solid fa-calendar-days w-5 text-center"></i>
-        <span>Agendamentos</span>
-    </a>
-    <a href="/publicacoes" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
-        <i class="fa-solid fa-square-check w-5 text-center"></i>
-        <span>Publicações</span>
-    </a>
-    <a href="/planos" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
-        <i class="fa-solid fa-credit-card w-5 text-center"></i>
-        <span>Meu Plano</span>
-    </a>
-    <a href="/configuracoes" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
-        <i class="fa-solid fa-gear w-5 text-center"></i>
-        <span>Configurações</span>
-    </a>
+    <aside class="w-full md:w-64 bg-gray-800 border-b md:border-b-0 md:border-r border-gray-700 flex flex-col justify-between p-4 shrink-0">
+        <div>
+            <div class="flex items-center space-x-3 px-2 py-4 border-b border-gray-700 mb-6">
+                <i class="fa-solid to-blue-500 fa-brain text-2xl text-blue-500"></i>
+                <span class="text-xl font-bold tracking-wider text-white">Social AI</span>
+            </div>
 
-    {{/* ── Separador + Seção Conteúdo IA (NOVO) ── */}}
-    <div class="pt-3 pb-1">
-        <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-600 px-3">
-            Conteúdo IA
-        </p>
-    </div>
+            <nav class="space-y-2">
 
-    <a href="/posts-site" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
-        <i class="fa-solid fa-newspaper w-5 text-center text-blue-400"></i>
-        <span>Posts</span>
-    </a>
-    <a href="/roteiros-tiktok-site" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
-        <i class="fa-brands fa-tiktok w-5 text-center text-pink-400"></i>
-        <span>Roteiros TikTok</span>
-    </a>
-    <a href="/ctas-site" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
-        <i class="fa-solid fa-bullhorn w-5 text-center text-yellow-400"></i>
-        <span>CTAs</span>
-    </a>
-    <a href="/ebooks-site" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
-        <i class="fa-solid fa-book-open w-5 text-center text-emerald-400"></i>
-        <span>E-books</span>
-    </a>
-    <a href="/infograficos-site" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
-        <i class="fa-solid fa-chart-bar w-5 text-center text-purple-400"></i>
-        <span>Infográficos</span>
-    </a>
-    <a href="/templates-site" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
-        <i class="fa-solid fa-layer-group w-5 text-center text-indigo-400"></i>
-        <span>Templates</span>
-    </a>
+                {# ── Menu principal ── #}
+                <a href="/" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
+                    <i class="fa-solid fa-chart-pie w-5 text-center"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/ia" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
+                    <i class="fa-solid fa-wand-magic-sparkles w-5 text-center"></i>
+                    <span>Criar Post com IA</span>
+                </a>
+                <a href="/agendamentos" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
+                    <i class="fa-solid fa-calendar-days w-5 text-center"></i>
+                    <span>Agendamentos</span>
+                </a>
+                <a href="/publicacoes" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
+                    <i class="fa-solid fa-square-check w-5 text-center"></i>
+                    <span>Publicações</span>
+                </a>
+                <a href="/planos" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
+                    <i class="fa-solid fa-credit-card w-5 text-center"></i>
+                    <span>Meu Plano</span>
+                </a>
+                <a href="/configuracoes" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
+                    <i class="fa-solid fa-gear w-5 text-center"></i>
+                    <span>Configurações</span>
+                </a>
 
-    {{/* ── Admin (já existia) ── */}}
-    {% if session.get('email') == 'oseiasnepom@gmail.com' %}
-    <a href="/monitoramento" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all border border-blue-500/10 bg-blue-500/5">
-        <i class="fa-solid fa-gauge-high w-5 text-center text-blue-400"></i>
-        <span class="text-blue-200 font-medium">Monitoramento</span>
-    </a>
-    {% endif %}
+                {# ── Seção Conteúdo IA (NOVO) ── #}
+                <div class="pt-3 pb-1">
+                    <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-600 px-3">
+                        Conteúdo IA
+                    </p>
+                </div>
 
-</nav>
+                <a href="/posts-site" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
+                    <i class="fa-solid fa-newspaper w-5 text-center text-blue-400"></i>
+                    <span>Posts</span>
+                </a>
+                <a href="/roteiros-tiktok-site" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
+                    <i class="fa-brands fa-tiktok w-5 text-center text-pink-400"></i>
+                    <span>Roteiros TikTok</span>
+                </a>
+                <a href="/ctas-site" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
+                    <i class="fa-solid fa-bullhorn w-5 text-center text-yellow-400"></i>
+                    <span>CTAs</span>
+                </a>
+                <a href="/ebooks-site" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
+                    <i class="fa-solid fa-book-open w-5 text-center text-emerald-400"></i>
+                    <span>E-books</span>
+                </a>
+                <a href="/infograficos-site" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
+                    <i class="fa-solid fa-chart-bar w-5 text-center text-purple-400"></i>
+                    <span>Infográficos</span>
+                </a>
+                <a href="/templates-site" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
+                    <i class="fa-solid fa-layer-group w-5 text-center text-indigo-400"></i>
+                    <span>Templates</span>
+                </a>
+
+                {# 🔒 TRAVA DE SEGURANÇA EXCLUSIVA PARA O SEU LOGIN #}
+                {% if session.get('email') == 'oseiasnepom@gmail.com' %}
+                <a href="/monitoramento" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all border border-blue-500/10 bg-blue-500/5">
+                    <i class="fa-solid fa-gauge-high w-5 text-center text-blue-400"></i>
+                    <span class="text-blue-200 font-medium">Monitoramento</span>
+                </a>
+                {% endif %}
+
+            </nav>
+        </div>
+
+        <div class="pt-4 border-t border-gray-700 mt-6 md:mt-0">
+            <div class="flex items-center justify-between px-2 py-2 mb-2">
+                <div class="flex items-center space-x-2 overflow-hidden">
+                    <i class="fa-solid fa-user text-gray-400 bg-gray-700 p-2 rounded-full"></i>
+                    <span class="text-sm font-medium text-gray-300 truncate max-w-[140px]" title="{{ session.get('email', 'Usuário') }}">
+                        {{ session.get('email', 'Usuário').split('@')[0] }}
+                    </span>
+                </div>
+            </div>
+            <a href="/logout" class="flex items-center space-x-3 px-3 py-2 rounded-lg text-red-400 hover:bg-red-950/30 hover:text-red-300 transition-all w-full">
+                <i class="fa-solid fa-right-from-bracket w-5 text-center"></i>
+                <span>Sair da Conta</span>
+            </a>
+        </div>
+    </aside>
+
+    <main class="flex-1 p-6 md:p-8 overflow-y-auto">
+        {% block content %}{% endblock %}
+    </main>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>
