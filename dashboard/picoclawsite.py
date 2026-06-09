@@ -81,15 +81,22 @@ class TemplateRequest(BaseModel):
     tema: str
 
 # ─────────────────────────────────────────────
-# HELPER: salvar no Supabase
+# HELPER: salvar no Supabase — 100% AUTOMÁTICO
+# status sempre "publicado" — sem revisão manual
 # ─────────────────────────────────────────────
-def salvar_conteudo(titulo: str, tipo: str, conteudo: str, status: str = "rascunho") -> dict:
+def salvar_conteudo(titulo: str, tipo: str, conteudo: str) -> dict:
+    """Salva conteúdo diretamente como publicado — fluxo 100% automático."""
     try:
+        # Validação mínima: conteúdo precisa ter ao menos 50 caracteres
+        if not conteudo or len(conteudo.strip()) < 50:
+            print(f"⚠️ Conteúdo muito curto para '{titulo}' — descartado")
+            return {}
+
         response = supabase.table("conteudos").insert({
             "titulo": titulo,
             "tipo": tipo,
-            "conteudo": conteudo,
-            "status": status,
+            "conteudo": conteudo.strip(),
+            "status": "publicado",  # 100% automático — sem rascunho
         }).execute()
         return response.data[0] if response.data else {}
     except Exception as e:
@@ -125,90 +132,72 @@ def listar_infograficos(request: Request):
     return templates.TemplateResponse("infografico.html", {"request": request, "infograficos": response.data})
 
 # ─────────────────────────────────────────────
-# ROTAS DE GERAÇÃO (POST → DeepSeek → Supabase)
+# ROTAS DE GERAÇÃO (POST → PicoClaw → Supabase)
 # ─────────────────────────────────────────────
 @app.post("/gerar/post")
 def endpoint_gerar_post(body: PostRequest):
     nicho = body.nicho or inferir_nicho(body.tema, NICHOS)
     resultado = gerar_post(body.tema, body.rede, body.modo, nicho)
-
     if not resultado.get("success"):
         raise HTTPException(status_code=500, detail=resultado.get("erro"))
-
     salvo = salvar_conteudo(body.tema, "post", resultado["conteudo"])
     return {"status": "ok", "nicho": nicho, "conteudo": resultado["conteudo"], "salvo": salvo}
-
 
 @app.post("/gerar/roteiro-tiktok")
 def endpoint_gerar_roteiro(body: RoteiroRequest):
     nicho = body.nicho or inferir_nicho(body.tema, NICHOS)
     resultado = gerar_roteiro_tiktok(body.tema, nicho, body.duracao)
-
     if not resultado.get("success"):
         raise HTTPException(status_code=500, detail=resultado.get("erro"))
-
     salvo = salvar_conteudo(body.tema, "roteiro_tiktok", resultado["conteudo"])
     return {"status": "ok", "nicho": nicho, "conteudo": resultado["conteudo"], "salvo": salvo}
-
 
 @app.post("/gerar/cta")
 def endpoint_gerar_cta(body: CTARequest):
     nicho = body.nicho or inferir_nicho(body.tema, NICHOS)
     resultado = gerar_cta(body.tema, nicho, body.objetivo, body.canal)
-
     if not resultado.get("success"):
         raise HTTPException(status_code=500, detail=resultado.get("erro"))
-
     salvo = salvar_conteudo(body.tema, "cta", resultado["conteudo"])
     return {"status": "ok", "nicho": nicho, "conteudo": resultado["conteudo"], "salvo": salvo}
-
 
 @app.post("/gerar/ebook")
 def endpoint_gerar_ebook(body: EbookRequest):
     nicho = body.nicho or inferir_nicho(body.tema, NICHOS)
     resultado = gerar_ebook(body.tema, nicho, body.publico_alvo, body.num_capitulos)
-
     if not resultado.get("success"):
         raise HTTPException(status_code=500, detail=resultado.get("erro"))
-
     salvo = salvar_conteudo(body.tema, "ebook", resultado["conteudo"])
     return {"status": "ok", "nicho": nicho, "conteudo": resultado["conteudo"], "salvo": salvo}
-
 
 @app.post("/gerar/infografico")
 def endpoint_gerar_infografico(body: InfograficRequest):
     nicho = body.nicho or inferir_nicho(body.tema, NICHOS)
     resultado = gerar_infografico(body.tema, nicho, body.formato)
-
     if not resultado.get("success"):
         raise HTTPException(status_code=500, detail=resultado.get("erro"))
-
     salvo = salvar_conteudo(body.tema, "infografico", resultado["conteudo"])
     return {"status": "ok", "nicho": nicho, "conteudo": resultado["conteudo"], "salvo": salvo}
-
 
 @app.post("/gerar/template")
 def endpoint_gerar_template(body: TemplateRequest):
     nicho = body.nicho or inferir_nicho(body.tema, NICHOS)
     resultado = gerar_template(body.tipo, nicho, body.tema)
-
     if not resultado.get("success"):
         raise HTTPException(status_code=500, detail=resultado.get("erro"))
-
     salvo = salvar_conteudo(body.tema, "template", resultado["conteudo"])
     return {"status": "ok", "nicho": nicho, "conteudo": resultado["conteudo"], "salvo": salvo}
-
 
 # ─────────────────────────────────────────────
 # ROTA DE STATUS
 # ─────────────────────────────────────────────
 @app.get("/status")
 def status():
-    return {"status": "online", "modelo": "deepseek-v4-flash", "nichos": NICHOS}
-
+    return {"status": "online", "modelo": "picoclaw→deepseek-v4-flash", "nichos": NICHOS}
 
 # ─────────────────────────────────────────────
-# SCHEDULER AUTOMÁTICO
+# SCHEDULER AUTOMÁTICO — 3x ao dia
+# Gera roteiro TikTok + post + CTA automaticamente
 # ─────────────────────────────────────────────
 TEMAS_AUTOMATICOS = [
     "Transparência na gestão pública municipal",
@@ -216,12 +205,17 @@ TEMAS_AUTOMATICOS = [
     "Gestão de equipes no setor público",
     "Licitações: erros mais comuns e como evitar",
     "Inovação em prefeituras pequenas",
+    "Como o empreendedor pode reduzir custos operacionais",
+    "Marketing digital para pequenas empresas",
+    "Planejamento financeiro para negócios em crescimento",
+    "Como aumentar a produtividade da equipe",
+    "Tendências de tecnologia para empresas em 2026",
 ]
 
 _tema_index = 0
 
 def job_gerar_conteudo_automatico():
-    """Gera roteiro TikTok + post automaticamente no horário agendado."""
+    """Gera e publica roteiro TikTok + post LinkedIn + CTA automaticamente."""
     global _tema_index
     tema = TEMAS_AUTOMATICOS[_tema_index % len(TEMAS_AUTOMATICOS)]
     _tema_index += 1
@@ -233,7 +227,7 @@ def job_gerar_conteudo_automatico():
     r_tiktok = gerar_roteiro_tiktok(tema, nicho)
     if r_tiktok.get("success"):
         salvar_conteudo(tema, "roteiro_tiktok", r_tiktok["conteudo"])
-        print(f"✅ Roteiro TikTok salvo: {tema}")
+        print(f"✅ Roteiro TikTok publicado: {tema}")
     else:
         print(f"❌ Falha roteiro TikTok: {r_tiktok.get('erro')}")
 
@@ -241,9 +235,17 @@ def job_gerar_conteudo_automatico():
     r_post = gerar_post(tema, "LinkedIn", "engajamento", nicho)
     if r_post.get("success"):
         salvar_conteudo(tema, "post", r_post["conteudo"])
-        print(f"✅ Post LinkedIn salvo: {tema}")
+        print(f"✅ Post LinkedIn publicado: {tema}")
     else:
         print(f"❌ Falha post: {r_post.get('erro')}")
+
+    # CTA
+    r_cta = gerar_cta(tema, nicho, "conversão", "site")
+    if r_cta.get("success"):
+        salvar_conteudo(tema, "cta", r_cta["conteudo"])
+        print(f"✅ CTA publicado: {tema}")
+    else:
+        print(f"❌ Falha CTA: {r_cta.get('erro')}")
 
 
 def job_scheduler():
@@ -257,3 +259,4 @@ def job_scheduler():
 
 # Inicia o scheduler em thread separada
 threading.Thread(target=job_scheduler, daemon=True).start()
+print("✅ SCHEDULER CONTEÚDO INICIADO — gerando às 09h, 12h e 15h (UTC)")
