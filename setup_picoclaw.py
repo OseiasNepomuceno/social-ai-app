@@ -3,29 +3,21 @@ import os
 
 config_path = '/opt/render/.picoclaw/config.json'
 security_path = '/opt/render/.picoclaw/.security.yml'
-openrouter_key = os.environ.get('OPENROUTER_API_KEY', '')
-gemini_key = os.environ.get('GEMINI_API_KEY', '')
-groq_key = os.environ.get('GROQ_API_KEY', '')
+deepseek_key = os.environ.get('DEEPSEEK_API_KEY', '')
 
 with open(config_path) as f:
     c = json.load(f)
 
-c['agents']['defaults']['model_name'] = 'llama-3.3-70b'
-c['agents']['defaults']['provider'] = 'groq'
+# Configurando para o DeepSeek direto
+c['agents']['defaults']['model_name'] = 'deepseek-chat'
+c['agents']['defaults']['provider'] = 'deepseek' # Alterado para o provider oficial
 
+# Atualizando a lista de modelos
 for m in c['model_list']:
-    if m.get('model_name') == 'llama-3.3-70b':
-        m['api_keys'] = [groq_key]
-        m['model'] = 'llama-3.1-8b-instant'  # modelo menor, contexto maior
-    if m.get('model_name') == 'gemini-2.0-flash':
-        m['api_keys'] = [gemini_key]
-        m['model'] = 'gemini-2.5-flash'
-    if m.get('model_name') == 'openrouter-auto':
-        m['api_keys'] = [openrouter_key]
-
-c['model_list'] = [m for m in c['model_list'] if not (
-    m.get('model_name') == 'openrouter-auto' and 'groq' in m.get('api_base', '')
-)]
+    if m.get('model_name') == 'deepseek-chat':
+        m['api_keys'] = [deepseek_key]
+        m['api_base'] = 'https://api.deepseek.com' # Endpoint oficial
+        m['model'] = 'deepseek-chat' 
 
 with open(config_path, 'w') as f:
     json.dump(c, f, indent=2)
@@ -33,15 +25,9 @@ with open(config_path, 'w') as f:
 with open(security_path, 'w') as f:
     f.write(
         f'model_list:\n'
-        f'  llama-3.3-70b:8:\n'
+        f'  deepseek-chat:0:\n'
         f'    api_keys:\n'
-        f'      - "{groq_key}"\n'
-        f'  gemini-2.0-flash:0:\n'
-        f'    api_keys:\n'
-        f'      - "{gemini_key}"\n'
-        f'  openrouter-auto:0:\n'
-        f'    api_keys:\n'
-        f'      - "{openrouter_key}"\n'
+        f'      - "{deepseek_key}"\n'
     )
 
-print('PicoClaw config OK - Groq llama-3.1-8b-instant')
+print('PicoClaw config OK - DeepSeek Oficial Direto')
