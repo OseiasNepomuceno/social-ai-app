@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}E-books — Social CoreGov{% endblock %}
+
+{% block content %}
+<div class="space-y-8 max-w-5xl mx-auto">
+
+    <!-- Cabeçalho -->
+    <div class="border-b border-gray-800 pb-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-white tracking-wide flex items-center gap-2">
+                <i class="fa-solid fa-book-open text-emerald-400"></i> E-books
+            </h1>
+            <p class="text-sm text-gray-400 mt-1">E-books gerados automaticamente pela IA para seu nicho.</p>
+        </div>
+        <form method="GET" class="flex gap-2">
+            <input type="text" name="q" value="{{ request.args.get('q', '') }}"
+                placeholder="Buscar e-books..."
+                class="bg-gray-800 border border-gray-700 rounded-xl px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-all text-sm w-56">
+            <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all">
+                <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
+        </form>
+    </div>
+
+    <!-- Grid de E-books -->
+    {% if ebooks %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {% for ebook in ebooks %}
+            <div class="bg-gray-800 border border-gray-700/70 rounded-2xl p-5 shadow-xl flex flex-col gap-3 hover:border-emerald-500/40 transition-all">
+
+                <!-- Capa fictícia do e-book -->
+                <div class="bg-gradient-to-br from-emerald-900/40 to-gray-900 border border-emerald-700/30 rounded-xl p-4 flex items-center gap-4">
+                    <div class="bg-emerald-600/20 border border-emerald-500/30 rounded-lg p-3 shrink-0">
+                        <i class="fa-solid fa-book text-emerald-400 text-2xl"></i>
+                    </div>
+                    <div class="overflow-hidden">
+                        <h2 class="text-white font-bold text-sm leading-snug line-clamp-2">{{ ebook.titulo }}</h2>
+                        <p class="text-emerald-400 text-xs mt-1 font-medium">E-book Gerado por IA</p>
+                    </div>
+                </div>
+
+                <!-- Preview do conteúdo -->
+                <div class="relative">
+                    <pre id="ebook-{{ loop.index }}" class="text-gray-400 text-xs leading-relaxed whitespace-pre-wrap font-sans line-clamp-5 overflow-hidden transition-all duration-300">{{ ebook.conteudo }}</pre>
+                    <button onclick="toggleEbook({{ loop.index }})" id="btn-ebook-{{ loop.index }}"
+                        class="mt-2 text-xs text-emerald-400 hover:text-emerald-300 transition-all flex items-center gap-1">
+                        <i class="fa-solid fa-chevron-down" id="icon-ebook-{{ loop.index }}"></i>
+                        <span id="label-ebook-{{ loop.index }}">Ler e-book completo</span>
+                    </button>
+                </div>
+
+                <div class="flex items-center justify-between pt-2 border-t border-gray-700/50 mt-auto">
+                    <span class="text-xs text-gray-500">
+                        <i class="fa-regular fa-clock mr-1"></i>
+                        {{ ebook.created_at[:10] if ebook.created_at else '—' }}
+                    </span>
+                    <button onclick="copiarTexto(this, `{{ ebook.conteudo | replace('`', "'") | replace('\n', '\\n') }}`)"
+                        class="text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition-all">
+                        <i class="fa-regular fa-copy"></i> Copiar conteúdo
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Paginação -->
+        {% if total_pages > 1 %}
+        <div class="flex justify-center gap-2 pt-4">
+            {% for p in range(1, total_pages + 1) %}
+            <a href="?page={{ p }}{% if request.args.get('q') %}&q={{ request.args.get('q') }}{% endif %}"
+                class="px-4 py-2 rounded-xl text-sm font-semibold transition-all
+                {% if p == page %} bg-emerald-600 text-white {% else %} bg-gray-800 text-gray-400 hover:bg-gray-700 border border-gray-700 {% endif %}">
+                {{ p }}
+            </a>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+    {% else %}
+        <div class="flex flex-col items-center justify-center py-20 text-center">
+            <i class="fa-solid fa-book-open text-5xl text-gray-700 mb-4"></i>
+            <p class="text-gray-400 font-medium">Nenhum e-book publicado ainda.</p>
+            <p class="text-gray-600 text-sm mt-1">Os e-books gerados automaticamente aparecerão aqui.</p>
+        </div>
+    {% endif %}
+
+</div>
+
+<script>
+function toggleEbook(idx) {
+    const pre = document.getElementById('ebook-' + idx);
+    const icon = document.getElementById('icon-ebook-' + idx);
+    const label = document.getElementById('label-ebook-' + idx);
+    const expandido = pre.classList.contains('line-clamp-5');
+    pre.classList.toggle('line-clamp-5', !expandido);
+    icon.className = expandido ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down';
+    label.textContent = expandido ? 'Recolher' : 'Ler e-book completo';
+}
+
+function copiarTexto(btn, texto) {
+    navigator.clipboard.writeText(texto.replace(/\\n/g, '\n')).then(() => {
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> Copiado!';
+        btn.classList.replace('text-emerald-400', 'text-blue-400');
+        setTimeout(() => {
+            btn.innerHTML = '<i class="fa-regular fa-copy"></i> Copiar conteúdo';
+            btn.classList.replace('text-blue-400', 'text-emerald-400');
+        }, 2000);
+    });
+}
+</script>
+{% endblock %}

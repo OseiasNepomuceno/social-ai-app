@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}CTAs — Social CoreGov{% endblock %}
+
+{% block content %}
+<div class="space-y-8 max-w-5xl mx-auto">
+
+    <!-- Cabeçalho -->
+    <div class="border-b border-gray-800 pb-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-white tracking-wide flex items-center gap-2">
+                <i class="fa-solid fa-bullhorn text-yellow-400"></i> CTAs
+            </h1>
+            <p class="text-sm text-gray-400 mt-1">Chamadas para ação geradas automaticamente pela IA.</p>
+        </div>
+        <form method="GET" class="flex gap-2">
+            <input type="text" name="q" value="{{ request.args.get('q', '') }}"
+                placeholder="Buscar CTAs..."
+                class="bg-gray-800 border border-gray-700 rounded-xl px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-yellow-500 transition-all text-sm w-56">
+            <button type="submit" class="bg-yellow-600 hover:bg-yellow-500 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all">
+                <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
+        </form>
+    </div>
+
+    <!-- Grid de CTAs -->
+    {% if ctas %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {% for cta in ctas %}
+            <div class="bg-gray-800 border border-gray-700/70 rounded-2xl p-5 shadow-xl flex flex-col gap-3 hover:border-yellow-500/40 transition-all">
+                <div class="flex items-start justify-between gap-3">
+                    <h2 class="text-white font-bold text-base leading-snug flex items-center gap-2">
+                        <i class="fa-solid fa-arrow-pointer text-yellow-400 text-sm"></i>
+                        {{ cta.titulo }}
+                    </h2>
+                    <span class="shrink-0 text-[10px] font-semibold px-2 py-1 rounded-lg bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">
+                        CTA
+                    </span>
+                </div>
+
+                <!-- Variações de CTA -->
+                <div class="space-y-2">
+                    {% set linhas = cta.conteudo.split('\n') %}
+                    {% set variacao = namespace(count=0, buffer=[]) %}
+                    {% for linha in linhas %}
+                        {% if linha.strip() == '---' %}
+                            {% if variacao.buffer %}
+                            <div class="bg-gray-900/60 border border-gray-700/50 rounded-xl p-3 space-y-1">
+                                {% for l in variacao.buffer %}
+                                    {% if loop.index == 1 %}
+                                        <p class="text-white font-semibold text-sm">{{ l }}</p>
+                                    {% elif loop.index == 2 %}
+                                        <p class="text-gray-400 text-xs">{{ l }}</p>
+                                    {% elif loop.index == 3 %}
+                                        <span class="inline-block mt-1 bg-yellow-600/20 text-yellow-300 border border-yellow-500/30 text-xs font-bold px-3 py-1 rounded-lg">
+                                            {{ l }}
+                                        </span>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            {% set variacao.buffer = [] %}
+                            {% endif %}
+                        {% elif linha.strip() %}
+                            {% set variacao.buffer = variacao.buffer + [linha.strip()] %}
+                        {% endif %}
+                    {% endfor %}
+                    <!-- última variação sem --- final -->
+                    {% if variacao.buffer %}
+                    <div class="bg-gray-900/60 border border-gray-700/50 rounded-xl p-3 space-y-1">
+                        {% for l in variacao.buffer %}
+                            {% if loop.index == 1 %}
+                                <p class="text-white font-semibold text-sm">{{ l }}</p>
+                            {% elif loop.index == 2 %}
+                                <p class="text-gray-400 text-xs">{{ l }}</p>
+                            {% elif loop.index == 3 %}
+                                <span class="inline-block mt-1 bg-yellow-600/20 text-yellow-300 border border-yellow-500/30 text-xs font-bold px-3 py-1 rounded-lg">
+                                    {{ l }}
+                                </span>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="flex items-center justify-between pt-2 border-t border-gray-700/50 mt-auto">
+                    <span class="text-xs text-gray-500">
+                        <i class="fa-regular fa-clock mr-1"></i>
+                        {{ cta.created_at[:10] if cta.created_at else '—' }}
+                    </span>
+                    <button onclick="copiarTexto(this, `{{ cta.conteudo | replace('`', "'") | replace('\n', '\\n') }}`)"
+                        class="text-xs text-yellow-400 hover:text-yellow-300 flex items-center gap-1 transition-all">
+                        <i class="fa-regular fa-copy"></i> Copiar tudo
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Paginação -->
+        {% if total_pages > 1 %}
+        <div class="flex justify-center gap-2 pt-4">
+            {% for p in range(1, total_pages + 1) %}
+            <a href="?page={{ p }}{% if request.args.get('q') %}&q={{ request.args.get('q') }}{% endif %}"
+                class="px-4 py-2 rounded-xl text-sm font-semibold transition-all
+                {% if p == page %} bg-yellow-600 text-white {% else %} bg-gray-800 text-gray-400 hover:bg-gray-700 border border-gray-700 {% endif %}">
+                {{ p }}
+            </a>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+    {% else %}
+        <div class="flex flex-col items-center justify-center py-20 text-center">
+            <i class="fa-solid fa-bullhorn text-5xl text-gray-700 mb-4"></i>
+            <p class="text-gray-400 font-medium">Nenhum CTA publicado ainda.</p>
+            <p class="text-gray-600 text-sm mt-1">As chamadas para ação geradas automaticamente aparecerão aqui.</p>
+        </div>
+    {% endif %}
+
+</div>
+
+<script>
+function copiarTexto(btn, texto) {
+    navigator.clipboard.writeText(texto.replace(/\\n/g, '\n')).then(() => {
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> Copiado!';
+        btn.classList.replace('text-yellow-400', 'text-emerald-400');
+        setTimeout(() => {
+            btn.innerHTML = '<i class="fa-regular fa-copy"></i> Copiar tudo';
+            btn.classList.replace('text-emerald-400', 'text-yellow-400');
+        }, 2000);
+    });
+}
+</script>
+{% endblock %}
