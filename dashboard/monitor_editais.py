@@ -35,7 +35,7 @@ def buscar_editais_recentes_pncp(dias_atras=1):
       response = requests.get(
         url,
         params=params,
-        timeout=15
+        timeout=60
       )
     
       print(f"STATUS: {response.status_code}")
