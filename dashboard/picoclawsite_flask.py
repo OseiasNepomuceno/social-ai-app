@@ -217,38 +217,45 @@ def registrar_rotas_picoclaw(app, supabase):
         )
         return render_template("infografico.html", infograficos=response.data)
 
-    @app.route("/gerar/monitorar-editais", methods=["POST"])
-    def endpoint_monitorar_editais_manual():
-        body = request.get_json(force=True)
-        nicho = body.get("nicho", "Tecnologia e Automação")
-        dias = body.get("dias", 1)
+    import threading
 
-        editais_encontrados = buscar_editais_recentes_pncp(dias_atras=dias)
+@app.route("/gerar/monitorar-editais", methods=["POST"])
+def endpoint_monitorar_editais_manual():
+    body = request.get_json(force=True)
+    nicho = body.get("nicho", "Tecnologia e Automação")
+    dias = body.get("dias", 1)
 
-        if not editais_encontrados:
-            return jsonify({
-                "status": "vazio",
-                "mensagem": "Nenhum edital encontrado."
-            })
+    # Inicia a busca em background para não bloquear o worker
+    def processar_editais():
+        try:
+            editais_encontrados = buscar_editais_recentes_pncp(dias_atras=dias)
 
-        oportunidades = []
+            if not editais_encontrados:
+                print("⚠️ Nenhum edital encontrado")
+                return
 
-        for edital in editais_encontrados:
-            analise = analisar_edital_com_deepseek(
-                edital,
-                nicho_cliente=nicho
-            )
+            oportunidades = []
+            for edital in editais_encontrados:
+                analise = analisar_edital_com_deepseek(
+                    edital,
+                    nicho_cliente=nicho
+                )
+                if analise and analise.get("decisao") == "RECOMENDADO":
+                    oportunidades.append(analise)
 
-            if analise and analise.get("decisao") == "RECOMENDADO":
-                oportunidades.append(analise)
+            print(f"✅ {len(oportunidades)} oportunidades recomendadas!")
+        except Exception as e:
+            print(f"❌ Erro ao processar editais: {e}")
 
-        return jsonify({
-            "status": "sucesso",
-            "total_analisado": len(editais_encontrados),
-            "total_recomendado": len(oportunidades),
-            "dados": oportunidades
-        })
+    thread = threading.Thread(target=processar_editais, daemon=True)
+    thread.start()
 
+    return jsonify({
+        "status": "processando",
+        "mensagem": "Busca iniciada em background"
+    }), 202
+
+    
     @app.route("/gerar/post", methods=["POST"])
     def endpoint_gerar_post():
         body = request.get_json(force=True)
