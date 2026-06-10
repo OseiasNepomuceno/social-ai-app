@@ -139,8 +139,7 @@ NICHO: tema sugerido"""
 
 def registrar_rotas_picoclaw(app, supabase):
 
-        @app.route("/status")
-        @app.route(
+           @app.route(
         "/interno/gerar-automatico",
         methods=["POST"]
     )
@@ -186,6 +185,9 @@ def registrar_rotas_picoclaw(app, supabase):
             "nichos":
                 len(nichos)
         }), 202
+
+
+
     def picoclaw_status():
 
         nichos = buscar_nichos_tiktok(
