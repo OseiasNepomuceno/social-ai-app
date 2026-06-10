@@ -140,6 +140,52 @@ NICHO: tema sugerido"""
 def registrar_rotas_picoclaw(app, supabase):
 
         @app.route("/status")
+        @app.route(
+        "/interno/gerar-automatico",
+        methods=["POST"]
+    )
+    def gerar_conteudo_automatico():
+
+        token = request.headers.get(
+            "X-Cron-Token",
+            ""
+        )
+
+        if (
+            not CRON_SECRET
+            or
+            not secrets.compare_digest(
+                token,
+                CRON_SECRET
+            )
+        ):
+
+            return jsonify({
+                "erro": "Não autorizado"
+            }), 401
+
+        nichos = buscar_nichos_tiktok(
+            supabase
+        )
+
+        threading.Thread(
+            target=lambda:
+                asyncio.run(
+                    _processar_conteudo_background(
+                        supabase,
+                        nichos
+                    )
+                ),
+            daemon=True
+        ).start()
+
+        return jsonify({
+            "status": "aceito",
+            "mensagem":
+                "Processamento iniciado",
+            "nichos":
+                len(nichos)
+        }), 202
     def picoclaw_status():
 
         nichos = buscar_nichos_tiktok(
@@ -524,6 +570,179 @@ def registrar_rotas_picoclaw(app, supabase):
             "conteudo": resultado["conteudo"],
             "salvo": salvo
         })        
+
+
+    @app.route(
+        "/gerar/infografico",
+        methods=["POST"]
+    )
+    def endpoint_gerar_infografico():
+
+        body = request.get_json(force=True)
+
+        tema = body.get("tema")
+        nicho = body.get("nicho", "")
+        formato = body.get("formato", "lista")
+
+        nicho = (
+            nicho or
+            inferir_nicho(
+                tema,
+                NICHOS_FALLBACK
+            )
+        )
+
+        resultado = gerar_infografico(
+            tema,
+            nicho,
+            formato
+        )
+
+        if not resultado.get("success"):
+            return jsonify({
+                "status": "erro",
+                "erro": resultado.get("erro")
+            }), 500
+
+        salvo = salvar_conteudo(
+            supabase,
+            tema,
+            "infografico",
+            resultado["conteudo"]
+        )
+
+        return jsonify({
+            "status": "ok",
+            "nicho": nicho,
+            "conteudo": resultado["conteudo"],
+            "salvo": salvo
+        })
+
+
+    @app.route(
+        "/gerar/template",
+        methods=["POST"]
+    )
+    def endpoint_gerar_template():
+
+        body = request.get_json(force=True)
+
+        tema = body.get("tema")
+        nicho = body.get("nicho", "")
+        tipo = body.get("tipo", "post")
+
+        nicho = (
+            nicho or
+            inferir_nicho(
+                tema,
+                NICHOS_FALLBACK
+            )
+        )
+
+        resultado = gerar_template(
+            tipo,
+            nicho,
+            tema
+        )
+
+        if not resultado.get("success"):
+            return jsonify({
+                "status": "erro",
+                "erro": resultado.get("erro")
+            }), 500
+
+        salvo = salvar_conteudo(
+            supabase,
+            tema,
+            "template",
+            resultado["conteudo"]
+        )
+
+        return jsonify({
+            "status": "ok",
+            "nicho": nicho,
+            "conteudo": resultado["conteudo"],
+            "salvo": salvo
+        })
+
+
+async def _processar_conteudo_background(
+    supabase,
+    nichos
+):
+    temas = await sugerir_temas_automaticos(
+        nichos
+    )
+
+    if not temas:
+        return
+
+    for item in temas:
+
+        tema = item["tema"]
+        nicho = item["nicho"]
+
+        try:
+
+            r = gerar_roteiro_tiktok(
+                tema,
+                nicho,
+                item["duracao"]
+            )
+
+            if r.get("success"):
+                salvar_conteudo(
+                    supabase,
+                    tema,
+                    "roteiro_tiktok",
+                    r["conteudo"]
+                )
+
+        except Exception as e:
+            print(e)
+
+        try:
+
+            r = gerar_post(
+                tema,
+                "LinkedIn",
+                "engajamento",
+                nicho
+            )
+
+            if r.get("success"):
+                salvar_conteudo(
+                    supabase,
+                    tema,
+                    "post",
+                    r["conteudo"]
+                )
+
+        except Exception as e:
+            print(e)
+
+        try:
+
+            r = gerar_cta(
+                tema,
+                nicho,
+                "conversão",
+                "site"
+            )
+
+            if r.get("success"):
+                salvar_conteudo(
+                    supabase,
+                    tema,
+                    "cta",
+                    r["conteudo"]
+                )
+
+        except Exception as e:
+            print(e)
+
+
+
         
 
 
