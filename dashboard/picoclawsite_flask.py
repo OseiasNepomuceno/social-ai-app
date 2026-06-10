@@ -143,6 +143,7 @@ def registrar_rotas_picoclaw(app, supabase):
         "/interno/gerar-automatico",
         methods=["POST"]
     )
+    
     def gerar_conteudo_automatico():
 
         token = request.headers.get(
