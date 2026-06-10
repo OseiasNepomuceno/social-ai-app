@@ -22,8 +22,9 @@ def buscar_editais_recentes_pncp(dias_atras=1):
     params = {
         "dataInicial": str_inicio,
         "dataFinal": str_fim,
+        "codigoModalidadeContratacao": 8,
         "pagina": 1,
-        "tamanhoPagina": 50 # Puxa os 50 mais recentes do dia
+        "tamanhoPagina": 50
     }
     
     try:
