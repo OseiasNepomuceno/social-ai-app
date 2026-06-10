@@ -18,7 +18,7 @@ def buscar_editais_recentes_pncp(dias_atras=1):
     str_fim = data_fim.strftime("%Y%m%d")
     
     # URL da API pública do PNCP para consulta de contratações por período
-    url = "https://pncp.gov.br/api/consulta/v1/contratacoes"
+    url = "https://pncp.gov.br/api/consulta/v1/contratacoes/publicacao"
     params = {
         "dataInicial": str_inicio,
         "dataFinal": str_fim,
@@ -30,13 +30,14 @@ def buscar_editais_recentes_pncp(dias_atras=1):
         print(f"🔄 Buscando editais no PNCP de {data_inicio.strftime('%d/%m')} até hoje...")
         print(f"URL: {url}")
         print(f"PARAMS: {params}")
+        print(f"STATUS: {response.status_code}")
         
         response = requests.get(
             url,
             params=params,
             timeout=15
         )
-        
+        print(response.text[:500])
         print(f"STATUS: {response.status_code}")
         print(f"RESPOSTA: {response.text[:1000]}")
 
