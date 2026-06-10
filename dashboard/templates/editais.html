@@ -83,11 +83,31 @@ function dispararBuscaEditais() {
     // Renderiza os cards
     let htmlContent = '<h3 style="margin-bottom:20px;color:#1e293b;">🎯 Oportunidades Qualificadas Identificadas:</h3>';
 
-    data.dados.forEach(edital => {
-        ...
-    });
+   data.dados.forEach(edital => {
 
-    resultadoDiv.innerHTML = htmlContent;
+    htmlContent += `
+        <div style="background: white; border: 1px solid #e2e8f0; padding: 24px; margin-bottom: 20px; border-radius: 8px;">
+
+            <strong>🏛️ ${edital.orgao}</strong>
+
+            <p>
+                <strong>Análise:</strong>
+                ${edital.motivo}
+            </p>
+
+            <p>
+                ${edital.resumo}
+            </p>
+
+            <a href="${edital.link}" target="_blank">
+                Abrir Edital
+            </a>
+
+        </div>
+    `;
+});
+
+resultadoDiv.innerHTML = htmlContent;
 
 })
 .catch(error => {
