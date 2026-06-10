@@ -1,6 +1,6 @@
 import requests
 from datetime import datetime, timedelta
-from picoclaw_agent import chamar_picoclaw
+from dashboard.picoclaw_agent import chamar_picoclaw
 
 # Configuração de palavras-chave para o filtro inicial (braçal/rápido)
 PALAVRAS_CHAVE = ["tecnologia", "inteligência artificial", "software", "dados", "consultoria", "contabilidade"]
