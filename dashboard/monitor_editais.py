@@ -20,34 +20,32 @@ def buscar_editais_recentes_pncp(dias_atras=1):
     # URL da API pública do PNCP para consulta de contratações por período
     url = "https://pncp.gov.br/api/consulta/v1/contratacoes/publicacao"
     params = {
+        "dataInicial": str_inicio,
+        "dataFinal": str_fim,
         "codigoModalidadeContratacao": 8,
         "pagina": 1,
-        "tamanhoPagina": 1
+        "tamanhoPagina": 100
     }
     
     try:
-      print(f"🔄 Buscando editais no PNCP de {data_inicio.strftime('%d/%m')} até hoje...")
-      print(f"URL: {url}")
-      print(f"PARAMS: {params}")
-    
-      response = requests.get(
-        url,
-        params=params,
-        timeout=60
-      )
-    
-      print(f"STATUS: {response.status_code}")
-      print(response.text[:500])
-    
-      if response.status_code != 200:
-        print(f"⚠️ Erro ao acessar API do PNCP: Status {response.status_code}")
-        return []
-            
+        print(f"🔄 Buscando editais no PNCP de {data_inicio.strftime('%d/%m')} até hoje...")
+        print(f"URL: {url}")
+        print(f"PARAMS: {params}")
+        
+        response = requests.get(url, params=params, timeout=60)
+        
+        print(f"STATUS: {response.status_code}")
+        print(response.text[:500])
+        
+        if response.status_code != 200:
+            print(f"⚠️ Erro ao acessar API do PNCP: Status {response.status_code}")
+            return []
+        
         dados = response.json()
         editais_brutos = dados.get("data", [])
         print(f"📋 {len(editais_brutos)} editais brutos encontrados no período.")
         
-        # Filtro inicial por palavra-chave para economizar tokens do DeepSeek
+        # Filtro inicial por palavra-chave para economizar tokens do PicoClaw
         editais_filtrados = []
         for edital in editais_brutos:
             objeto = edital.get("objetoCompra", "").lower()
@@ -59,7 +57,7 @@ def buscar_editais_recentes_pncp(dias_atras=1):
                     "valor_estimado": edital.get("valorTotalEstimado"),
                     "link": f"https://pncp.gov.br/app/editais/{edital.get('orgaoEntidade', {}).get('cnpj')}/{edital.get('anoCompra')}/{edital.get('numeroCompra')}"
                 })
-                
+        
         print(f"🎯 {len(editais_filtrados)} editais passaram pelo pré-filtro de interesse.")
         return editais_filtrados
         
@@ -90,7 +88,7 @@ def analisar_edital_com_deepseek(edital, nicho_cliente="Tecnologia e Automação
     RESUMO: (3 pontos críticos do que o órgão está pedindo)
     """
     
-    # Chama o motor do DeepSeek através do seu orquestrador PicoClaw
+    # Chama o motor do PicoClaw
     resultado = chamar_picoclaw(prompt, timeout=30)
     
     if resultado.get("success"):
