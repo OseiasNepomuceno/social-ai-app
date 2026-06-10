@@ -24,7 +24,7 @@ def buscar_editais_recentes_pncp(dias_atras=1):
         "dataFinal": str_fim,
         "codigoModalidadeContratacao": 8,
         "pagina": 1,
-        "tamanhoPagina": 50
+        "tamanhoPagina": 10
     }
     
     try:
