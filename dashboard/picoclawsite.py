@@ -25,6 +25,14 @@ class MonitorRequest(BaseModel):
     nicho: str = "Tecnologia e Automação"
     dias: int = 1
 
+
+@app.get("/monitor-editais", response_class=HTMLResponse)
+def pagina_monitor_editais(request: Request):
+    """Renderiza a página direita com o botão de varredura manual"""
+    return templates.TemplateResponse("editais.html", {
+        "request": request
+})
+
 # Adicione esta rota na seção de ROTAS DE GERAÇÃO MANUAL
 @app.post("/gerar/monitorar-editais")
 def endpoint_monitorar_editais_manual(body: MonitorRequest):
