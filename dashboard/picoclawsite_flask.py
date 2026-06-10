@@ -4,11 +4,7 @@ import random
 import asyncio
 import threading
 
-from flask import (
-    request,
-    jsonify,
-    render_template
-)
+from flask import request, jsonify, render_template
 
 from dashboard.picoclaw_agent import (
     gerar_post,
@@ -67,14 +63,8 @@ def buscar_nichos_tiktok(supabase):
         return NICHOS_FALLBACK
 
 
-def salvar_conteudo(
-    supabase,
-    titulo,
-    tipo,
-    conteudo
-):
+def salvar_conteudo(supabase, titulo, tipo, conteudo):
     try:
-
         if not conteudo or len(conteudo.strip()) < 50:
             return {}
 
@@ -109,10 +99,7 @@ Nichos: {', '.join(nichos_sorteados)}
 Responda APENAS neste formato:
 NICHO: tema sugerido"""
 
-    resultado = chamar_picoclaw(
-        prompt,
-        timeout=60
-    )
+    resultado = chamar_picoclaw(prompt, timeout=60)
 
     if not resultado.get("success"):
         return []
@@ -122,7 +109,6 @@ NICHO: tema sugerido"""
     for linha in resultado["conteudo"].split("\n"):
         if ":" in linha:
             partes = linha.split(":", 1)
-
             nicho = partes[0].strip()
             tema = partes[1].strip()
 
@@ -136,64 +122,33 @@ NICHO: tema sugerido"""
     return temas
 
 
-
 def registrar_rotas_picoclaw(app, supabase):
 
-           @app.route(
-        "/interno/gerar-automatico",
-        methods=["POST"]
-    )
-    
+    @app.route("/interno/gerar-automatico", methods=["POST"])
     def gerar_conteudo_automatico():
+        token = request.headers.get("X-Cron-Token", "")
 
-        token = request.headers.get(
-            "X-Cron-Token",
-            ""
-        )
+        if not CRON_SECRET or not secrets.compare_digest(token, CRON_SECRET):
+            return jsonify({"erro": "Não autorizado"}), 401
 
-        if (
-            not CRON_SECRET
-            or
-            not secrets.compare_digest(
-                token,
-                CRON_SECRET
-            )
-        ):
-
-            return jsonify({
-                "erro": "Não autorizado"
-            }), 401
-
-        nichos = buscar_nichos_tiktok(
-            supabase
-        )
+        nichos = buscar_nichos_tiktok(supabase)
 
         threading.Thread(
-            target=lambda:
-                asyncio.run(
-                    _processar_conteudo_background(
-                        supabase,
-                        nichos
-                    )
-                ),
+            target=lambda: asyncio.run(
+                _processar_conteudo_background(supabase, nichos)
+            ),
             daemon=True
         ).start()
 
         return jsonify({
             "status": "aceito",
-            "mensagem":
-                "Processamento iniciado",
-            "nichos":
-                len(nichos)
+            "mensagem": "Processamento iniciado",
+            "nichos": len(nichos)
         }), 202
 
-
-
+    @app.route("/picoclaw/status")
     def picoclaw_status():
-
-        nichos = buscar_nichos_tiktok(
-            supabase
-        )
+        nichos = buscar_nichos_tiktok(supabase)
 
         return jsonify({
             "status": "online",
@@ -202,18 +157,12 @@ def registrar_rotas_picoclaw(app, supabase):
             "total_nichos": len(nichos)
         })
 
-
     @app.route("/monitor-editais")
     def pagina_monitor_editais():
-
-        return render_template(
-            "editais.html"
-        )
-
+        return render_template("editais.html")
 
     @app.route("/posts")
     def listar_posts():
-
         response = (
             supabase.table("conteudos")
             .select("*")
@@ -221,16 +170,10 @@ def registrar_rotas_picoclaw(app, supabase):
             .eq("status", "publicado")
             .execute()
         )
-
-        return render_template(
-            "posts.html",
-            posts=response.data
-        )
-
+        return render_template("posts.html", posts=response.data)
 
     @app.route("/roteiros-tiktok")
     def listar_roteiros():
-
         response = (
             supabase.table("conteudos")
             .select("*")
@@ -238,16 +181,10 @@ def registrar_rotas_picoclaw(app, supabase):
             .eq("status", "publicado")
             .execute()
         )
-
-        return render_template(
-            "roteiros.html",
-            roteiros=response.data
-        )
-
+        return render_template("roteiros.html", roteiros=response.data)
 
     @app.route("/ctas")
     def listar_ctas():
-
         response = (
             supabase.table("conteudos")
             .select("*")
@@ -255,16 +192,10 @@ def registrar_rotas_picoclaw(app, supabase):
             .eq("status", "publicado")
             .execute()
         )
-
-        return render_template(
-            "ctas.html",
-            ctas=response.data
-        )
-
+        return render_template("ctas.html", ctas=response.data)
 
     @app.route("/e-books")
     def listar_ebooks():
-
         response = (
             supabase.table("conteudos")
             .select("*")
@@ -272,16 +203,10 @@ def registrar_rotas_picoclaw(app, supabase):
             .eq("status", "publicado")
             .execute()
         )
-
-        return render_template(
-            "e-books.html",
-            ebooks=response.data
-        )
-
+        return render_template("e-books.html", ebooks=response.data)
 
     @app.route("/infograficos")
     def listar_infograficos():
-
         response = (
             supabase.table("conteudos")
             .select("*")
@@ -289,165 +214,77 @@ def registrar_rotas_picoclaw(app, supabase):
             .eq("status", "publicado")
             .execute()
         )
+        return render_template("infografico.html", infograficos=response.data)
 
-        return render_template(
-            "infografico.html",
-            infograficos=response.data
-        )
-
-            @app.route(
-        "/gerar/monitorar-editais",
-        methods=["POST"]
-    )
+    @app.route("/gerar/monitorar-editais", methods=["POST"])
     def endpoint_monitorar_editais_manual():
-
         body = request.get_json(force=True)
+        nicho = body.get("nicho", "Tecnologia e Automação")
+        dias = body.get("dias", 1)
 
-        nicho = body.get(
-            "nicho",
-            "Tecnologia e Automação"
-        )
-
-        dias = body.get(
-            "dias",
-            1
-        )
-
-        editais_encontrados = (
-            buscar_editais_recentes_pncp(
-                dias_atras=dias
-            )
-        )
+        editais_encontrados = buscar_editais_recentes_pncp(dias_atras=dias)
 
         if not editais_encontrados:
-
             return jsonify({
                 "status": "vazio",
-                "mensagem": (
-                    "Nenhum edital encontrado."
-                )
+                "mensagem": "Nenhum edital encontrado."
             })
 
         oportunidades = []
 
         for edital in editais_encontrados:
-
-            analise = (
-                analisar_edital_com_deepseek(
-                    edital,
-                    nicho_cliente=nicho
-                )
+            analise = analisar_edital_com_deepseek(
+                edital,
+                nicho_cliente=nicho
             )
 
-            if (
-                analise and
-                analise.get("decisao")
-                == "RECOMENDADO"
-            ):
-
-                oportunidades.append(
-                    analise
-                )
+            if analise and analise.get("decisao") == "RECOMENDADO":
+                oportunidades.append(analise)
 
         return jsonify({
             "status": "sucesso",
-            "total_analisado":
-                len(editais_encontrados),
-            "total_recomendado":
-                len(oportunidades),
-            "dados":
-                oportunidades
+            "total_analisado": len(editais_encontrados),
+            "total_recomendado": len(oportunidades),
+            "dados": oportunidades
         })
 
-
-    @app.route(
-        "/gerar/post",
-        methods=["POST"]
-    )
+    @app.route("/gerar/post", methods=["POST"])
     def endpoint_gerar_post():
-
         body = request.get_json(force=True)
-
         tema = body.get("tema")
-        rede = body.get(
-            "rede",
-            "LinkedIn"
-        )
+        rede = body.get("rede", "LinkedIn")
+        modo = body.get("modo", "engajamento")
+        nicho = body.get("nicho", "")
 
-        modo = body.get(
-            "modo",
-            "engajamento"
-        )
+        nicho = nicho or inferir_nicho(tema, NICHOS_FALLBACK)
 
-        nicho = body.get(
-            "nicho",
-            ""
-        )
-
-        nicho = (
-            nicho or
-            inferir_nicho(
-                tema,
-                NICHOS_FALLBACK
-            )
-        )
-
-        resultado = gerar_post(
-            tema,
-            rede,
-            modo,
-            nicho
-        )
+        resultado = gerar_post(tema, rede, modo, nicho)
 
         if not resultado.get("success"):
-
             return jsonify({
                 "status": "erro",
-                "erro":
-                    resultado.get("erro")
+                "erro": resultado.get("erro")
             }), 500
 
-        salvo = salvar_conteudo(
-            supabase,
-            tema,
-            "post",
-            resultado["conteudo"]
-        )
+        salvo = salvar_conteudo(supabase, tema, "post", resultado["conteudo"])
 
         return jsonify({
             "status": "ok",
             "nicho": nicho,
-            "conteudo":
-                resultado["conteudo"],
+            "conteudo": resultado["conteudo"],
             "salvo": salvo
         })
 
-
-    @app.route(
-        "/gerar/roteiro-tiktok",
-        methods=["POST"]
-    )
+    @app.route("/gerar/roteiro-tiktok", methods=["POST"])
     def endpoint_gerar_roteiro():
-
         body = request.get_json(force=True)
-
         tema = body.get("tema")
         nicho = body.get("nicho", "")
         duracao = body.get("duracao", 60)
 
-        nicho = (
-            nicho or
-            inferir_nicho(
-                tema,
-                NICHOS_FALLBACK
-            )
-        )
+        nicho = nicho or inferir_nicho(tema, NICHOS_FALLBACK)
 
-        resultado = gerar_roteiro_tiktok(
-            tema,
-            nicho,
-            duracao
-        )
+        resultado = gerar_roteiro_tiktok(tema, nicho, duracao)
 
         if not resultado.get("success"):
             return jsonify({
@@ -469,34 +306,17 @@ def registrar_rotas_picoclaw(app, supabase):
             "salvo": salvo
         })
 
-
-    @app.route(
-        "/gerar/cta",
-        methods=["POST"]
-    )
+    @app.route("/gerar/cta", methods=["POST"])
     def endpoint_gerar_cta():
-
         body = request.get_json(force=True)
-
         tema = body.get("tema")
         nicho = body.get("nicho", "")
         objetivo = body.get("objetivo", "conversão")
         canal = body.get("canal", "site")
 
-        nicho = (
-            nicho or
-            inferir_nicho(
-                tema,
-                NICHOS_FALLBACK
-            )
-        )
+        nicho = nicho or inferir_nicho(tema, NICHOS_FALLBACK)
 
-        resultado = gerar_cta(
-            tema,
-            nicho,
-            objetivo,
-            canal
-        )
+        resultado = gerar_cta(tema, nicho, objetivo, canal)
 
         if not resultado.get("success"):
             return jsonify({
@@ -518,34 +338,15 @@ def registrar_rotas_picoclaw(app, supabase):
             "salvo": salvo
         })
 
-
-    @app.route(
-        "/gerar/ebook",
-        methods=["POST"]
-    )
+    @app.route("/gerar/ebook", methods=["POST"])
     def endpoint_gerar_ebook():
-
         body = request.get_json(force=True)
-
         tema = body.get("tema")
         nicho = body.get("nicho", "")
-        publico_alvo = body.get(
-            "publico_alvo",
-            "gestores e empresários"
-        )
+        publico_alvo = body.get("publico_alvo", "gestores e empresários")
+        num_capitulos = body.get("num_capitulos", 5)
 
-        num_capitulos = body.get(
-            "num_capitulos",
-            5
-        )
-
-        nicho = (
-            nicho or
-            inferir_nicho(
-                tema,
-                NICHOS_FALLBACK
-            )
-        )
+        nicho = nicho or inferir_nicho(tema, NICHOS_FALLBACK)
 
         resultado = gerar_ebook(
             tema,
@@ -572,34 +373,18 @@ def registrar_rotas_picoclaw(app, supabase):
             "nicho": nicho,
             "conteudo": resultado["conteudo"],
             "salvo": salvo
-        })        
+        })
 
-
-    @app.route(
-        "/gerar/infografico",
-        methods=["POST"]
-    )
+    @app.route("/gerar/infografico", methods=["POST"])
     def endpoint_gerar_infografico():
-
         body = request.get_json(force=True)
-
         tema = body.get("tema")
         nicho = body.get("nicho", "")
         formato = body.get("formato", "lista")
 
-        nicho = (
-            nicho or
-            inferir_nicho(
-                tema,
-                NICHOS_FALLBACK
-            )
-        )
+        nicho = nicho or inferir_nicho(tema, NICHOS_FALLBACK)
 
-        resultado = gerar_infografico(
-            tema,
-            nicho,
-            formato
-        )
+        resultado = gerar_infografico(tema, nicho, formato)
 
         if not resultado.get("success"):
             return jsonify({
@@ -621,32 +406,16 @@ def registrar_rotas_picoclaw(app, supabase):
             "salvo": salvo
         })
 
-
-    @app.route(
-        "/gerar/template",
-        methods=["POST"]
-    )
+    @app.route("/gerar/template", methods=["POST"])
     def endpoint_gerar_template():
-
         body = request.get_json(force=True)
-
         tema = body.get("tema")
         nicho = body.get("nicho", "")
         tipo = body.get("tipo", "post")
 
-        nicho = (
-            nicho or
-            inferir_nicho(
-                tema,
-                NICHOS_FALLBACK
-            )
-        )
+        nicho = nicho or inferir_nicho(tema, NICHOS_FALLBACK)
 
-        resultado = gerar_template(
-            tipo,
-            nicho,
-            tema
-        )
+        resultado = gerar_template(tipo, nicho, tema)
 
         if not resultado.get("success"):
             return jsonify({
@@ -669,30 +438,18 @@ def registrar_rotas_picoclaw(app, supabase):
         })
 
 
-async def _processar_conteudo_background(
-    supabase,
-    nichos
-):
-    temas = await sugerir_temas_automaticos(
-        nichos
-    )
+async def _processar_conteudo_background(supabase, nichos):
+    temas = await sugerir_temas_automaticos(nichos)
 
     if not temas:
         return
 
     for item in temas:
-
         tema = item["tema"]
         nicho = item["nicho"]
 
         try:
-
-            r = gerar_roteiro_tiktok(
-                tema,
-                nicho,
-                item["duracao"]
-            )
-
+            r = gerar_roteiro_tiktok(tema, nicho, item["duracao"])
             if r.get("success"):
                 salvar_conteudo(
                     supabase,
@@ -700,19 +457,11 @@ async def _processar_conteudo_background(
                     "roteiro_tiktok",
                     r["conteudo"]
                 )
-
         except Exception as e:
-            print(e)
+            print(f"❌ Erro ao gerar roteiro: {e}")
 
         try:
-
-            r = gerar_post(
-                tema,
-                "LinkedIn",
-                "engajamento",
-                nicho
-            )
-
+            r = gerar_post(tema, "LinkedIn", "engajamento", nicho)
             if r.get("success"):
                 salvar_conteudo(
                     supabase,
@@ -720,19 +469,11 @@ async def _processar_conteudo_background(
                     "post",
                     r["conteudo"]
                 )
-
         except Exception as e:
-            print(e)
+            print(f"❌ Erro ao gerar post: {e}")
 
         try:
-
-            r = gerar_cta(
-                tema,
-                nicho,
-                "conversão",
-                "site"
-            )
-
+            r = gerar_cta(tema, nicho, "conversão", "site")
             if r.get("success"):
                 salvar_conteudo(
                     supabase,
@@ -740,15 +481,5 @@ async def _processar_conteudo_background(
                     "cta",
                     r["conteudo"]
                 )
-
         except Exception as e:
-            print(e)
-
-
-
-        
-
-
-
-
-
+            print(f"❌ Erro ao gerar CTA: {e}")
