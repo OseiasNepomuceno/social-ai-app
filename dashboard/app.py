@@ -29,6 +29,7 @@ from dashboard.agents.media_selector import selecionar_imagem
 from dashboard.ia_engine import gerar_conteudo
 from dashboard.picoclaw_agent import gerar_post_picoclaw
 from dashboard.picoclaw_agent import gerar_post_picoclaw, inferir_nicho
+from dashboard.picoclawsite_flask import registrar_rotas_picoclaw
 
 #Segurança por Telegram
 from dashboard.telegram_alerts import (
@@ -153,6 +154,12 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+
+registrar_rotas_picoclaw(
+    app,
+    supabase
+)
 
 # =========================
 # MERCADO PAGO
