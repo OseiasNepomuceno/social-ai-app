@@ -96,5 +96,284 @@ def salvar_conteudo(
         return {}
 
 
+async def sugerir_temas_automaticos(nichos):
+    nichos_sorteados = random.sample(
+        nichos,
+        min(3, len(nichos))
+    )
+
+    prompt = f"""Você é um especialista em conteúdo para redes sociais voltado ao mercado empresarial e de gestão.
+
+Nichos: {', '.join(nichos_sorteados)}
+
+Responda APENAS neste formato:
+NICHO: tema sugerido"""
+
+    resultado = chamar_picoclaw(
+        prompt,
+        timeout=60
+    )
+
+    if not resultado.get("success"):
+        return []
+
+    temas = []
+
+    for linha in resultado["conteudo"].split("\n"):
+        if ":" in linha:
+            partes = linha.split(":", 1)
+
+            nicho = partes[0].strip()
+            tema = partes[1].strip()
+
+            if nicho and tema:
+                temas.append({
+                    "tema": tema,
+                    "nicho": nicho,
+                    "duracao": 60
+                })
+
+    return temas
+
+
+
+def registrar_rotas_picoclaw(app, supabase):
+
+        @app.route("/status")
+    def picoclaw_status():
+
+        nichos = buscar_nichos_tiktok(
+            supabase
+        )
+
+        return jsonify({
+            "status": "online",
+            "modelo": "picoclaw",
+            "nichos_tiktok": nichos,
+            "total_nichos": len(nichos)
+        })
+
+
+    @app.route("/monitor-editais")
+    def pagina_monitor_editais():
+
+        return render_template(
+            "editais.html"
+        )
+
+
+    @app.route("/posts")
+    def listar_posts():
+
+        response = (
+            supabase.table("conteudos")
+            .select("*")
+            .eq("tipo", "post")
+            .eq("status", "publicado")
+            .execute()
+        )
+
+        return render_template(
+            "posts.html",
+            posts=response.data
+        )
+
+
+    @app.route("/roteiros-tiktok")
+    def listar_roteiros():
+
+        response = (
+            supabase.table("conteudos")
+            .select("*")
+            .eq("tipo", "roteiro_tiktok")
+            .eq("status", "publicado")
+            .execute()
+        )
+
+        return render_template(
+            "roteiros.html",
+            roteiros=response.data
+        )
+
+
+    @app.route("/ctas")
+    def listar_ctas():
+
+        response = (
+            supabase.table("conteudos")
+            .select("*")
+            .eq("tipo", "cta")
+            .eq("status", "publicado")
+            .execute()
+        )
+
+        return render_template(
+            "ctas.html",
+            ctas=response.data
+        )
+
+
+    @app.route("/e-books")
+    def listar_ebooks():
+
+        response = (
+            supabase.table("conteudos")
+            .select("*")
+            .eq("tipo", "ebook")
+            .eq("status", "publicado")
+            .execute()
+        )
+
+        return render_template(
+            "e-books.html",
+            ebooks=response.data
+        )
+
+
+    @app.route("/infograficos")
+    def listar_infograficos():
+
+        response = (
+            supabase.table("conteudos")
+            .select("*")
+            .eq("tipo", "infografico")
+            .eq("status", "publicado")
+            .execute()
+        )
+
+        return render_template(
+            "infografico.html",
+            infograficos=response.data
+        )
+
+            @app.route(
+        "/gerar/monitorar-editais",
+        methods=["POST"]
+    )
+    def endpoint_monitorar_editais_manual():
+
+        body = request.get_json(force=True)
+
+        nicho = body.get(
+            "nicho",
+            "Tecnologia e Automação"
+        )
+
+        dias = body.get(
+            "dias",
+            1
+        )
+
+        editais_encontrados = (
+            buscar_editais_recentes_pncp(
+                dias_atras=dias
+            )
+        )
+
+        if not editais_encontrados:
+
+            return jsonify({
+                "status": "vazio",
+                "mensagem": (
+                    "Nenhum edital encontrado."
+                )
+            })
+
+        oportunidades = []
+
+        for edital in editais_encontrados:
+
+            analise = (
+                analisar_edital_com_deepseek(
+                    edital,
+                    nicho_cliente=nicho
+                )
+            )
+
+            if (
+                analise and
+                analise.get("decisao")
+                == "RECOMENDADO"
+            ):
+
+                oportunidades.append(
+                    analise
+                )
+
+        return jsonify({
+            "status": "sucesso",
+            "total_analisado":
+                len(editais_encontrados),
+            "total_recomendado":
+                len(oportunidades),
+            "dados":
+                oportunidades
+        })
+
+
+    @app.route(
+        "/gerar/post",
+        methods=["POST"]
+    )
+    def endpoint_gerar_post():
+
+        body = request.get_json(force=True)
+
+        tema = body.get("tema")
+        rede = body.get(
+            "rede",
+            "LinkedIn"
+        )
+
+        modo = body.get(
+            "modo",
+            "engajamento"
+        )
+
+        nicho = body.get(
+            "nicho",
+            ""
+        )
+
+        nicho = (
+            nicho or
+            inferir_nicho(
+                tema,
+                NICHOS_FALLBACK
+            )
+        )
+
+        resultado = gerar_post(
+            tema,
+            rede,
+            modo,
+            nicho
+        )
+
+        if not resultado.get("success"):
+
+            return jsonify({
+                "status": "erro",
+                "erro":
+                    resultado.get("erro")
+            }), 500
+
+        salvo = salvar_conteudo(
+            supabase,
+            tema,
+            "post",
+            resultado["conteudo"]
+        )
+
+        return jsonify({
+            "status": "ok",
+            "nicho": nicho,
+            "conteudo":
+                resultado["conteudo"],
+            "salvo": salvo
+        })
+
+
+
 
 
