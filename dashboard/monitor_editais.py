@@ -27,23 +27,22 @@ def buscar_editais_recentes_pncp(dias_atras=1):
     }
     
     try:
-        print(f"🔄 Buscando editais no PNCP de {data_inicio.strftime('%d/%m')} até hoje...")
-        print(f"URL: {url}")
-        print(f"PARAMS: {params}")
-        print(f"STATUS: {response.status_code}")
-        
-        response = requests.get(
-            url,
-            params=params,
-            timeout=15
-        )
-        print(response.text[:500])
-        print(f"STATUS: {response.status_code}")
-        print(f"RESPOSTA: {response.text[:1000]}")
-
-        if response.status_code != 200:
-            print(f"⚠️ Erro ao acessar API do PNCP: Status {response.status_code}")
-            return []
+      print(f"🔄 Buscando editais no PNCP de {data_inicio.strftime('%d/%m')} até hoje...")
+      print(f"URL: {url}")
+      print(f"PARAMS: {params}")
+    
+      response = requests.get(
+        url,
+        params=params,
+        timeout=15
+      )
+    
+      print(f"STATUS: {response.status_code}")
+      print(response.text[:500])
+    
+      if response.status_code != 200:
+        print(f"⚠️ Erro ao acessar API do PNCP: Status {response.status_code}")
+        return []
             
         dados = response.json()
         editais_brutos = dados.get("data", [])
