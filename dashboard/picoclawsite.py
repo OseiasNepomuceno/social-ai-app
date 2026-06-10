@@ -20,6 +20,56 @@ from picoclaw_agent import (
     chamar_picoclaw,
 )
 
+# Adicione este schema junto com os outros no início do arquivo
+class MonitorRequest(BaseModel):
+    nicho: str = "Tecnologia e Automação"
+    dias: int = 1
+
+# Adicione esta rota na seção de ROTAS DE GERAÇÃO MANUAL
+@app.post("/gerar/monitorar-editais")
+def endpoint_monitorar_editais_manual(body: MonitorRequest):
+    """
+    Acionado manualmente pelo botão do painel.
+    Busca, filtra com DeepSeek e retorna os editais recomendados em tempo real.
+    """
+    from monitor_editais import buscar_editais_recentes_pncp, analisar_edital_com_deepseek
+    
+    # 1. Executa o Olheiro buscando os editais do PNCP
+    editais_encontrados = buscar_editais_recentes_pncp(dias_atras=body.dias)
+    
+    if not editais_encontrados:
+        return {"status": "vazio", "mensagem": "Nenhum edital com suas palavras-chave foi encontrado hoje."}
+        
+    oportunidades_recomendadas = []
+    
+    # 2. Passa os editais filtrados pelo cérebro do DeepSeek
+    for edital in editais_encontrados:
+        analise = analisar_edital_com_deepseek(edital, nicho_cliente=body.nicho)
+        
+        # Se a IA recomendou, colocamos na lista que vai para a tela
+        if analise and analise.get("decisao") == "RECOMENDADO":
+            oportunidades_recomendadas.append(analise)
+            
+            # (Opcional) Salva no Supabase para manter histórico
+            try:
+                supabase.table("oportunidades_editais").insert({
+                    "orgao": analise["orgao"],
+                    "valor": float(analise["valor"]) if analise["valor"] else 0,
+                    "motivo": analise["motivo"],
+                    "resumo": analise["resumo"],
+                    "link": analise["link"],
+                    "nicho": body.nicho
+                }).execute()
+            except Exception as e:
+                print(f"⚠️ Erro ao salvar oportunidade no Supabase: {e}")
+
+    return {
+        "status": "sucesso",
+        "total_analisado": len(editais_encontrados),
+        "total_recomendado": len(oportunidades_recomendadas),
+        "dados": oportunidades_recomendadas
+    }
+
 # ─────────────────────────────────────────────
 # CONFIGURAÇÃO
 # ─────────────────────────────────────────────
