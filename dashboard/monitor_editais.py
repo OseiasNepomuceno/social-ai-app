@@ -13,11 +13,9 @@ def buscar_editais_recentes_pncp(dias_atras=1):
     data_fim = datetime.now()
     data_inicio = data_fim - timedelta(days=dias_atras)
     
-    # Formato de data exigido pela API do PNCP: AAAAMMDD
     str_inicio = data_inicio.strftime("%Y%m%d")
     str_fim = data_fim.strftime("%Y%m%d")
     
-    # URL da API pública do PNCP para consulta de contratações por período
     url = "https://pncp.gov.br/api/consulta/v1/contratacoes/publicacao"
     params = {
         "dataInicial": str_inicio,
@@ -35,7 +33,6 @@ def buscar_editais_recentes_pncp(dias_atras=1):
         response = requests.get(url, params=params, timeout=60)
         
         print(f"STATUS: {response.status_code}")
-        print(response.text[:500])
         
         if response.status_code != 200:
             print(f"⚠️ Erro ao acessar API do PNCP: Status {response.status_code}")
@@ -43,22 +40,20 @@ def buscar_editais_recentes_pncp(dias_atras=1):
         
         dados = response.json()
         editais_brutos = dados.get("data", [])
-        print(f"📋 {len(editais_brutos)} editais brutos encontrados no período.")
+        print(f"📋 {len(editais_brutos)} editais encontrados no período.")
         
-        # Filtro inicial por palavra-chave para economizar tokens do PicoClaw
+        # Retorna TODOS os editais sem filtro
         editais_filtrados = []
         for edital in editais_brutos:
-            objeto = edital.get("objetoCompra", "").lower()
-            if any(palavra in objeto for palavra in PALAVRAS_CHAVE):
-                editais_filtrados.append({
-                    "id": edital.get("id"),
-                    "orgao": edital.get("orgaoEntidade", {}).get("razaoSocial"),
-                    "objeto": edital.get("objetoCompra"),
-                    "valor_estimado": edital.get("valorTotalEstimado"),
-                    "link": f"https://pncp.gov.br/app/editais/{edital.get('orgaoEntidade', {}).get('cnpj')}/{edital.get('anoCompra')}/{edital.get('numeroCompra')}"
-                })
+            editais_filtrados.append({
+                "id": edital.get("id"),
+                "orgao": edital.get("orgaoEntidade", {}).get("razaoSocial"),
+                "objeto": edital.get("objetoCompra"),
+                "valor_estimado": edital.get("valorTotalEstimado"),
+                "link": f"https://pncp.gov.br/app/editais/{edital.get('orgaoEntidade', {}).get('cnpj')}/{edital.get('anoCompra')}/{edital.get('numeroCompra')}"
+            })
         
-        print(f"🎯 {len(editais_filtrados)} editais passaram pelo pré-filtro de interesse.")
+        print(f"🎯 {len(editais_filtrados)} editais prontos para análise cognitiva.")
         return editais_filtrados
         
     except Exception as e:
