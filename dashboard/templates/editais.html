@@ -57,38 +57,41 @@ function dispararBuscaEditais() {
             dias: 1
         })
     })
-            
-            // Renderiza os cards das oportunidades recomendadas pela IA
-            let htmlContent = '<h3 style="margin-bottom: 20px; color: #1e293b;">🎯 Oportunidades Qualificadas Identificadas:</h3>';
-            data.dados.forEach(edital => {
-                htmlContent += `
-                    <div style="background: white; border: 1px solid #e2e8f0; padding: 24px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 15px;">
-                            <strong style="color: #0f172a; font-size: 1.2rem; max-width: 70%;">🏛️ ${edital.orgao}</strong>
-                            <span style="background-color: #dcfce7; color: #166534; font-size: 0.9rem; font-weight: 700; padding: 6px 12px; border-radius: 50px; white-space: nowrap;">
-                                💰 Valor: R$ ${edital.valor ? Number(edital.valor).toLocaleString('pt-BR', {minimumFractionDigits: 2}) : 'Não informado'}
-                            </span>
-                        </div>
-                        
-                        <p style="margin: 15px 0 10px 0; color: #334155; font-size: 1rem;">
-                            <strong>Análise da Coregov:</strong> ${edital.motivo}
-                        </p>
-                        
-                        <div style="margin: 15px 0; color: #475569; background: #f8fafc; padding: 15px; border-radius: 6px; border-left: 4px solid #2563eb; font-size: 0.95rem; line-height: 1.6;">
-                            <strong>Resumo Técnico do Objeto:</strong><br>${edital.resumo.replace(/\n/g, '<br>')}
-                        </div>
-                        
-                        <div style="margin-top: 20px; text-align: right;">
-                            <a href="${edital.link}" target="_blank" style="display: inline-block; background: #f1f5f9; color: #2563eb; font-weight: 600; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-size: 0.9rem; transition: background 0.2s;">
-                                📂 Abrir Edital Oficial no PNCP →
-                            </a>
-                        </div>
-                    </div>
-                `;
-            });
-            resultadoDiv.innerHTML = htmlContent;
-        })
-        .catch(error => {
+.then(response => response.json())
+.then(data => {
+
+    btn.disabled = false;
+    btn.style.backgroundColor = '#2563eb';
+    btn.innerText = '🚀 Iniciar Varredura Inteligente';
+    status.style.display = 'none';
+
+    if (
+        data.status === 'vazio'
+        ||
+        !data.total_recomendado
+        ||
+        data.total_recomendado === 0
+    ) {
+        resultadoDiv.innerHTML = `
+            <div style="background: #fef3c7; border: 1px solid #fde68a; color: #92400e; padding: 16px; border-radius: 6px; font-weight: 500;">
+                🍃 Nenhuma oportunidade recomendada encontrada.
+            </div>
+        `;
+        return;
+    }
+
+    // Renderiza os cards
+    let htmlContent = '<h3 style="margin-bottom:20px;color:#1e293b;">🎯 Oportunidades Qualificadas Identificadas:</h3>';
+
+    data.dados.forEach(edital => {
+        ...
+    });
+
+    resultadoDiv.innerHTML = htmlContent;
+
+})
+.catch(error => {
+       
             btn.disabled = false;
             btn.style.backgroundColor = '#2563eb';
             btn.innerText = '🚀 Iniciar Varredura Inteligente';
