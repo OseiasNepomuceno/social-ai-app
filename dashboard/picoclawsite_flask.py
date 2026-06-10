@@ -5,6 +5,7 @@ import asyncio
 import threading
 
 from flask import request, jsonify, render_template
+from dashboard.picoclaw_agent import chamar_picoclaw
 
 from dashboard.picoclaw_agent import (
     gerar_post,
