@@ -52,7 +52,7 @@ def buscar_editais_recentes_pncp(dias_atras=1):
         editais_filtrados = []
         for edital in editais_brutos:
             objeto = edital.get("objetoCompra", "").lower()
-            if any(palavra in objeto for palabra in PALAVRAS_CHAVE):
+            if any(palavra in objeto for palavra in PALAVRAS_CHAVE):
                 editais_filtrados.append({
                     "id": edital.get("id"),
                     "orgao": edital.get("orgaoEntidade", {}).get("razaoSocial"),
