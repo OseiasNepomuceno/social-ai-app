@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid" style="padding: 24px; font-family: sans-serif;">
+    
+    <div class="dashboard-header" style="margin-bottom: 25px;">
+        <h2 style="color: #1e293b; margin-bottom: 5px;">🔍 Monitor de Oportunidades PNCP</h2>
+        <p style="color: #64748b; margin-top: 0;">Varredura em tempo real no Portal Nacional de Contratações Públicas com análise cognitiva do DeepSeek.</p>
+    </div>
+
+    <div class="control-box" style="background: white; border: 1px solid #e2e8f0; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <h4 style="margin-top: 0; color: #334155;">Buscar Editais Recentes</h4>
+        <p style="color: #64748b; font-size: 0.9rem;">A IA irá analisar as publicações das últimas 24 horas buscando projetos ideais para o seu nicho.</p>
+        
+        <div style="margin-top: 15px;">
+            <button id="btn-pesquisa" onclick="dispararBuscaEditais()" style="padding: 12px 24px; background-color: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1rem; transition: background 0.2s;">
+                🚀 Iniciar Varredura Inteligente
+            </button>
+        </div>
+
+        <div id="status-carregamento" style="margin-top: 15px; color: #475569; display: none; font-weight: 500;">
+            <span style="display: inline-block; animation: spin 1s linear infinite; margin-right: 8px;">🔄</span> 
+            PicoClaw minerando o PNCP e rodando filtros com o DeepSeek... Aguarde.
+        </div>
+    </div>
+
+    <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;">
+
+    <div id="resultado-editais">
+        <div style="background: #f8fafc; border: 2px dashed #cbd5e1; padding: 50px 20px; text-align: center; border-radius: 8px; color: #64748b;">
+            💡 O estoque está limpo. Clique no botão acima para acionar os agentes e buscar novas licitações.
+        </div>
+    </div>
+</div>
+
+<script>
+function dispararBuscaEditais() {
+    const btn = document.getElementById('btn-pesquisa');
+    const status = document.getElementById('status-carregamento');
+    const resultadoDiv = document.getElementById('resultado-editais');
+    
+    // Bloqueia duplo clique e liga loading
+    btn.disabled = true;
+    btn.style.backgroundColor = '#93c5fd';
+    btn.innerText = '⚡ Agentes em Campo...';
+    status.style.display = 'block';
+    resultadoDiv.innerHTML = '';
+
+    // Faz a chamada para a API interna que criamos anteriormente
+    fetch('/api/verificar-editais')
+        .then(response => response.json())
+        .then(data => {
+            // Libera o botão
+            btn.disabled = false;
+            btn.style.backgroundColor = '#2563eb';
+            btn.innerText = '🚀 Iniciar Varredura Inteligente';
+            status.style.display = 'none';
+            
+            if (data.status === 'vazio' || !data.total_encontrado || data.total_encontrado === 0) {
+                resultadoDiv.innerHTML = `
+                    <div style="background: #fef3c7; border: 1px solid #fde68a; color: #92400e; padding: 16px; border-radius: 6px; font-weight: 500;">
+                        🍃 Tudo limpo nas últimas 24 horas. Nenhum edital de automação ou dados foi publicado no período.
+                    </div>`;
+                return;
+            }
+            
+            // Renderiza os cards das oportunidades recomendadas pela IA
+            let htmlContent = '<h3 style="margin-bottom: 20px; color: #1e293b;">🎯 Oportunidades Qualificadas Identificadas:</h3>';
+            data.dados.forEach(edital => {
+                htmlContent += `
+                    <div style="background: white; border: 1px solid #e2e8f0; padding: 24px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 15px;">
+                            <strong style="color: #0f172a; font-size: 1.2rem; max-width: 70%;">🏛️ ${edital.orgao}</strong>
+                            <span style="background-color: #dcfce7; color: #166534; font-size: 0.9rem; font-weight: 700; padding: 6px 12px; border-radius: 50px; white-space: nowrap;">
+                                💰 Valor: R$ ${edital.valor ? Number(edital.valor).toLocaleString('pt-BR', {minimumFractionDigits: 2}) : 'Não informado'}
+                            </span>
+                        </div>
+                        
+                        <p style="margin: 15px 0 10px 0; color: #334155; font-size: 1rem;">
+                            <strong>Análise da Coregov:</strong> ${edital.motivo}
+                        </p>
+                        
+                        <div style="margin: 15px 0; color: #475569; background: #f8fafc; padding: 15px; border-radius: 6px; border-left: 4px solid #2563eb; font-size: 0.95rem; line-height: 1.6;">
+                            <strong>Resumo Técnico do Objeto:</strong><br>${edital.resumo.replace(/\n/g, '<br>')}
+                        </div>
+                        
+                        <div style="margin-top: 20px; text-align: right;">
+                            <a href="${edital.link}" target="_blank" style="display: inline-block; background: #f1f5f9; color: #2563eb; font-weight: 600; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-size: 0.9rem; transition: background 0.2s;">
+                                📂 Abrir Edital Oficial no PNCP →
+                            </a>
+                        </div>
+                    </div>
+                `;
+            });
+            resultadoDiv.innerHTML = htmlContent;
+        })
+        .catch(error => {
+            btn.disabled = false;
+            btn.style.backgroundColor = '#2563eb';
+            btn.innerText = '🚀 Iniciar Varredura Inteligente';
+            status.style.display = 'none';
+            resultadoDiv.innerHTML = `
+                <div style="background: #fee2e2; border: 1px solid #fecaca; color: #991b1b; padding: 16px; border-radius: 6px; font-weight: 500;">
+                    ❌ Falha na conexão com a API. Verifique os logs de execução do Render.
+                </div>`;
+            console.error('Erro:', error);
+        });
+}
+</script>
+
+<style>
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+</style>
+{% endblock %}
