@@ -56,18 +56,23 @@
                     </p>
                 </div>
 
-                <a href="/posts-site" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
-                    <i class="fa-solid fa-newspaper w-5 text-center text-blue-400"></i>
-                    <span>Posts</span>
-                </a>
-                <a href="/roteiros-tiktok-site" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
-                    <i class="fa-brands fa-tiktok w-5 text-center text-pink-400"></i>
-                    <span>Roteiros TikTok</span>
-                </a>
-                <a href="/ctas-site" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
-                    <i class="fa-solid fa-bullhorn w-5 text-center text-yellow-400"></i>
-                    <span>CTAs</span>
-                </a>
+                {# ADMIN: acesso total ao menu Conteúdo IA #}
+                {% if session.get('email') == 'oseiasnepom@gmail.com' %}
+                    <a href="/posts-site" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
+                        <i class="fa-solid fa-newspaper w-5 text-center text-blue-400"></i>
+                        <span>Posts</span>
+                    </a>
+                    <a href="/roteiros-tiktok-site" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
+                        <i class="fa-brands fa-tiktok w-5 text-center text-pink-400"></i>
+                        <span>Roteiros TikTok</span>
+                    </a>
+                    <a href="/ctas-site" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
+                        <i class="fa-solid fa-bullhorn w-5 text-center text-yellow-400"></i>
+                        <span>CTAs</span>
+                    </a>
+                {% endif %}
+
+                {# TODOS: e-books e infográficos visíveis para qualquer usuário #}
                 <a href="/ebooks-site" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
                     <i class="fa-solid fa-book-open w-5 text-center text-emerald-400"></i>
                     <span>E-books</span>
@@ -76,17 +81,17 @@
                     <i class="fa-solid fa-chart-bar w-5 text-center text-purple-400"></i>
                     <span>Infográficos</span>
                 </a>
-                <a href="/templates-site" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
-                    <i class="fa-solid fa-layer-group w-5 text-center text-indigo-400"></i>
-                    <span>Templates</span>
-                </a>
 
-                {# Trava de seguranca exclusiva para admin #}
+                {# ADMIN: templates e monitoramento #}
                 {% if session.get('email') == 'oseiasnepom@gmail.com' %}
-                <a href="/monitoramento" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all border border-blue-500/10 bg-blue-500/5">
-                    <i class="fa-solid fa-gauge-high w-5 text-center text-blue-400"></i>
-                    <span class="text-blue-200 font-medium">Monitoramento</span>
-                </a>
+                    <a href="/templates-site" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
+                        <i class="fa-solid fa-layer-group w-5 text-center text-indigo-400"></i>
+                        <span>Templates</span>
+                    </a>
+                    <a href="/monitoramento" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all border border-blue-500/10 bg-blue-500/5">
+                        <i class="fa-solid fa-gauge-high w-5 text-center text-blue-400"></i>
+                        <span class="text-blue-200 font-medium">Monitoramento</span>
+                    </a>
                 {% endif %}
 
             </nav>
@@ -109,7 +114,8 @@
     </aside>
 
     <main class="flex-1 p-6 md:p-8 overflow-y-auto">
-        {% block content %}{% endblock %}
+        {% block content %}
+        {% endblock %}
     </main>
 
     {% block scripts %}{% endblock %}
