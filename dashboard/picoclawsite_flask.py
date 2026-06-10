@@ -374,6 +374,159 @@ def registrar_rotas_picoclaw(app, supabase):
         })
 
 
+    @app.route(
+        "/gerar/roteiro-tiktok",
+        methods=["POST"]
+    )
+    def endpoint_gerar_roteiro():
+
+        body = request.get_json(force=True)
+
+        tema = body.get("tema")
+        nicho = body.get("nicho", "")
+        duracao = body.get("duracao", 60)
+
+        nicho = (
+            nicho or
+            inferir_nicho(
+                tema,
+                NICHOS_FALLBACK
+            )
+        )
+
+        resultado = gerar_roteiro_tiktok(
+            tema,
+            nicho,
+            duracao
+        )
+
+        if not resultado.get("success"):
+            return jsonify({
+                "status": "erro",
+                "erro": resultado.get("erro")
+            }), 500
+
+        salvo = salvar_conteudo(
+            supabase,
+            tema,
+            "roteiro_tiktok",
+            resultado["conteudo"]
+        )
+
+        return jsonify({
+            "status": "ok",
+            "nicho": nicho,
+            "conteudo": resultado["conteudo"],
+            "salvo": salvo
+        })
+
+
+    @app.route(
+        "/gerar/cta",
+        methods=["POST"]
+    )
+    def endpoint_gerar_cta():
+
+        body = request.get_json(force=True)
+
+        tema = body.get("tema")
+        nicho = body.get("nicho", "")
+        objetivo = body.get("objetivo", "conversão")
+        canal = body.get("canal", "site")
+
+        nicho = (
+            nicho or
+            inferir_nicho(
+                tema,
+                NICHOS_FALLBACK
+            )
+        )
+
+        resultado = gerar_cta(
+            tema,
+            nicho,
+            objetivo,
+            canal
+        )
+
+        if not resultado.get("success"):
+            return jsonify({
+                "status": "erro",
+                "erro": resultado.get("erro")
+            }), 500
+
+        salvo = salvar_conteudo(
+            supabase,
+            tema,
+            "cta",
+            resultado["conteudo"]
+        )
+
+        return jsonify({
+            "status": "ok",
+            "nicho": nicho,
+            "conteudo": resultado["conteudo"],
+            "salvo": salvo
+        })
+
+
+    @app.route(
+        "/gerar/ebook",
+        methods=["POST"]
+    )
+    def endpoint_gerar_ebook():
+
+        body = request.get_json(force=True)
+
+        tema = body.get("tema")
+        nicho = body.get("nicho", "")
+        publico_alvo = body.get(
+            "publico_alvo",
+            "gestores e empresários"
+        )
+
+        num_capitulos = body.get(
+            "num_capitulos",
+            5
+        )
+
+        nicho = (
+            nicho or
+            inferir_nicho(
+                tema,
+                NICHOS_FALLBACK
+            )
+        )
+
+        resultado = gerar_ebook(
+            tema,
+            nicho,
+            publico_alvo,
+            num_capitulos
+        )
+
+        if not resultado.get("success"):
+            return jsonify({
+                "status": "erro",
+                "erro": resultado.get("erro")
+            }), 500
+
+        salvo = salvar_conteudo(
+            supabase,
+            tema,
+            "ebook",
+            resultado["conteudo"]
+        )
+
+        return jsonify({
+            "status": "ok",
+            "nicho": nicho,
+            "conteudo": resultado["conteudo"],
+            "salvo": salvo
+        })        
+        
+
+
 
 
 
