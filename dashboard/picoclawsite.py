@@ -1,8 +1,9 @@
 import os
 import secrets
 import random
+import asyncio
 
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request, HTTPException, BackgroundTasks
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
@@ -310,87 +311,99 @@ def endpoint_gerar_template(body: TemplateRequest):
 # ROTA DE GERAÇÃO AUTOMÁTICA — acionada pelo cron-job.org
 #
 # Configure no cron-job.org:
-#   URL:    https://seu-app.onrender.com/interno/gerar-automatico
-#   Método: POST
-#   Header: X-Cron-Token: <valor do CRON_SECRET no Render>
-#   Horários: 09:00 / 12:00 / 15:00 (escolha o fuso)
+#   URL:     https://app.coregov.com.br/interno/gerar-automatico
+#   Método:  POST
+#   Header:  X-Cron-Token: <valor do CRON_SECRET no Render>
+#   Crontab: 0 9,12,15 * * *  (9h, 12h, 15h — America/Sao_Paulo)
+#   Timeout: 30s (responde imediato — processamento ocorre em background)
 # ─────────────────────────────────────────────
-@app.post("/interno/gerar-automatico")
-async def gerar_conteudo_automatico(request: Request):
-    # Segurança: valida token para ninguém chamar externamente
-    token = request.headers.get("X-Cron-Token", "")
-    if not CRON_SECRET or not secrets.compare_digest(token, CRON_SECRET):
-        raise HTTPException(status_code=401, detail="Não autorizado")
+async def _processar_conteudo_background(nichos: list):
+    """Tarefa em background — executa após o endpoint já ter respondido 202."""
+    print("\n🔄 BACKGROUND — iniciando geração automática de conteúdo")
 
-    # 1. Busca nichos TikTok do Supabase
-    nichos = buscar_nichos_tiktok()
-
-    # 2. PicoClaw sugere temas alinhados ao CoreGov
+    # 1. PicoClaw sugere temas alinhados ao CoreGov
     temas = await sugerir_temas_automaticos(nichos)
     if not temas:
-        return {"status": "erro", "detalhe": "PicoClaw não retornou temas válidos"}
+        print("❌ BACKGROUND — PicoClaw não retornou temas válidos")
+        return
 
-    # 3. Gera roteiro TikTok + post LinkedIn + CTA para cada tema sugerido
-    resultados = []
+    # 2. Gera roteiro TikTok + post LinkedIn + CTA para cada tema sugerido
+    total_ok   = 0
+    total_erro = 0
+
     for item in temas:
         tema  = item["tema"]
         nicho = item["nicho"]
-        print(f"\n⏰ AUTO-GERANDO: [{nicho}] {tema}")
+        print(f"\n⏰ BACKGROUND AUTO-GERANDO: [{nicho}] {tema}")
 
         # Roteiro TikTok
         try:
             r = gerar_roteiro_tiktok(tema, nicho, item["duracao"])
             if r.get("success"):
                 salvar_conteudo(tema, "roteiro_tiktok", r["conteudo"])
-                resultados.append({"tema": tema, "tipo": "roteiro_tiktok", "status": "ok"})
+                total_ok += 1
                 print(f"  ✅ Roteiro TikTok salvo")
             else:
-                resultados.append({"tema": tema, "tipo": "roteiro_tiktok",
-                                   "status": "erro", "detalhe": r.get("erro")})
+                total_erro += 1
                 print(f"  ❌ Roteiro TikTok falhou: {r.get('erro')}")
         except Exception as e:
-            resultados.append({"tema": tema, "tipo": "roteiro_tiktok",
-                               "status": "exceção", "detalhe": str(e)})
+            total_erro += 1
+            print(f"  ❌ Roteiro TikTok exceção: {e}")
 
         # Post LinkedIn
         try:
             r = gerar_post(tema, "LinkedIn", "engajamento", nicho)
             if r.get("success"):
                 salvar_conteudo(tema, "post", r["conteudo"])
-                resultados.append({"tema": tema, "tipo": "post", "status": "ok"})
+                total_ok += 1
                 print(f"  ✅ Post LinkedIn salvo")
             else:
-                resultados.append({"tema": tema, "tipo": "post",
-                                   "status": "erro", "detalhe": r.get("erro")})
+                total_erro += 1
                 print(f"  ❌ Post LinkedIn falhou: {r.get('erro')}")
         except Exception as e:
-            resultados.append({"tema": tema, "tipo": "post",
-                               "status": "exceção", "detalhe": str(e)})
+            total_erro += 1
+            print(f"  ❌ Post LinkedIn exceção: {e}")
 
         # CTA
         try:
             r = gerar_cta(tema, nicho, "conversão", "site")
             if r.get("success"):
                 salvar_conteudo(tema, "cta", r["conteudo"])
-                resultados.append({"tema": tema, "tipo": "cta", "status": "ok"})
+                total_ok += 1
                 print(f"  ✅ CTA salvo")
             else:
-                resultados.append({"tema": tema, "tipo": "cta",
-                                   "status": "erro", "detalhe": r.get("erro")})
+                total_erro += 1
                 print(f"  ❌ CTA falhou: {r.get('erro')}")
         except Exception as e:
-            resultados.append({"tema": tema, "tipo": "cta",
-                               "status": "exceção", "detalhe": str(e)})
+            total_erro += 1
+            print(f"  ❌ CTA exceção: {e}")
 
-    total_ok    = sum(1 for r in resultados if r["status"] == "ok")
-    total_erro  = sum(1 for r in resultados if r["status"] != "ok")
-    print(f"\n✅ AUTO-GERAÇÃO CONCLUÍDA — {total_ok} ok / {total_erro} falhas")
+    print(f"\n✅ BACKGROUND CONCLUÍDO — {total_ok} ok / {total_erro} falhas")
 
+
+@app.post("/interno/gerar-automatico", status_code=202)
+async def gerar_conteudo_automatico(request: Request, background_tasks: BackgroundTasks):
+    """
+    Responde imediatamente 202 Accepted ao cron-job.org.
+    O processamento real (PicoClaw → Supabase) ocorre em background,
+    sem risco de timeout nos 30s do plano gratuito do cron-job.org.
+    """
+    # Segurança: valida token para ninguém chamar externamente
+    token = request.headers.get("X-Cron-Token", "")
+    if not CRON_SECRET or not secrets.compare_digest(token, CRON_SECRET):
+        raise HTTPException(status_code=401, detail="Não autorizado")
+
+    # Busca nichos antes de soltar o background (falha rápida se Supabase estiver fora)
+    nichos = buscar_nichos_tiktok()
+
+    # Agenda o processamento em background e responde imediatamente
+    background_tasks.add_task(_processar_conteudo_background, nichos)
+
+    print("✅ /interno/gerar-automatico — 202 enviado, background iniciado")
     return {
-        "status":      "concluido",
-        "total_ok":    total_ok,
-        "total_erro":  total_erro,
-        "resultados":  resultados,
+        "status":   "aceito",
+        "mensagem": "Geração iniciada em background",
+        "nichos":   len(nichos),
     }
 
 
