@@ -226,6 +226,149 @@ def registrar_rotas_picoclaw(app, supabase):
             .eq("status", "publicado")
             .execute()
         )
+    @app.route("/gerar/monitorar-editais", methods=["POST"])
+    def endpoint_monitorar_editais_manual():
+        body = request.get_json(force=True)
+        nicho = body.get("nicho", "Todos os Nichos")
+        dias = body.get("dias", 1)
+        buscar_privadas = body.get("buscar_privadas", True)
+        
+        # Converter meses aproximados para dias
+        dias_efetivos = max(1, dias * 30)
+
+        def processar_editais():
+            try:
+                print(f"🚀 Iniciando varredura de oportunidades para nicho: {nicho}")
+                
+                oportunidades_salvas = []
+                
+                print("📊 Fase 1: Buscando editais do governo (PNCP)...")
+                from dashboard.monitor_editais_completo import (
+                    buscar_editais_recentes_pncp,
+                    analisar_oportunidade_com_picoclaw,
+                    buscar_oportunidades_privadas
+                )
+                
+                editais_governo = buscar_editais_recentes_pncp(dias_atras=dias_efetivos)
+                print(f"✅ {len(editais_governo)} editais do governo encontrados")
+                
+                editais_privados = []
+                if buscar_privadas:
+                    print("💼 Fase 2: Buscando oportunidades privadas...")
+                    editais_privados = buscar_oportunidades_privadas(dias_atras=dias_efetivos)
+                    print(f"✅ {len(editais_privados)} oportunidades privadas encontradas")
+                
+                todas_oportunidades = editais_governo + editais_privados
+                print(f"📈 Total: {len(todas_oportunidades)} oportunidades")
+                
+                if len(todas_oportunidades) == 0:
+                    print("⚠️ Nenhuma oportunidade encontrada no período especificado")
+                    from dashboard.telegram_alerts import enviar_alerta
+                    enviar_alerta(f"⚠️ Varredura com 0 resultados para nicho: {nicho}", emoji="⚠️")
+                    return
+                
+                print(f"🔍 Fase 3: Analisando e registrando todas as oportunidades...")
+                
+                for idx, oportunidade in enumerate(todas_oportunidades, 1):
+                    try:
+                        print(f"  [{idx}/{len(todas_oportunidades)}] Registrando: {oportunidade['orgao']}")
+                        
+                        analise = analisar_oportunidade_com_picoclaw(
+                            oportunidade,
+                            nicho_cliente=nicho
+                        )
+                        
+                        if not analise:
+                            analise = {
+                                "orgao": oportunidade['orgao'],
+                                "valor": oportunidade.get("valor_estimado"),
+                                "tipo": oportunidade.get("tipo"),
+                                "fonte": oportunidade.get("fonte"),
+                                "link": oportunidade.get("link"),
+                                "relevancia": "ANÁLISE_NÃO_DISPONÍVEL",
+                                "motivo": "Sistema não conseguiu analisar",
+                                "proximos_passos": "Verificar manualmente"
+                            }
+                        
+                        dados_salvar = {
+                            "orgao": analise.get("orgao", oportunidade['orgao']),
+                            "objeto": oportunidade.get("objeto"),
+                            "valor_estimado": str(analise.get("valor", "N/A")),
+                            "tipo": analise.get("tipo", "misto"),
+                            "fonte": analise.get("fonte", "Múltiplas"),
+                            "relevancia": analise.get("relevancia", "ANÁLISE_PENDENTE"),
+                            "motivo_analise": analise.get("motivo", ""),
+                            "proximos_passos": analise.get("proximos_passos", ""),
+                            "link": analise.get("link", oportunidade.get("link")),
+                            "nicho_cliente": nicho,
+                            "data_analise": datetime.now().isoformat()
+                        }
+                        
+                        response = supabase.table("oportunidades_analisadas").insert(dados_salvar).execute()
+                        
+                        if response.data:
+                            oportunidades_salvas.append(dados_salvar)
+                            print(f"  ✅ Registrada")
+                        
+                    except Exception as e:
+                        print(f"  ⚠️ Erro: {e}")
+                        try:
+                            dados_salvar = {
+                                "orgao": oportunidade['orgao'],
+                                "objeto": oportunidade.get("objeto"),
+                                "valor_estimado": str(oportunidade.get("valor_estimado", "N/A")),
+                                "tipo": oportunidade.get("tipo", "desconhecido"),
+                                "fonte": oportunidade.get("fonte", "Varredura"),
+                                "relevancia": "ERRO_NA_ANÁLISE",
+                                "motivo_analise": str(e),
+                                "proximos_passos": "Revisar manualmente",
+                                "link": oportunidade.get("link"),
+                                "nicho_cliente": nicho,
+                                "data_analise": datetime.now().isoformat()
+                            }
+                            supabase.table("oportunidades_analisadas").insert(dados_salvar).execute()
+                            oportunidades_salvas.append(dados_salvar)
+                        except:
+                            pass
+                
+                print(f"\n{'='*60}")
+                print(f"🎯 RESUMO DA VARREDURA")
+                print(f"{'='*60}")
+                print(f"Total analisado: {len(todas_oportunidades)}")
+                print(f"Total registrado: {len(oportunidades_salvas)}")
+                print(f"Período: {dias_efetivos} dias")
+                print(f"Nicho: {nicho}")
+                print(f"Data/Hora: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
+                print(f"{'='*60}")
+                
+                if oportunidades_salvas:
+                    from dashboard.telegram_alerts import enviar_alerta
+                    mensagem = f"""
+✅ VARREDURA COMPLETA - {len(oportunidades_salvas)} oportunidades registradas
+
+Nicho: {nicho}
+Período: {dias_efetivos} dias
+Total: {len(todas_oportunidades)}
+Governo: {len(editais_governo)}
+Privado: {len(editais_privados)}
+
+Acesse o painel para revisar todas as oportunidades.
+"""
+                    enviar_alerta(mensagem, emoji="🎯")
+                
+            except Exception as e:
+                print(f"❌ Erro crítico: {e}")
+                from dashboard.telegram_alerts import enviar_alerta
+                enviar_alerta(f"❌ Erro na varredura: {str(e)}", emoji="🔴")
+
+        thread = threading.Thread(target=processar_editais, daemon=True)
+        thread.start()
+
+        return jsonify({
+            "status": "processando",
+            "mensagem": "Varredura iniciada em background",
+            "timestamp": datetime.now().isoformat()
+        }), 202
         return render_template("infografico.html", infograficos=response.data)
 
     @app.route("/gerar/monitorar-editais", methods=["POST"])
@@ -242,7 +385,7 @@ def registrar_rotas_picoclaw(app, supabase):
                 oportunidades_salvas = []
                 
                 print("📊 Fase 1: Buscando editais do governo (PNCP)...")
-                from dashboard.monitor_editais import (
+                from dashboard.monitor_editais_completo import (
                     buscar_editais_recentes_pncp,
                     analisar_oportunidade_com_picoclaw,
                     buscar_oportunidades_privadas
