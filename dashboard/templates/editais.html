@@ -5,22 +5,30 @@
     
     <div class="dashboard-header" style="margin-bottom: 25px;">
         <h2 style="color: #1e293b; margin-bottom: 5px;">🔍 Monitor de Oportunidades PNCP</h2>
-        <p style="color: #64748b; margin-top: 0;">Varredura em tempo real no Portal Nacional de Contratações Públicas com análise cognitiva do DeepSeek.</p>
+        <p style="color: #64748b; margin-top: 0;">Varredura em tempo real no Portal Nacional de Contratações Públicas com análise cognitiva do PicoClaw.</p>
     </div>
 
     <div class="control-box" style="background: white; border: 1px solid #e2e8f0; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
         <h4 style="margin-top: 0; color: #334155;">Buscar Editais Recentes</h4>
         <p style="color: #64748b; font-size: 0.9rem;">A IA irá analisar as publicações das últimas 24 horas buscando projetos ideais para o seu nicho.</p>
         
-        <div style="margin-top: 15px;">
-            <button id="btn-pesquisa" onclick="dispararBuscaEditais()" style="padding: 12px 24px; background-color: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1rem; transition: background 0.2s;">
-                🚀 Iniciar Varredura Inteligente
+        <div style="margin-top: 15px; display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: end;">
+            <div>
+                <label style="display: block; margin-bottom: 8px; color: #334155; font-weight: 500;">Nicho/Segmento:</label>
+                <input type="text" id="input-nicho" placeholder="Ex: Tecnologia e Automação, Saúde, Educação..." value="Tecnologia e Automação" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem;">
+            </div>
+            <div>
+                <label style="display: block; margin-bottom: 8px; color: #334155; font-weight: 500;">Dias atrás:</label>
+                <input type="number" id="input-dias" min="1" max="30" value="1" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem;">
+            </div>
+            <button id="btn-pesquisa" onclick="dispararBuscaEditais()" style="padding: 12px 24px; background-color: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1rem; transition: background 0.2s; white-space: nowrap;">
+                🚀 Iniciar Varredura
             </button>
         </div>
 
         <div id="status-carregamento" style="margin-top: 15px; color: #475569; display: none; font-weight: 500;">
             <span style="display: inline-block; animation: spin 1s linear infinite; margin-right: 8px;">🔄</span> 
-            PicoClaw minerando o PNCP e rodando filtros com o DeepSeek... Aguarde.
+            PicoClaw minerando o PNCP e analisando oportunidades... Aguarde.
         </div>
     </div>
 
@@ -38,6 +46,8 @@ function dispararBuscaEditais() {
     const btn = document.getElementById('btn-pesquisa');
     const status = document.getElementById('status-carregamento');
     const resultadoDiv = document.getElementById('resultado-editais');
+    const nicho = document.getElementById('input-nicho').value || 'Tecnologia e Automação';
+    const dias = parseInt(document.getElementById('input-dias').value) || 1;
     
     // Bloqueia duplo clique e liga loading
     btn.disabled = true;
@@ -46,83 +56,132 @@ function dispararBuscaEditais() {
     status.style.display = 'block';
     resultadoDiv.innerHTML = '';
 
-    // Faz a chamada para a API interna que criamos anteriormente
+    // Faz a chamada para a API
     fetch('/gerar/monitorar-editais', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            nicho: 'Tecnologia e Automação',
-            dias: 1
+            nicho: nicho,
+            dias: dias,
+            buscar_privadas: true
         })
     })
-.then(response => response.json())
-.then(data => {
+    .then(response => response.json())
+    .then(data => {
+        console.log('Resposta da API:', data);
+        
+        btn.disabled = false;
+        btn.style.backgroundColor = '#2563eb';
+        btn.innerText = '🚀 Iniciar Varredura';
+        status.style.display = 'none';
 
-    btn.disabled = false;
-    btn.style.backgroundColor = '#2563eb';
-    btn.innerText = '🚀 Iniciar Varredura Inteligente';
-    status.style.display = 'none';
-
-    if (
-        data.status === 'vazio'
-        ||
-        !data.total_recomendado
-        ||
-        data.total_recomendado === 0
-    ) {
+        // Aguarda 2 segundos e depois carrega os dados
+        setTimeout(() => {
+            carregarOportunidades();
+        }, 2000);
+    })
+    .catch(error => {
+        btn.disabled = false;
+        btn.style.backgroundColor = '#2563eb';
+        btn.innerText = '🚀 Iniciar Varredura';
+        status.style.display = 'none';
         resultadoDiv.innerHTML = `
-            <div style="background: #fef3c7; border: 1px solid #fde68a; color: #92400e; padding: 16px; border-radius: 6px; font-weight: 500;">
-                🍃 Nenhuma oportunidade recomendada encontrada.
-            </div>
-        `;
-        return;
-    }
+            <div style="background: #fee2e2; border: 1px solid #fecaca; color: #991b1b; padding: 16px; border-radius: 6px; font-weight: 500;">
+                ❌ Falha na conexão com a API. Verifique os logs de execução do Render.
+            </div>`;
+        console.error('Erro:', error);
+    });
+}
 
-    // Renderiza os cards
-    let htmlContent = '<h3 style="margin-bottom:20px;color:#1e293b;">🎯 Oportunidades Qualificadas Identificadas:</h3>';
+function carregarOportunidades() {
+    const resultadoDiv = document.getElementById('resultado-editais');
+    
+    // Busca os dados salvos no Supabase
+    fetch('/api/oportunidades-analisadas')
+        .then(response => response.json())
+        .then(data => {
+            console.log('Oportunidades carregadas:', data);
+            
+            if (!data.oportunidades || data.oportunidades.length === 0) {
+                resultadoDiv.innerHTML = `
+                    <div style="background: #fef3c7; border: 1px solid #fde68a; color: #92400e; padding: 16px; border-radius: 6px; font-weight: 500;">
+                        🍃 Nenhuma oportunidade encontrada.
+                    </div>
+                `;
+                return;
+            }
 
-   data.dados.forEach(edital => {
+            // Renderiza tabela com os dados
+            let htmlContent = `
+                <h3 style="margin-bottom:20px;color:#1e293b;">
+                    🎯 ${data.total} Oportunidades Registradas
+                </h3>
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; background: white; border: 1px solid #e2e8f0; border-radius: 8px;">
+                        <thead>
+                            <tr style="background-color: #f1f5f9; border-bottom: 2px solid #e2e8f0;">
+                                <th style="padding: 12px; text-align: left; color: #334155; font-weight: 600;">Órgão/Instituição</th>
+                                <th style="padding: 12px; text-align: left; color: #334155; font-weight: 600;">Objeto</th>
+                                <th style="padding: 12px; text-align: left; color: #334155; font-weight: 600;">Valor</th>
+                                <th style="padding: 12px; text-align: left; color: #334155; font-weight: 600;">Relevância</th>
+                                <th style="padding: 12px; text-align: left; color: #334155; font-weight: 600;">Nicho</th>
+                                <th style="padding: 12px; text-align: left; color: #334155; font-weight: 600;">Tipo</th>
+                                <th style="padding: 12px; text-align: center; color: #334155; font-weight: 600;">Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
 
-    htmlContent += `
-        <div style="background: white; border: 1px solid #e2e8f0; padding: 24px; margin-bottom: 20px; border-radius: 8px;">
+            data.oportunidades.forEach((op, idx) => {
+                const bgColor = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
+                const relevanciaColor = op.relevancia.includes('RELEVANTE') ? '#10b981' : 
+                                       op.relevancia.includes('ERRO') ? '#ef4444' : '#6b7280';
+                
+                htmlContent += `
+                    <tr style="background-color: ${bgColor}; border-bottom: 1px solid #e2e8f0;">
+                        <td style="padding: 12px; color: #1e293b; font-weight: 500;">${op.orgao || 'N/A'}</td>
+                        <td style="padding: 12px; color: #475569; font-size: 0.85rem;">${(op.objeto || 'N/A').substring(0, 50)}...</td>
+                        <td style="padding: 12px; color: #475569;">${op.valor_estimado || 'N/A'}</td>
+                        <td style="padding: 12px;">
+                            <span style="display: inline-block; padding: 4px 8px; background-color: ${relevanciaColor}20; color: ${relevanciaColor}; border-radius: 4px; font-size: 0.85rem; font-weight: 500;">
+                                ${op.relevancia || 'ANÁLISE_PENDENTE'}
+                            </span>
+                        </td>
+                        <td style="padding: 12px; color: #475569; font-size: 0.9rem;">${op.nicho_cliente || 'N/A'}</td>
+                        <td style="padding: 12px; color: #475569; font-size: 0.9rem;">${op.tipo || 'N/A'}</td>
+                        <td style="padding: 12px; text-align: center;">
+                            ${op.link ? `<a href="${op.link}" target="_blank" style="color: #2563eb; text-decoration: none; font-weight: 500;">🔗 Abrir</a>` : 'N/A'}
+                        </td>
+                    </tr>
+                `;
+            });
 
-            <strong>🏛️ ${edital.orgao}</strong>
+            htmlContent += `
+                        </tbody>
+                    </table>
+                </div>
+                <div style="margin-top: 20px; padding: 12px; background-color: #dbeafe; color: #1e40af; border-radius: 6px; font-weight: 500;">
+                    ✅ Total registrado: ${data.total} oportunidades analisadas com sucesso.
+                </div>
+            `;
 
-            <p>
-                <strong>Análise:</strong>
-                ${edital.motivo}
-            </p>
-
-            <p>
-                ${edital.resumo}
-            </p>
-
-            <a href="${edital.link}" target="_blank">
-                Abrir Edital
-            </a>
-
-        </div>
-    `;
-});
-
-resultadoDiv.innerHTML = htmlContent;
-
-})
-.catch(error => {
-       
-            btn.disabled = false;
-            btn.style.backgroundColor = '#2563eb';
-            btn.innerText = '🚀 Iniciar Varredura Inteligente';
-            status.style.display = 'none';
+            resultadoDiv.innerHTML = htmlContent;
+        })
+        .catch(error => {
+            console.error('Erro ao carregar:', error);
             resultadoDiv.innerHTML = `
                 <div style="background: #fee2e2; border: 1px solid #fecaca; color: #991b1b; padding: 16px; border-radius: 6px; font-weight: 500;">
-                    ❌ Falha na conexão com a API. Verifique os logs de execução do Render.
+                    ❌ Erro ao carregar oportunidades. Verifique a conexão.
                 </div>`;
-            console.error('Erro:', error);
         });
 }
+
+// Carregar dados ao abrir a página
+document.addEventListener('DOMContentLoaded', function() {
+    carregarOportunidades();
+});
 </script>
 
 <style>
