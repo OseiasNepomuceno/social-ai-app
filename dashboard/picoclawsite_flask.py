@@ -3,6 +3,7 @@ import secrets
 import random
 import asyncio
 import threading
+from datetime import datetime
 
 from flask import request, jsonify, render_template
 
@@ -215,15 +216,6 @@ def registrar_rotas_picoclaw(app, supabase):
             .execute()
         )
         return render_template("infografico.html", infograficos=response.data)
-
-    @app.route("/gerar/monitorar-editais", methods=["POST"])
-    def endpoint_monitorar_editais_manual():
-        body = request.get_json(force=True)
-        nicho = body.get("nicho", "Tecnologia e Automação")
-        dias = body.get("dias", 1)
-
-        # Inicia a busca em background para não bloquear o worker
-        # Adicione essa função DENTRO de registrar_rotas_picoclaw(app, supabase):
 
     @app.route("/gerar/monitorar-editais", methods=["POST"])
     def endpoint_monitorar_editais_manual():
