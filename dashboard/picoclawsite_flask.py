@@ -157,6 +157,24 @@ def registrar_rotas_picoclaw(app, supabase):
     def pagina_monitor_editais():
         return render_template("editais.html")
 
+
+    @app.route("/api/oportunidades-analisadas", methods=["GET"])
+def listar_oportunidades():
+    try:
+        response = supabase.table("oportunidades_analisadas").select("*").order("data_analise", desc=True).execute()
+        return jsonify({
+            "status": "ok",
+            "total": len(response.data),
+            "oportunidades": response.data
+        })
+    except Exception as e:
+        print(f"❌ Erro ao listar oportunidades: {e}")
+        return jsonify({
+            "status": "erro",
+            "erro": str(e)
+        }), 500
+        
+
     @app.route("/posts")
     def listar_posts():
         response = (
