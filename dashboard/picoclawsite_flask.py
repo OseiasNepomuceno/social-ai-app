@@ -18,10 +18,6 @@ from dashboard.picoclaw_agent import (
     chamar_picoclaw,
 )
 
-from dashboard.monitor_editais import (
-    buscar_editais_recentes_pncp,
-    analisar_edital_com_deepseek,
-)
 
 CRON_SECRET = os.getenv("CRON_SECRET", "")
 
@@ -232,7 +228,7 @@ def registrar_rotas_picoclaw(app, supabase):
                 
                 # 1. Buscar editais do governo
                 print("📊 Fase 1: Buscando editais do governo (PNCP)...")
-                from dashboard.monitor_editais_completo import (
+                from dashboard.monitor_editais import (
                     buscar_editais_recentes_pncp,
                     analisar_oportunidade_com_picoclaw,
                     buscar_oportunidades_privadas
