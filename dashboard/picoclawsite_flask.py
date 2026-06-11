@@ -223,33 +223,126 @@ def registrar_rotas_picoclaw(app, supabase):
         dias = body.get("dias", 1)
 
         # Inicia a busca em background para não bloquear o worker
+        # Adicione essa função DENTRO de registrar_rotas_picoclaw(app, supabase):
+
+    @app.route("/gerar/monitorar-editais", methods=["POST"])
+    def endpoint_monitorar_editais_manual():
+        body = request.get_json(force=True)
+        nicho = body.get("nicho", "Tecnologia e Automação")
+        dias = body.get("dias", 1)
+        buscar_privadas = body.get("buscar_privadas", True)
+
         def processar_editais():
             try:
-                editais_encontrados = buscar_editais_recentes_pncp(dias_atras=dias)
+                print(f"🚀 Iniciando varredura de oportunidades para nicho: {nicho}")
+                
+                oportunidades_salvas = []
+                
+                # 1. Buscar editais do governo
+                print("📊 Fase 1: Buscando editais do governo (PNCP)...")
+                from dashboard.monitor_editais_completo import (
+                    buscar_editais_recentes_pncp,
+                    analisar_oportunidade_com_picoclaw,
+                    buscar_oportunidades_privadas
+                )
+                
+                editais_governo = buscar_editais_recentes_pncp(dias_atras=dias)
+                print(f"✅ {len(editais_governo)} editais do governo encontrados")
+                
+                # 2. Buscar oportunidades privadas (se solicitado)
+                editais_privados = []
+                if buscar_privadas:
+                    print("💼 Fase 2: Buscando oportunidades privadas...")
+                    editais_privados = buscar_oportunidades_privadas(dias_atras=dias)
+                    print(f"✅ {len(editais_privados)} oportunidades privadas encontradas")
+                
+                # 3. Combinar todas as oportunidades
+                todas_oportunidades = editais_governo + editais_privados
+                print(f"📈 Total: {len(todas_oportunidades)} oportunidades")
+                
+                # 4. Analisar cada uma com PicoClaw
+                print(f"🔍 Fase 3: Analisando relevância para nicho '{nicho}'...")
+                
+                for idx, oportunidade in enumerate(todas_oportunidades, 1):
+                    try:
+                        print(f"  [{idx}/{len(todas_oportunidades)}] Analisando: {oportunidade['orgao']}")
+                        
+                        analise = analisar_oportunidade_com_picoclaw(
+                            oportunidade,
+                            nicho_cliente=nicho
+                        )
+                        
+                        if not analise:
+                            continue
+                        
+                        # Verificar relevância
+                        relevancia = analise.get("relevancia", "").upper()
+                        if "RELEVANTE" not in relevancia:
+                            continue
+                        
+                        # Preparar dados para salvar
+                        dados_salvar = {
+                            "orgao": analise.get("orgao"),
+                            "objeto": oportunidade.get("objeto"),
+                            "valor_estimado": str(analise.get("valor", "N/A")),
+                            "tipo": analise.get("tipo", "misto"),
+                            "fonte": analise.get("fonte", "Múltiplas"),
+                            "relevancia": relevancia,
+                            "motivo_analise": analise.get("motivo", ""),
+                            "proximos_passos": analise.get("proximos_passos", ""),
+                            "link": analise.get("link"),
+                            "nicho_cliente": nicho,
+                            "data_analise": datetime.now().isoformat()
+                        }
+                        
+                        # Salvar no Supabase
+                        response = supabase.table("oportunidades_analisadas").insert(dados_salvar).execute()
+                        
+                        if response.data:
+                            oportunidades_salvas.append(dados_salvar)
+                            print(f"  ✅ Oportunidade salva")
+                        
+                    except Exception as e:
+                        print(f"  ⚠️ Erro ao analisar {oportunidade['orgao']}: {e}")
+                        continue
+                
+                # 5. Resumo final
+                print(f"\n" + "="*60)
+                print(f"🎯 RESUMO DA VARREDURA")
+                print(f"="*60)
+                print(f"Total analisado: {len(todas_oportunidades)}")
+                print(f"Relevantes para '{nicho}': {len(oportunidades_salvas)}")
+                print(f"Data/Hora: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
+                print(f"="*60)
+                
+                # Enviar alerta se encontrou oportunidades
+                if oportunidades_salvas:
+                    from dashboard.telegram_alerts import enviar_alerta
+                    mensagem = f"""
+✅ VARREDURA COMPLETA - {len(oportunidades_salvas)} oportunidades relevantes encontradas
 
-                if not editais_encontrados:
-                    print("⚠️ Nenhum edital encontrado")
-                    return
+Nicho: {nicho}
+Total analisado: {len(todas_oportunidades)}
+Governo: {len(editais_governo)}
+Privado: {len(editais_privados)}
 
-                oportunidades = []
-                for edital in editais_encontrados:
-                    analise = analisar_edital_com_deepseek(
-                        edital,
-                        nicho_cliente=nicho
-                    )
-                    if analise and analise.get("decisao") == "RECOMENDADO":
-                        oportunidades.append(analise)
-
-                print(f"✅ {len(oportunidades)} oportunidades recomendadas!")
+Acesse o painel para revisar detalhes.
+"""
+                    enviar_alerta(mensagem, emoji="🎯")
+                
             except Exception as e:
-                print(f"❌ Erro ao processar editais: {e}")
+                print(f"❌ Erro crítico na varredura: {e}")
+                from dashboard.telegram_alerts import enviar_alerta
+                enviar_alerta(f"❌ Erro na varredura: {str(e)}", emoji="🔴")
 
+        # Iniciar processamento em thread
         thread = threading.Thread(target=processar_editais, daemon=True)
         thread.start()
 
         return jsonify({
             "status": "processando",
-            "mensagem": "Busca iniciada em background"
+            "mensagem": "Varredura iniciada em background",
+            "timestamp": datetime.now().isoformat()
         }), 202
 
     @app.route("/gerar/post", methods=["POST"])
