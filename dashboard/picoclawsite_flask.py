@@ -243,7 +243,7 @@ def registrar_rotas_picoclaw(app, supabase):
                 oportunidades_salvas = []
                 
                 print("📊 Fase 1: Buscando editais do governo (PNCP)...")
-                from dashboard.monitor_editais import (
+                from dashboard.monitor_editais_completo import (
                     buscar_editais_recentes_pncp,
                     analisar_oportunidade_com_picoclaw,
                     buscar_oportunidades_privadas
