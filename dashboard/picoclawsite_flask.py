@@ -220,6 +220,8 @@ def registrar_rotas_picoclaw(app, supabase):
         dias = body.get("dias", 1)
         buscar_privadas = body.get("buscar_privadas", True)
 
+        # Substitua a função processar_editais() dentro de registrar_rotas_picoclaw() por:
+
         def processar_editais():
             try:
                 print(f"🚀 Iniciando varredura de oportunidades para nicho: {nicho}")
@@ -228,7 +230,7 @@ def registrar_rotas_picoclaw(app, supabase):
                 
                 # 1. Buscar editais do governo
                 print("📊 Fase 1: Buscando editais do governo (PNCP)...")
-                from dashboard.monitor_editais import (
+                from dashboard.monitor_editais_completo import (
                     buscar_editais_recentes_pncp,
                     analisar_oportunidade_com_picoclaw,
                     buscar_oportunidades_privadas
@@ -249,11 +251,11 @@ def registrar_rotas_picoclaw(app, supabase):
                 print(f"📈 Total: {len(todas_oportunidades)} oportunidades")
                 
                 # 4. Analisar cada uma com PicoClaw
-                print(f"🔍 Fase 3: Analisando relevância para nicho '{nicho}'...")
+                print(f"🔍 Fase 3: Analisando e registrando todas as oportunidades...")
                 
                 for idx, oportunidade in enumerate(todas_oportunidades, 1):
                     try:
-                        print(f"  [{idx}/{len(todas_oportunidades)}] Analisando: {oportunidade['orgao']}")
+                        print(f"  [{idx}/{len(todas_oportunidades)}] Registrando: {oportunidade['orgao']}")
                         
                         analise = analisar_oportunidade_com_picoclaw(
                             oportunidade,
@@ -261,24 +263,29 @@ def registrar_rotas_picoclaw(app, supabase):
                         )
                         
                         if not analise:
-                            continue
+                            analise = {
+                                "orgao": oportunidade['orgao'],
+                                "valor": oportunidade.get("valor_estimado"),
+                                "tipo": oportunidade.get("tipo"),
+                                "fonte": oportunidade.get("fonte"),
+                                "link": oportunidade.get("link"),
+                                "relevancia": "ANÁLISE_NÃO_DISPONÍVEL",
+                                "motivo": "Sistema não conseguiu analisar",
+                                "proximos_passos": "Verificar manualmente"
+                            }
                         
-                        # Verificar relevância
-                        relevancia = analise.get("relevancia", "").upper()
-                        if "RELEVANTE" not in relevancia:
-                            continue
-                        
-                        # Preparar dados para salvar
+                        # ✅ SALVAR TODOS SEM RESTRIÇÃO
+                        # Independente de ser RELEVANTE ou NÃO, tudo é salvo
                         dados_salvar = {
-                            "orgao": analise.get("orgao"),
+                            "orgao": analise.get("orgao", oportunidade['orgao']),
                             "objeto": oportunidade.get("objeto"),
                             "valor_estimado": str(analise.get("valor", "N/A")),
                             "tipo": analise.get("tipo", "misto"),
                             "fonte": analise.get("fonte", "Múltiplas"),
-                            "relevancia": relevancia,
+                            "relevancia": analise.get("relevancia", "ANÁLISE_PENDENTE"),
                             "motivo_analise": analise.get("motivo", ""),
                             "proximos_passos": analise.get("proximos_passos", ""),
-                            "link": analise.get("link"),
+                            "link": analise.get("link", oportunidade.get("link")),
                             "nicho_cliente": nicho,
                             "data_analise": datetime.now().isoformat()
                         }
@@ -288,10 +295,31 @@ def registrar_rotas_picoclaw(app, supabase):
                         
                         if response.data:
                             oportunidades_salvas.append(dados_salvar)
-                            print(f"  ✅ Oportunidade salva")
+                            print(f"  ✅ Oportunidade registrada")
+                        else:
+                            print(f"  ⚠️ Falha ao registrar {oportunidade['orgao']}")
                         
                     except Exception as e:
-                        print(f"  ⚠️ Erro ao analisar {oportunidade['orgao']}: {e}")
+                        print(f"  ⚠️ Erro ao processar {oportunidade['orgao']}: {e}")
+                        # Mesmo com erro, tenta salvar dados básicos
+                        try:
+                            dados_salvar = {
+                                "orgao": oportunidade['orgao'],
+                                "objeto": oportunidade.get("objeto"),
+                                "valor_estimado": str(oportunidade.get("valor_estimado", "N/A")),
+                                "tipo": oportunidade.get("tipo", "desconhecido"),
+                                "fonte": oportunidade.get("fonte", "Varredura"),
+                                "relevancia": "ERRO_NA_ANÁLISE",
+                                "motivo_analise": str(e),
+                                "proximos_passos": "Revisar manualmente",
+                                "link": oportunidade.get("link"),
+                                "nicho_cliente": nicho,
+                                "data_analise": datetime.now().isoformat()
+                            }
+                            supabase.table("oportunidades_analisadas").insert(dados_salvar).execute()
+                            oportunidades_salvas.append(dados_salvar)
+                        except:
+                            pass
                         continue
                 
                 # 5. Resumo final
@@ -299,22 +327,22 @@ def registrar_rotas_picoclaw(app, supabase):
                 print(f"🎯 RESUMO DA VARREDURA")
                 print(f"="*60)
                 print(f"Total analisado: {len(todas_oportunidades)}")
-                print(f"Relevantes para '{nicho}': {len(oportunidades_salvas)}")
+                print(f"Total registrado no banco: {len(oportunidades_salvas)}")
                 print(f"Data/Hora: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
                 print(f"="*60)
                 
-                # Enviar alerta se encontrou oportunidades
+                # Enviar alerta
                 if oportunidades_salvas:
                     from dashboard.telegram_alerts import enviar_alerta
                     mensagem = f"""
-✅ VARREDURA COMPLETA - {len(oportunidades_salvas)} oportunidades relevantes encontradas
+✅ VARREDURA COMPLETA - {len(oportunidades_salvas)} oportunidades registradas
 
 Nicho: {nicho}
 Total analisado: {len(todas_oportunidades)}
 Governo: {len(editais_governo)}
 Privado: {len(editais_privados)}
 
-Acesse o painel para revisar detalhes.
+Acesse o painel para revisar todas as oportunidades.
 """
                     enviar_alerta(mensagem, emoji="🎯")
                 
@@ -322,16 +350,6 @@ Acesse o painel para revisar detalhes.
                 print(f"❌ Erro crítico na varredura: {e}")
                 from dashboard.telegram_alerts import enviar_alerta
                 enviar_alerta(f"❌ Erro na varredura: {str(e)}", emoji="🔴")
-
-        # Iniciar processamento em thread
-        thread = threading.Thread(target=processar_editais, daemon=True)
-        thread.start()
-
-        return jsonify({
-            "status": "processando",
-            "mensagem": "Varredura iniciada em background",
-            "timestamp": datetime.now().isoformat()
-        }), 202
 
     @app.route("/gerar/post", methods=["POST"])
     def endpoint_gerar_post():
