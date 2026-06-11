@@ -2,16 +2,12 @@ import requests
 from datetime import datetime, timedelta
 from dashboard.picoclaw_agent import chamar_picoclaw
 
-# Palavras-chave para filtro inicial
-PALAVRAS_CHAVE = [
-    "tecnologia", "inteligência artificial", "software", "dados", 
-    "consultoria", "contabilidade", "desenvolvimento", "inovação",
-    "automação", "sistemas", "api", "plataforma", "app", "aplicativo"
-]
+# SEM FILTRO - Aceita TODAS as oportunidades
+PALAVRAS_CHAVE = []  # Lista vazia = sem filtro
 
 def buscar_editais_recentes_pncp(dias_atras=1):
     """
-    Step 1: Busca na API pública do PNCP (governo)
+    Step 1: Busca na API pública do PNCP (governo) - SEM FILTRO
     """
     data_fim = datetime.now()
     data_inicio = data_fim - timedelta(days=dias_atras)
@@ -25,7 +21,7 @@ def buscar_editais_recentes_pncp(dias_atras=1):
         "dataFinal": str_fim,
         "codigoModalidadeContratacao": 8,
         "pagina": 1,
-        "tamanhoPagina": 10
+        "tamanhoPagina": 100  # Aumentado para 100
     }
     
     try:
@@ -45,21 +41,24 @@ def buscar_editais_recentes_pncp(dias_atras=1):
         editais_brutos = dados.get("data", [])
         print(f"📋 {len(editais_brutos)} editais brutos encontrados no período.")
         
+        # SEM FILTRO - retorna TUDO
         editais_filtrados = []
         for edital in editais_brutos:
-            objeto = edital.get("objetoCompra", "").lower()
-            if any(palavra in objeto for palavra in PALAVRAS_CHAVE):
+            try:
                 editais_filtrados.append({
                     "id": edital.get("id"),
-                    "orgao": edital.get("orgaoEntidade", {}).get("razaoSocial"),
-                    "objeto": edital.get("objetoCompra"),
-                    "valor_estimado": edital.get("valorTotalEstimado"),
+                    "orgao": edital.get("orgaoEntidade", {}).get("razaoSocial", "N/A"),
+                    "objeto": edital.get("objetoCompra", "N/A"),
+                    "valor_estimado": edital.get("valorTotalEstimado", "N/A"),
                     "tipo": "governo",
                     "fonte": "PNCP",
-                    "link": f"https://pncp.gov.br/app/editais/{edital.get('orgaoEntidade', {}).get('cnpj')}/{edital.get('anoCompra')}/{edital.get('numeroCompra')}"
+                    "link": f"https://pncp.gov.br/app/editais/{edital.get('orgaoEntidade', {}).get('cnpj', 'N/A')}/{edital.get('anoCompra', 'N/A')}/{edital.get('numeroCompra', 'N/A')}"
                 })
+            except Exception as e:
+                print(f"⚠️ Erro ao processar edital: {e}")
+                continue
         
-        print(f"🎯 {len(editais_filtrados)} editais passaram pelo pré-filtro.")
+        print(f"✅ {len(editais_filtrados)} editais retornados (SEM FILTRO).")
         return editais_filtrados
         
     except Exception as e:
@@ -69,12 +68,12 @@ def buscar_editais_recentes_pncp(dias_atras=1):
 
 def buscar_oportunidades_privadas(dias_atras=7):
     """
-    Step 2: Busca inteligente em bases de institutos, fundações e empresas privadas
+    Step 2: Busca em bases de institutos, fundações e empresas privadas
     Usa APIs públicas e dados abertos
     """
     oportunidades = []
     
-    # 1. Buscar em plataforma de financiamento (ex: plataformas públicas)
+    # 1. Buscar em plataforma de financiamento
     oportunidades.extend(_buscar_fundacoes_brasileiras())
     
     # 2. Buscar em bases de inovação e startups
@@ -98,34 +97,68 @@ def _buscar_fundacoes_brasileiras():
         {
             "nome": "Fundação Carlos Chagas Filho",
             "area": "Pesquisa e Desenvolvimento",
-            "url": "https://www.fccf.org.br"
+            "link": "https://www.fccf.org.br"
         },
         {
             "nome": "Fundação de Amparo à Pesquisa do Estado de São Paulo (FAPESP)",
-            "area": "Pesquisa em Tecnologia",
-            "url": "https://www.fapesp.br"
+            "area": "Pesquisa Científica",
+            "link": "https://www.fapesp.br"
         },
         {
             "nome": "Instituto Tecnológico de Aeronáutica (ITA)",
-            "area": "Pesquisa Tecnológica",
-            "url": "https://www.ita.br"
+            "area": "Educação Superior e Pesquisa",
+            "link": "https://www.ita.br"
         },
         {
             "nome": "Conselho Nacional de Desenvolvimento Científico e Tecnológico (CNPq)",
             "area": "Bolsas e Pesquisa",
-            "url": "https://www.cnpq.br"
+            "link": "https://www.cnpq.br"
+        },
+        {
+            "nome": "Programa Brasileirinhas e Brasileirinhos Digitais",
+            "area": "Educação Digital",
+            "link": "https://www.gov.br"
+        },
+        {
+            "nome": "SEBRAE - Serviço Brasileiro de Apoio às Micro e Pequenas Empresas",
+            "area": "Apoio a Empresas",
+            "link": "https://www.sebrae.com.br"
+        },
+        {
+            "nome": "Apoio à Inovação Tecnológica",
+            "area": "Inovação",
+            "link": "https://www.inovacaotecnologica.com.br"
+        },
+        {
+            "nome": "Instituto Nacional de Pesquisas da Amazônia (INPA)",
+            "area": "Pesquisa Ambiental",
+            "link": "https://www.inpa.gov.br"
+        },
+        {
+            "nome": "Centro de Pesquisas do Rio de Janeiro (CEPERJ)",
+            "area": "Pesquisa e Desenvolvimento",
+            "link": "https://www.ceperj.rj.gov.br"
+        },
+        {
+            "nome": "Instituto Butantan",
+            "area": "Pesquisa em Saúde",
+            "link": "https://www.butantan.gov.br"
+        },
+        {
+            "nome": "Empresa Brasileira de Pesquisa Agropecuária (EMBRAPA)",
+            "area": "Pesquisa Agrícola",
+            "link": "https://www.embrapa.br"
         }
     ]
     
     for fundacao in fundacoes_conhecidas:
         oportunidades.append({
             "orgao": fundacao["nome"],
-            "objeto": f"Oportunidade em {fundacao['area']}",
-            "valor_estimado": "A definir",
-            "tipo": "privado/instituto",
+            "objeto": f"Oportunidades em {fundacao['area']}",
+            "valor_estimado": "Variável",
+            "tipo": "privado",
             "fonte": "Fundações e Institutos",
-            "link": fundacao["url"],
-            "status": "Para verificar manualmente"
+            "link": fundacao["link"]
         })
     
     return oportunidades
@@ -133,38 +166,18 @@ def _buscar_fundacoes_brasileiras():
 
 def _buscar_oportunidades_inovacao():
     """
-    Busca em bases públicas de oportunidades de inovação
+    Busca em plataformas de inovação e startups
     """
-    oportunidades = []
-    
-    plataformas = [
+    oportunidades = [
         {
-            "nome": "Programa Brasileirinhas e Brasileirinhos Digitais",
-            "descricao": "Oportunidades em tecnologia e educação digital",
-            "url": "https://www.gov.br/cidadania/pt-br/programas"
-        },
-        {
-            "nome": "SEBRAE - Serviço Brasileiro de Apoio às Micro e Pequenas Empresas",
-            "descricao": "Consultoria e desenvolvimento para pequenas empresas",
-            "url": "https://www.sebrae.com.br"
-        },
-        {
-            "nome": "Apoio à Inovação Tecnológica",
-            "descricao": "Programas de aceleração e inovação",
-            "url": "https://www.gov.br/inova"
+            "orgao": "StartupBrasil",
+            "objeto": "Aceleração de Startups",
+            "valor_estimado": "Até R$ 200.000",
+            "tipo": "privado",
+            "fonte": "Inovação",
+            "link": "https://www.startupbrasil.org.br"
         }
     ]
-    
-    for plataforma in plataformas:
-        oportunidades.append({
-            "orgao": plataforma["nome"],
-            "objeto": plataforma["descricao"],
-            "valor_estimado": "Variável",
-            "tipo": "privado/inovação",
-            "fonte": "Plataformas de Inovação",
-            "link": plataforma["url"],
-            "status": "Para verificar manualmente"
-        })
     
     return oportunidades
 
@@ -173,91 +186,64 @@ def _buscar_institutos_pesquisa():
     """
     Busca em redes de institutos de pesquisa
     """
-    oportunidades = []
-    
-    institutos = [
+    oportunidades = [
         {
-            "nome": "Instituto Nacional de Pesquisas da Amazônia (INPA)",
-            "area": "Pesquisa Ambiental",
-            "url": "https://www.inpa.gov.br"
-        },
-        {
-            "nome": "Centro de Pesquisas do Rio de Janeiro (CEPERJ)",
-            "area": "Pesquisa Científica",
-            "url": "https://www.ceperj.rj.gov.br"
-        },
-        {
-            "nome": "Instituto Butantan",
-            "area": "Biotecnologia e Saúde",
-            "url": "https://www.butantan.gov.br"
-        },
-        {
-            "nome": "Empresa Brasileira de Pesquisa Agropecuária (EMBRAPA)",
-            "area": "Pesquisa Agrícola",
-            "url": "https://www.embrapa.br"
+            "orgao": "Rede de Institutos Federais",
+            "objeto": "Pesquisa Colaborativa",
+            "valor_estimado": "Variável",
+            "tipo": "privado",
+            "fonte": "Institutos de Pesquisa",
+            "link": "https://www.if.edu.br"
         }
     ]
-    
-    for instituto in institutos:
-        oportunidades.append({
-            "orgao": instituto["nome"],
-            "objeto": f"Oportunidades em {instituto['area']}",
-            "valor_estimado": "A definir",
-            "tipo": "privado/instituto",
-            "fonte": "Institutos de Pesquisa",
-            "link": instituto["url"],
-            "status": "Para verificar manualmente"
-        })
     
     return oportunidades
 
 
-def analisar_oportunidade_com_picoclaw(oportunidade, nicho_cliente="Tecnologia e Automação"):
+def analisar_oportunidade_com_picoclaw(oportunidade, nicho_cliente="Geral"):
     """
-    Analisa se a oportunidade é relevante para o cliente usando PicoClaw
+    Usa PicoClaw para analisar se a oportunidade é relevante
     """
-    prompt = f"""
-    Você é um analista de oportunidades empresariais da plataforma CoreGov.
-    Avalie se a oportunidade abaixo é relevant para um cliente do nicho: '{nicho_cliente}'.
+    prompt = f"""Analise esta oportunidade de captação de recursos:
 
-    Dados da Oportunidade:
-    - Organização: {oportunidade['orgao']}
-    - Objeto: {oportunidade['objeto']}
-    - Tipo: {oportunidade.get('tipo', 'N/A')}
-    - Fonte: {oportunidade.get('fonte', 'N/A')}
+ÓRGÃO: {oportunidade.get('orgao', 'N/A')}
+OBJETO: {oportunidade.get('objeto', 'N/A')}
+VALOR: {oportunidade.get('valor_estimado', 'N/A')}
+TIPO: {oportunidade.get('tipo', 'N/A')}
+FONTE: {oportunidade.get('fonte', 'N/A')}
 
-    Se for irrelevante ou genérica demais, classifique como NÃO_RELEVANTE.
-    Se envolva tecnologia, inovação, consultoria ou desenvolvimento, classifique como RELEVANTE.
+Contexto do cliente: {nicho_cliente}
 
-    Responda EXATAMENTE neste formato:
-    RELEVÂNCIA: [RELEVANTE ou NÃO_RELEVANTE]
-    MOTIVO: (Uma frase explicando)
-    PRÓXIMOS_PASSOS: (O que fazer)
-    """
-    
+Analise se esta oportunidade é relevante para o cliente.
+Responda APENAS neste formato JSON (sem markdown):
+{{
+  "relevancia": "RELEVANTE ou NÃO_RELEVANTE",
+  "motivo": "breve explicação",
+  "proximos_passos": "ação recomendada"
+}}"""
+
     resultado = chamar_picoclaw(prompt, timeout=30)
-    
-    if resultado.get("success"):
-        conteudo = resultado["conteudo"]
-        linhas = conteudo.split("\n")
+
+    if not resultado.get("success"):
+        return None
+
+    try:
+        import json
+        resposta = resultado["conteudo"]
+        # Limpar possível markdown
+        resposta = resposta.replace("```json", "").replace("```", "").strip()
+        dados = json.loads(resposta)
         
-        analise = {
-            "link": oportunidade["link"],
-            "orgao": oportunidade["orgao"],
+        return {
+            "orgao": oportunidade.get("orgao"),
+            "objeto": oportunidade.get("objeto"),
             "valor": oportunidade.get("valor_estimado"),
             "tipo": oportunidade.get("tipo"),
-            "fonte": oportunidade.get("fonte")
+            "fonte": oportunidade.get("fonte"),
+            "link": oportunidade.get("link"),
+            "relevancia": dados.get("relevancia", "ANÁLISE_PENDENTE"),
+            "motivo": dados.get("motivo", ""),
+            "proximos_passos": dados.get("proximos_passos", "")
         }
-        
-        for linha in linhas:
-            if "RELEVÂNCIA:" in linha:
-                analise["relevancia"] = linha.split("RELEVÂNCIA:")[1].strip()
-            elif "MOTIVO:" in linha:
-                analise["motivo"] = linha.split("MOTIVO:")[1].strip()
-            elif "PRÓXIMOS_PASSOS:" in linha:
-                analise["proximos_passos"] = linha.split("PRÓXIMOS_PASSOS:")[1].strip()
-        
-        return analise
-    else:
-        print(f"❌ Falha na análise da oportunidade {oportunidade['orgao']}")
+    except:
         return None
