@@ -5,6 +5,9 @@ import requests
 import mercadopago
 import urllib.parse
 import unicodedata
+import os
+from dashboard.gerador_conteudo import GeradorConteudo
+from werkzeug.utils import secure_filename
 from flask import (
     Flask,
     render_template,
@@ -59,6 +62,50 @@ app.config['SESSION_COOKIE_NAME'] = 'social_ai_session'
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+
+
+UPLOAD_FOLDER = '/tmp/coregov-uploads'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+@app.route("/gerar-conteudo")
+def pagina_gerar_conteudo():
+    return render_template("gerar_conteudo.html")
+
+@app.route("/trilhas")
+def pagina_trilhas():
+    return render_template("trilhas.html")
+
+@app.route("/api/processar-conteudo", methods=["POST"])
+def processar_conteudo():
+    if 'file' not in request.files:
+        return jsonify({"success": False, "erro": "Arquivo não enviado"}), 400
+    
+    file = request.files['file']
+    tipo = request.form.get('tipo', 'video')
+    modulo = int(request.form.get('modulo', 1))
+    
+    filename = secure_filename(file.filename)
+    filepath = os.path.join(UPLOAD_FOLDER, f"{time.time()}_{filename}")
+    file.save(filepath)
+    
+    try:
+        gerador = GeradorConteudo()
+        resultado = gerador.processar_arquivo(filepath, tipo, modulo)
+        return jsonify(resultado)
+    except Exception as e:
+        return jsonify({"success": False, "erro": str(e)}), 500
+    finally:
+        if os.path.exists(filepath):
+            os.remove(filepath)
+PASSO 3: Criar tabelas no Supabase (opcional, para salvar histórico)
+sqlCREATE TABLE conteudos_gerados (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  tipo TEXT,
+  modulo INTEGER,
+  conteudos JSONB,
+  data_criacao TIMESTAMP DEFAULT NOW()
+);
+
 
 # =========================
 # ERRO HANDLER 429
