@@ -5,6 +5,10 @@ import requests
 import mercadopago
 import urllib.parse
 import unicodedata
+import sys
+import os
+import time
+from werkzeug.utils import secure_filename
 from dashboard.gerador_conteudo import GeradorConteudo
 from werkzeug.utils import secure_filename
 import os
@@ -44,16 +48,24 @@ from dashboard.telegram_alerts import (
 )
 
 
+
+# Adicionar caminho para importar do trilha
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
+from trilha.py.gerador_conteudo import GeradorConteudo
+
 UPLOAD_FOLDER = '/tmp/coregov-uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+# ===== ROTAS TRILHA =====
+
 @app.route("/gerar-conteudo")
 def pagina_gerar_conteudo():
-    return render_template("gerar_conteudo.html")
+    return render_template("../trilha/template/gerar_conteudo.html")
 
 @app.route("/trilhas")
 def pagina_trilhas():
-    return render_template("trilhas.html")
+    return render_template("../trilha/template/trilha.html")
 
 @app.route("/api/processar-conteudo", methods=["POST"])
 def processar_conteudo():
@@ -73,6 +85,7 @@ def processar_conteudo():
         resultado = gerador.processar_arquivo(filepath, tipo, modulo)
         return jsonify(resultado)
     except Exception as e:
+        print(f"❌ Erro: {e}")
         return jsonify({"success": False, "erro": str(e)}), 500
     finally:
         if os.path.exists(filepath):
