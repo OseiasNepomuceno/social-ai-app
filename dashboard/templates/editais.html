@@ -5,52 +5,45 @@
     
     <div class="dashboard-header" style="margin-bottom: 25px;">
         <h2 style="color: #ffffff; margin-bottom: 5px; font-size: 2rem; font-weight: 700;">🔍 Monitor de Oportunidades</h2>
-        <p style="color: #cbd5e1; margin-top: 0; font-size: 1rem;">Varredura em tempo real no Portal Nacional de Contratações Públicas com análise cognitiva do PicoClaw.</p>
+        <p style="color: #cbd5e1; margin-top: 0; font-size: 1rem;">Varredura integrada: PNCP (Licitações) + TransfereGov (Fomento) com análise cognitiva PicoClaw.</p>
     </div>
 
     <div class="control-box" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border: 2px solid #3b82f6; padding: 28px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
-        <h4 style="margin-top: 0; color: #60a5fa; font-size: 1.3rem; font-weight: 600; margin-bottom: 12px;">📋 Buscar Oportunidades por Período</h4>
-        <p style="color: #94a3b8; font-size: 0.95rem; margin-bottom: 20px;">A IA irá analisar as publicações do período selecionado buscando projetos ideais para o seu nicho.</p>
+        <h4 style="margin-top: 0; color: #60a5fa; font-size: 1.3rem; font-weight: 600; margin-bottom: 12px;">📋 Parâmetros de Busca</h4>
         
-        <div style="margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 16px; align-items: end;">
+        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 16px; align-items: end;">
             <div>
-                <label style="display: block; margin-bottom: 10px; color: #e0e7ff; font-weight: 600; font-size: 0.95rem;">🎯 Nicho/Segmento (livre):</label>
-                <input type="text" id="input-nicho" placeholder="Ex: Tecnologia, Saúde, Educação, ONGs..." value="Todos os Nichos" style="width: 100%; padding: 12px 14px; border: 2px solid #3b82f6; border-radius: 8px; font-size: 0.95rem; background: #0f172a; color: #e0e7ff; transition: all 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">
+                <label style="display: block; margin-bottom: 10px; color: #e0e7ff; font-weight: 600; font-size: 0.95rem;">🎯 Nicho/Segmento:</label>
+                <input type="text" id="input-nicho" placeholder="Ex: Tecnologia, Saúde..." value="Tecnologia e Automação" style="width: 100%; padding: 12px 14px; border: 2px solid #3b82f6; border-radius: 8px; background: #0f172a; color: #e0e7ff;">
             </div>
             <div>
                 <label style="display: block; margin-bottom: 10px; color: #e0e7ff; font-weight: 600; font-size: 0.95rem;">📅 Período:</label>
-                <select id="input-mes" style="width: 100%; padding: 12px 14px; border: 2px solid #3b82f6; border-radius: 8px; font-size: 0.95rem; background: #0f172a; color: #e0e7ff; transition: all 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">
+                <select id="input-mes" style="width: 100%; padding: 12px 14px; border: 2px solid #3b82f6; border-radius: 8px; background: #0f172a; color: #e0e7ff;">
                     <option value="30">Últimos 30 dias</option>
                     <option value="60">Últimos 60 dias</option>
-                    <option value="90">Últimos 90 dias</option>
-                    <option value="180">Últimos 6 meses</option>
-                    <option value="365">Último ano</option>
                 </select>
             </div>
             <div>
                 <label style="display: block; margin-bottom: 10px; color: #e0e7ff; font-weight: 600; font-size: 0.95rem;">🔗 Incluir:</label>
-                <select id="input-tipos" style="width: 100%; padding: 12px 14px; border: 2px solid #3b82f6; border-radius: 8px; font-size: 0.95rem; background: #0f172a; color: #e0e7ff; transition: all 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">
-                    <option value="todos">Público + Privado</option>
-                    <option value="publico">Apenas Público</option>
-                    <option value="privado">Apenas Privado</option>
+                <select id="input-tipos" style="width: 100%; padding: 12px 14px; border: 2px solid #3b82f6; border-radius: 8px; background: #0f172a; color: #e0e7ff;">
+                    <option value="todos">Tudo (PNCP + Fomento)</option>
                 </select>
             </div>
-            <button id="btn-pesquisa" onclick="dispararBuscaEditais()" style="padding: 12px 28px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 1rem; transition: all 0.3s; white-space: nowrap; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);">
+            <button id="btn-pesquisa" onclick="dispararBuscaEditais()" style="padding: 12px 28px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 700;">
                 🚀 Varrer Agora
             </button>
         </div>
 
-        <div id="status-carregamento" style="margin-top: 20px; color: #60a5fa; display: none; font-weight: 600; padding: 12px 16px; background: #1e293b; border-left: 4px solid #60a5fa; border-radius: 4px;">
-            <span style="display: inline-block; animation: spin 1s linear infinite; margin-right: 8px;">🔄</span> 
-            PicoClaw minerando oportunidades... Aguarde (pode levar alguns minutos).
+        <div id="status-carregamento" style="margin-top: 20px; color: #60a5fa; display: none; font-weight: 600; background: #1e293b; padding: 12px; border-left: 4px solid #60a5fa; border-radius: 4px;">
+            <span style="animation: spin 1s linear infinite; display: inline-block; margin-right: 8px;">🔄</span> PicoClaw minerando PNCP e TransfereGov...
         </div>
     </div>
 
     <hr style="border: 0; border-top: 1px solid #334155; margin: 30px 0;">
 
     <div id="resultado-editais">
-        <div style="background: #1e293b; border: 2px dashed #475569; padding: 50px 20px; text-align: center; border-radius: 12px; color: #94a3b8;">
-            💡 Carregando oportunidades já registradas...
+        <div style="background: #1e293b; border: 2px dashed #475569; padding: 50px; text-align: center; border-radius: 12px; color: #94a3b8;">
+            💡 Selecione o nicho e inicie a varredura para visualizar as oportunidades.
         </div>
     </div>
 </div>
@@ -59,204 +52,62 @@
 function dispararBuscaEditais() {
     const btn = document.getElementById('btn-pesquisa');
     const status = document.getElementById('status-carregamento');
-    const resultadoDiv = document.getElementById('resultado-editais');
-    const nicho = document.getElementById('input-nicho').value || 'Todos os Nichos';
-    const dias = parseInt(document.getElementById('input-mes').value) || 30;
-    const tipos = document.getElementById('input-tipos').value;
-    
-    const buscar_privadas = tipos !== 'publico';
+    const nicho = document.getElementById('input-nicho').value;
     
     btn.disabled = true;
-    btn.style.background = 'linear-gradient(135deg, #64748b 0%, #475569 100%)';
-    btn.innerText = '⚡ Agentes em Campo...';
     status.style.display = 'block';
-    resultadoDiv.innerHTML = '';
 
     fetch('/gerar/monitorar-editais', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-            nicho: nicho,
-            dias: Math.ceil(dias / 30),
-            buscar_privadas: buscar_privadas
-        })
+        body: JSON.stringify({ nicho: nicho })
     })
-    .then(response => response.json())
-    .then(data => {
-        console.log('Resposta da API:', data);
+    .then(() => {
         btn.disabled = false;
-        btn.style.background = 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)';
-        btn.innerText = '🚀 Varrer Agora';
         status.style.display = 'none';
-        setTimeout(() => {
-            carregarOportunidades(nicho);
-        }, 3000);
-    })
-    .catch(error => {
-        btn.disabled = false;
-        btn.style.background = 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)';
-        btn.innerText = '🚀 Varrer Agora';
-        status.style.display = 'none';
-        resultadoDiv.innerHTML = `
-            <div style="background: #7f1d1d; border: 2px solid #dc2626; color: #fca5a5; padding: 16px; border-radius: 8px; font-weight: 500;">
-                ❌ Falha na conexão com a API. Verifique os logs de execução do Render.
-            </div>`;
-        console.error('Erro:', error);
+        carregarOportunidades(nicho);
     });
 }
 
-
-    // Dentro da sua função dispararBuscaEditais, você pode chamar os dois endpoints
-async function dispararBuscaEditais() {
-    // ... seu código de carregamento ...
-
-    // Busca Licitações (PNCP)
-    const resEditais = await fetch('/api/verificar-editais');
-    // Busca Recursos (TransfereGov/Programas)
-    const resRecursos = await fetch('/api/monitor-recursos');
-    
-    // ... processa os dois resultados e mostra na tela ...
-}
-
-function carregarOportunidades(nichoBusca = null) {
+function carregarOportunidades(nichoBusca) {
     const resultadoDiv = document.getElementById('resultado-editais');
-    
     fetch('/api/oportunidades-analisadas')
-        .then(response => response.json())
+        .then(r => r.json())
         .then(data => {
-            console.log('Oportunidades carregadas:', data);
-            
-            if (!data.oportunidades || data.oportunidades.length === 0) {
-                resultadoDiv.innerHTML = `
-                    <div style="background: #78350f; border: 2px solid #f59e0b; color: #fef3c7; padding: 16px; border-radius: 8px; font-weight: 500;">
-                        🍃 Nenhuma oportunidade encontrada. Tente expandir o período ou remover filtros.
-                    </div>
-                `;
-                return;
-            }
+            const opps = data.oportunidades || [];
+            const licitacoes = opps.filter(o => o.tipo === 'governo');
+            const fomento = opps.filter(o => o.tipo === 'fomento' || o.tipo === 'privado');
 
-            let oportunidadesFiltradas = data.oportunidades;
-            let textoFiltro = '';
-            
-            if (nichoBusca && nichoBusca !== 'Todos os Nichos') {
-                oportunidadesFiltradas = data.oportunidades.filter(op => 
-                    op.nicho_cliente && op.nicho_cliente.toLowerCase().includes(nichoBusca.toLowerCase())
-                );
-                textoFiltro = ` (filtrado por: ${nichoBusca})`;
-            }
+            const gerarTabela = (lista, titulo, cor) => {
+                if (lista.length === 0) return '';
+                return `
+                    <div style="margin-bottom: 40px;">
+                        <h3 style="color: ${cor}; border-left: 4px solid ${cor}; padding-left: 10px; margin-bottom: 15px;">${titulo}</h3>
+                        <table style="width: 100%; border-collapse: collapse; background: #1e293b; border-radius: 8px;">
+                            <thead><tr style="background: #0f172a; color: #94a3b8; text-align: left;">
+                                <th style="padding: 12px;">Órgão</th><th style="padding: 12px;">Objeto</th><th style="padding: 12px;">Valor</th><th style="padding: 12px; text-align: center;">Ação</th>
+                            </tr></thead>
+                            <tbody>
+                                ${lista.map(o => `
+                                    <tr style="border-top: 1px solid #334155;">
+                                        <td style="padding: 12px; color: #e0e7ff;">${o.orgao}</td>
+                                        <td style="padding: 12px; color: #cbd5e1; font-size: 0.85rem;">${(o.objeto || '').substring(0, 60)}...</td>
+                                        <td style="padding: 12px; color: #60a5fa;">${o.valor_estimado || '-'}</td>
+                                        <td style="padding: 12px; text-align: center;"><a href="${o.link}" target="_blank" style="color: #3b82f6;">Abrir</a></td>
+                                    </tr>`).join('')}
+                            </tbody>
+                        </table>
+                    </div>`;
+            };
 
-            if (oportunidadesFiltradas.length === 0) {
-                resultadoDiv.innerHTML = `
-                    <div style="background: #78350f; border: 2px solid #f59e0b; color: #fef3c7; padding: 16px; border-radius: 8px; font-weight: 500;">
-                        🍃 Nenhuma oportunidade encontrada para o nicho "${nichoBusca}". Tente outro.
-                    </div>
-                `;
-                return;
-            }
-
-            let htmlContent = `
-                <h3 style="margin-bottom:20px; color:#60a5fa; font-size: 1.3rem;">
-                    🎯 ${oportunidadesFiltradas.length} Oportunidades Registradas${textoFiltro}
-                </h3>
-                <div style="overflow-x: auto; margin-bottom: 20px; background: #1e293b; border-radius: 12px; border: 1px solid #334155;">
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <thead>
-                            <tr style="background-color: #0f172a; border-bottom: 2px solid #3b82f6;">
-                                <th style="padding: 14px; text-align: left; color: #60a5fa; font-weight: 700;">Órgão/Instituição</th>
-                                <th style="padding: 14px; text-align: left; color: #60a5fa; font-weight: 700;">Objeto</th>
-                                <th style="padding: 14px; text-align: left; color: #60a5fa; font-weight: 700;">Valor</th>
-                                <th style="padding: 14px; text-align: left; color: #60a5fa; font-weight: 700;">Relevância</th>
-                                <th style="padding: 14px; text-align: left; color: #60a5fa; font-weight: 700;">Nicho</th>
-                                <th style="padding: 14px; text-align: left; color: #60a5fa; font-weight: 700;">Tipo</th>
-                                <th style="padding: 14px; text-align: left; color: #60a5fa; font-weight: 700;">Data</th>
-                                <th style="padding: 14px; text-align: center; color: #60a5fa; font-weight: 700;">Ação</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-            `;
-
-            oportunidadesFiltradas.forEach((op, idx) => {
-                const bgColor = idx % 2 === 0 ? '#1e293b' : '#0f172a';
-                const relevanciaColor = op.relevancia && op.relevancia.includes('RELEVANTE') ? '#10b981' : 
-                                       op.relevancia && op.relevancia.includes('ERRO') ? '#ef4444' : '#8b5cf6';
-                
-                const dataAnalise = op.data_analise ? new Date(op.data_analise).toLocaleDateString('pt-BR') : 'N/A';
-                
-                htmlContent += `
-                    <tr style="background-color: ${bgColor}; border-bottom: 1px solid #334155; transition: background 0.2s;">
-                        <td style="padding: 12px 14px; color: #e0e7ff; font-weight: 500; max-width: 200px; overflow: hidden; text-overflow: ellipsis;">${op.orgao || 'N/A'}</td>
-                        <td style="padding: 12px 14px; color: #cbd5e1; font-size: 0.85rem; max-width: 250px; overflow: hidden; text-overflow: ellipsis;">${(op.objeto || 'N/A').substring(0, 80)}...</td>
-                        <td style="padding: 12px 14px; color: #cbd5e1; font-size: 0.9rem;">${op.valor_estimado || 'N/A'}</td>
-                        <td style="padding: 12px 14px;">
-                            <span style="display: inline-block; padding: 4px 8px; background-color: ${relevanciaColor}20; color: ${relevanciaColor}; border-radius: 4px; font-size: 0.85rem; font-weight: 600;">
-                                ${op.relevancia ? op.relevancia.substring(0, 15) : 'ANÁLISE_PENDENTE'}
-                            </span>
-                        </td>
-                        <td style="padding: 12px 14px; color: #cbd5e1; font-size: 0.9rem;">${op.nicho_cliente || 'Geral'}</td>
-                        <td style="padding: 12px 14px;">
-                            <span style="display: inline-block; padding: 4px 8px; background-color: ${op.tipo === 'governo' ? '#1e3a8a' : '#065f46'}; color: ${op.tipo === 'governo' ? '#93c5fd' : '#86efac'}; border-radius: 4px; font-size: 0.85rem; font-weight: 600;">
-                                ${op.tipo && op.tipo.charAt(0).toUpperCase() + op.tipo.slice(1) || 'Desconhecido'}
-                            </span>
-                        </td>
-                        <td style="padding: 12px 14px; color: #94a3b8; font-size: 0.85rem;">${dataAnalise}</td>
-                        <td style="padding: 12px 14px; text-align: center;">
-                            ${op.link ? `<a href="${op.link}" target="_blank" style="color: #60a5fa; text-decoration: none; font-weight: 600; transition: color 0.2s;">🔗 Abrir</a>` : 'N/A'}
-                        </td>
-                    </tr>
-                `;
-            });
-
-            htmlContent += `
-                        </tbody>
-                    </table>
-                </div>
-                <div style="padding: 16px; background: linear-gradient(135deg, #1e3a8a 0%, #065f46 100%); border-radius: 12px; border: 1px solid #3b82f6;">
-                    <div style="color: #93c5fd; font-weight: 700; margin-bottom: 8px; font-size: 1.05rem;">✅ Resumo da Varredura</div>
-                    <div style="color: #cbd5e1; font-size: 0.9rem;">
-                        <strong style="color: #93c5fd;">Total:</strong> ${oportunidadesFiltradas.length} oportunidades analisadas<br>
-                        <strong style="color: #93c5fd;">Públicas:</strong> ${oportunidadesFiltradas.filter(o => o.tipo === 'governo').length}<br>
-                        <strong style="color: #93c5fd;">Privadas:</strong> ${oportunidadesFiltradas.filter(o => o.tipo !== 'governo').length}
-                    </div>
-                </div>
-            `;
-
-            resultadoDiv.innerHTML = htmlContent;
-        })
-        .catch(error => {
-            console.error('Erro ao carregar:', error);
-            resultadoDiv.innerHTML = `
-                <div style="background: #7f1d1d; border: 2px solid #dc2626; color: #fca5a5; padding: 16px; border-radius: 8px; font-weight: 500;">
-                    ❌ Erro ao carregar oportunidades. Verifique a conexão.
-                </div>`;
+            resultadoDiv.innerHTML = `${gerarTabela(licitacoes, '🏛️ Licitações e Editais (PNCP)', '#3b82f6')} ${gerarTabela(fomento, '💰 Fomento e Recursos (TransfereGov)', '#ea580c')}`;
         });
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    carregarOportunidades();
-});
+document.addEventListener('DOMContentLoaded', () => carregarOportunidades());
 </script>
 
 <style>
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-#input-nicho:focus,
-#input-mes:focus,
-#input-tipos:focus {
-    outline: none;
-    border-color: #60a5fa;
-    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
-}
-
-#btn-pesquisa:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6);
-}
-
-#btn-pesquisa:active {
-    transform: translateY(0);
-}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 </style>
 {% endblock %}
