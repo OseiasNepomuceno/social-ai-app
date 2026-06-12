@@ -229,55 +229,6 @@ def iniciar_monitoramento():
     return jsonify({"status": "sucesso", "mensagem": "Varredura concluída para o nicho: " + nicho})
 
 
-
-    
-
-# ===== ADICIONAR ESSAS ROTAS NO APP.PY =====
-
-@app.route("/gerar-conteudo")
-def pagina_gerar_conteudo():
-    """Dashboard para gerar conteúdos"""
-    return render_template("gerar_conteudo.html")
-
-@app.route("/trilhas")
-def pagina_trilhas():
-    """Página de trilhas de conhecimento"""
-    return render_template("trilhas.html")
-
-@app.route("/api/processar-conteudo", methods=["POST"])
-def processar_conteudo():
-    """Processa vídeo/imagem com PicoClaw"""
-    if 'file' not in request.files:
-        return jsonify({"success": False, "erro": "Arquivo não enviado"}), 400
-    
-    try:
-        file = request.files['file']
-        tipo = request.form.get('tipo', 'video')
-        modulo = int(request.form.get('modulo', 1))
-        
-        if not file or file.filename == '':
-            return jsonify({"success": False, "erro": "Arquivo inválido"}), 400
-        
-        filename = secure_filename(file.filename)
-        filepath = os.path.join(UPLOAD_FOLDER, f"{time.time()}_{filename}")
-        file.save(filepath)
-        
-        gerador = GeradorConteudo()
-        resultado = gerador.processar_arquivo(filepath, tipo, modulo)
-        
-        return jsonify(resultado)
-        
-    except Exception as e:
-        print(f"❌ Erro ao processar: {e}")
-        return jsonify({"success": False, "erro": str(e)}), 500
-    
-    finally:
-        if os.path.exists(filepath):
-            os.remove(filepath)
-
-
-
-
 # =========================
 # ERRO HANDLER 429
 # =========================
