@@ -45,9 +45,9 @@ class GeradorConteudo:
         }
     
     def _analisar_com_picoclaw(self, caminho_arquivo, tipo):
-    """Analisa arquivo com tratamento melhorado de erros"""
-    
-    prompt = f"""Analise este conteúdo de {tipo} sobre Marketing Digital:
+        """Analisa arquivo e extrai informações principais com tratamento de erro melhorado"""
+        
+        prompt = f"""Analise este conteúdo de {tipo} sobre Marketing Digital:
 
 ARQUIVO: {caminho_arquivo}
 
@@ -60,42 +60,45 @@ Extraia APENAS em JSON puro (sem markdown, sem backticks):
   "tone": "tom do conteúdo",
   "cta_principal": "call-to-action"
 }}"""
-    
-    try:
-        resultado = chamar_picoclaw(prompt, timeout=120)
         
-        if not resultado.get("success"):
-            print(f"⚠️ PicoClaw retornou sucesso=False: {resultado}")
+        try:
+            resultado = chamar_picoclaw(prompt, timeout=120)
+            
+            if not resultado.get("success"):
+                print(f"⚠️ PicoClaw retornou sucesso=False")
+                return None
+            
+            resposta = resultado["conteudo"]
+            
+            # Debug: imprimir resposta bruta (primeiros 500 chars)
+            print(f"📄 Resposta do PicoClaw ({len(resposta)} chars)")
+            print(f"   Primeiros 300 chars: {resposta[:300]}...")
+            
+            # Limpar resposta
+            resposta = resposta.replace("```json", "").replace("```", "").strip()
+            
+            # Tentar parse JSON
+            dados = json.loads(resposta)
+            
+            # Validar campos obrigatórios
+            campos_obrig = ["titulo_principal", "tema_principal", "pontos_chave"]
+            campos_faltantes = [c for c in campos_obrig if c not in dados]
+            
+            if campos_faltantes:
+                print(f"⚠️ JSON incompleto. Faltam: {campos_faltantes}")
+                print(f"   Campos encontrados: {list(dados.keys())}")
+                return None
+            
+            print(f"✅ Análise bem-sucedida!")
+            return dados
+            
+        except json.JSONDecodeError as e:
+            print(f"❌ Erro ao fazer parse JSON: {str(e)}")
+            print(f"   Resposta: {resposta[:200] if 'resposta' in locals() else 'N/A'}")
             return None
-        
-        resposta = resultado["conteudo"]
-        
-        # Debug: imprimir resposta bruta
-        print(f"📄 Resposta bruta do PicoClaw ({len(resposta)} chars):")
-        print(resposta[:500])  # Primeiros 500 chars
-        
-        # Limpar resposta
-        resposta = resposta.replace("```json", "").replace("```", "").strip()
-        
-        # Tentar parse JSON
-        dados = json.loads(resposta)
-        
-        # Validar campos obrigatórios
-        campos_obrig = ["titulo_principal", "tema_principal", "pontos_chave"]
-        if not all(campo in dados for campo in campos_obrig):
-            print(f"⚠️ JSON incompleto. Campos encontrados: {list(dados.keys())}")
+        except Exception as e:
+            print(f"❌ Erro na análise: {str(e)}")
             return None
-        
-        print(f"✅ Análise bem-sucedida!")
-        return dados
-        
-    except json.JSONDecodeError as e:
-        print(f"❌ Erro ao fazer parse JSON: {e}")
-        print(f"   Resposta: {resposta[:200]}")
-        return None
-    except Exception as e:
-        print(f"❌ Erro na análise: {e}")
-        return None
     
     def _gerar_clips(self, analise, modulo):
         """Gera 2-3 clips de 15-30 segundos"""
@@ -106,7 +109,7 @@ Extraia APENAS em JSON puro (sem markdown, sem backticks):
         for i, duracao in enumerate(duracoes, 1):
             clip = {
                 "id": f"clip_m{modulo}_{i}",
-                "titulo": f"Clip {i}: {analise.get('pontos_chave', [''])[i-1]}",
+                "titulo": f"Clip {i}: {analise.get('pontos_chave', [''])[i-1] if i <= len(analise.get('pontos_chave', [])) else 'Destaque'}",
                 "duracao": duracao,
                 "tipo": "gratis",
                 "modulo": modulo,
@@ -146,7 +149,7 @@ Pontos-chave: {', '.join(analise.get('pontos_chave', []))}
 Tom: descontraído, rápido, viral
 Duração vídeo: 15-30 segundos
 
-Responda em JSON (sem markdown):
+Responda APENAS em JSON (sem markdown):
 {{
   "caption": "texto do caption (max 150 chars)",
   "hashtags": "#hash1 #hash2 #hash3"
@@ -179,7 +182,7 @@ Tema: {analise.get('titulo_principal', '')}
 Pontos-chave: {', '.join(analise.get('pontos_chave', []))}
 Tom: profissional, educacional, B2B
 
-Responda APENAS o texto do post (sem JSON):"""
+Responda APENAS o texto do post (sem JSON, sem markdown):"""
         
         resultado = chamar_picoclaw(prompt, timeout=30)
         
@@ -192,7 +195,7 @@ Responda APENAS o texto do post (sem JSON):"""
         """Gera metadata para trilha de conhecimento"""
         
         titulo = analise.get('titulo_principal', f'Módulo {modulo} - Marketing Digital')
-        slug = titulo.lower().replace(' ', '-').replace('á', 'a').replace('é', 'e')
+        slug = titulo.lower().replace(' ', '-').replace('á', 'a').replace('é', 'e').replace('ã', 'a')
         descricao = f"Aprenda sobre {analise.get('tema_principal', 'Marketing Digital')}. " \
                    f"Nesta aula você vai conhecer: {', '.join(analise.get('pontos_chave', [])[:2])}"
         tags = ['marketing', 'digital', 'basico', analise.get('tema_principal', 'marketing').lower()]
@@ -206,10 +209,3 @@ Responda APENAS o texto do post (sem JSON):"""
             "tema": self.tema,
             "data_criacao": datetime.now().isoformat()
         }
-
-
-# Usar assim:
-def processar_conteudo_upload(file_path, tipo, modulo):
-    """API endpoint para processar arquivo"""
-    gerador = GeradorConteudo()
-    return gerador.processar_arquivo(file_path, tipo, modulo)
