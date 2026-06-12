@@ -57,10 +57,12 @@ function dispararBuscaEditais() {
     btn.disabled = true;
     status.style.display = 'block';
 
+    // Certifique-se que o trecho no seu editais.html seja exatamente este:
     fetch('/gerar/monitorar-editais', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ nicho: nicho })
+        body: JSON.stringify({ nicho: document.getElementById('input-nicho').value })
+    
     })
     .then(() => {
         btn.disabled = false;
