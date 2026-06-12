@@ -9,11 +9,7 @@ import sys
 # ===== IMPORTAR NO TOPO DO APP.PY =====
 import time
 from werkzeug.utils import secure_filename
-from gerador_conteudo import GeradorConteudo
-from werkzeug.utils import secure_filename
-from dashboard.gerador_conteudo import GeradorConteudo
-from werkzeug.utils import secure_filename
-import os
+from .gerador_conteudo import GeradorConteudo
 from flask import (
     Flask,
     render_template,
