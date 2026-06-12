@@ -3,8 +3,7 @@ import os
 import threading
 import time
 from datetime import datetime
-from gerador_conteudo import GeradorConteudo
-
+from dashboard.gerador_conteudo import GeradorConteudo
 class ProcessadorBackground:
     """Processa conteúdo em thread separada (não bloqueia requisição)"""
     
