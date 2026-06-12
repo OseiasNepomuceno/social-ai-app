@@ -32,7 +32,6 @@ from dashboard.agents.analisador_media import gerar_relatorio_completo
 from services.supabase_storage import upload_image
 from dashboard.agents.media_selector import selecionar_imagem
 from dashboard.ia_engine import gerar_conteudo
-from dashboard.picoclaw_agent import gerar_post_picoclaw
 from dashboard.picoclaw_agent import gerar_post_picoclaw, inferir_nicho
 from dashboard.picoclawsite_flask import registrar_rotas_picoclaw
 
@@ -53,6 +52,27 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 UPLOAD_FOLDER = '/tmp/coregov-uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+# =========================
+# CONFIGURAÇÃO DO FLASK
+# =========================
+
+app = Flask(
+    __name__,
+    static_folder="static",
+    template_folder="templates"
+)
+
+# SECRET KEY — obrigatória via variável de ambiente
+app.secret_key = os.getenv("SECRET_KEY")
+if not app.secret_key:
+    raise RuntimeError("❌ SECRET_KEY não configurada no ambiente!")
+
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=4)
+app.config['SESSION_COOKIE_NAME'] = 'social_ai_session'
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 # ===== ADICIONAR ESSAS ROTAS NO APP.PY =====
 
@@ -98,26 +118,7 @@ def processar_conteudo():
             os.remove(filepath)
 
 
-# =========================
-# CONFIGURAÇÃO DO FLASK
-# =========================
 
-app = Flask(
-    __name__,
-    static_folder="static",
-    template_folder="templates"
-)
-
-# SECRET KEY — obrigatória via variável de ambiente
-app.secret_key = os.getenv("SECRET_KEY")
-if not app.secret_key:
-    raise RuntimeError("❌ SECRET_KEY não configurada no ambiente!")
-
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=4)
-app.config['SESSION_COOKIE_NAME'] = 'social_ai_session'
-app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_SECURE'] = True
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 # =========================
 # ERRO HANDLER 429
