@@ -52,7 +52,7 @@ from dashboard.telegram_alerts import (
 # Adicionar caminho para importar do trilha
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from trilha.py.gerador_conteudo import GeradorConteudo
+from gerador_conteudo import GeradorConteudo
 
 UPLOAD_FOLDER = '/tmp/coregov-uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -61,33 +61,60 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 @app.route("/gerar-conteudo")
 def pagina_gerar_conteudo():
-    return render_template("../trilha/template/gerar_conteudo.html")
+    return render_template("gerar_conteudo.html")
+
 
 @app.route("/trilhas")
 def pagina_trilhas():
-    return render_template("../trilha/template/trilha.html")
+    return render_template("trilhas.html")
+
 
 @app.route("/api/processar-conteudo", methods=["POST"])
 def processar_conteudo():
+
     if 'file' not in request.files:
-        return jsonify({"success": False, "erro": "Arquivo não enviado"}), 400
-    
+        return jsonify({
+            "success": False,
+            "erro": "Arquivo não enviado"
+        }), 400
+
     file = request.files['file']
+
     tipo = request.form.get('tipo', 'video')
     modulo = int(request.form.get('modulo', 1))
-    
+
     filename = secure_filename(file.filename)
-    filepath = os.path.join(UPLOAD_FOLDER, f"{time.time()}_{filename}")
+
+    filepath = os.path.join(
+        UPLOAD_FOLDER,
+        f"{time.time()}_{filename}"
+    )
+
     file.save(filepath)
-    
+
     try:
+
         gerador = GeradorConteudo()
-        resultado = gerador.processar_arquivo(filepath, tipo, modulo)
+
+        resultado = gerador.processar_arquivo(
+            filepath,
+            tipo,
+            modulo
+        )
+
         return jsonify(resultado)
+
     except Exception as e:
+
         print(f"❌ Erro: {e}")
-        return jsonify({"success": False, "erro": str(e)}), 500
+
+        return jsonify({
+            "success": False,
+            "erro": str(e)
+        }), 500
+
     finally:
+
         if os.path.exists(filepath):
             os.remove(filepath)
 
