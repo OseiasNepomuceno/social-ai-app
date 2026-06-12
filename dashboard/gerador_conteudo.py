@@ -45,33 +45,57 @@ class GeradorConteudo:
         }
     
     def _analisar_com_picoclaw(self, caminho_arquivo, tipo):
-        """Analisa arquivo e extrai informações principais"""
-        
-        prompt = f"""Analise este conteúdo de {tipo} sobre Marketing Digital:
+    """Analisa arquivo com tratamento melhorado de erros"""
+    
+    prompt = f"""Analise este conteúdo de {tipo} sobre Marketing Digital:
 
 ARQUIVO: {caminho_arquivo}
 
-Extraia APENAS em JSON (sem markdown):
+Extraia APENAS em JSON puro (sem markdown, sem backticks):
 {{
   "titulo_principal": "título do conteúdo",
   "tema_principal": "tema abordado",
   "pontos_chave": ["ponto 1", "ponto 2", "ponto 3"],
   "target_audience": "público-alvo",
-  "tone": "tom do conteúdo (educacional/informal/profissional)",
+  "tone": "tom do conteúdo",
   "cta_principal": "call-to-action"
 }}"""
-        
-        resultado = chamar_picoclaw(prompt, timeout=60)
+    
+    try:
+        resultado = chamar_picoclaw(prompt, timeout=120)
         
         if not resultado.get("success"):
+            print(f"⚠️ PicoClaw retornou sucesso=False: {resultado}")
             return None
         
-        try:
-            resposta = resultado["conteudo"]
-            resposta = resposta.replace("```json", "").replace("```", "").strip()
-            return json.loads(resposta)
-        except:
+        resposta = resultado["conteudo"]
+        
+        # Debug: imprimir resposta bruta
+        print(f"📄 Resposta bruta do PicoClaw ({len(resposta)} chars):")
+        print(resposta[:500])  # Primeiros 500 chars
+        
+        # Limpar resposta
+        resposta = resposta.replace("```json", "").replace("```", "").strip()
+        
+        # Tentar parse JSON
+        dados = json.loads(resposta)
+        
+        # Validar campos obrigatórios
+        campos_obrig = ["titulo_principal", "tema_principal", "pontos_chave"]
+        if not all(campo in dados for campo in campos_obrig):
+            print(f"⚠️ JSON incompleto. Campos encontrados: {list(dados.keys())}")
             return None
+        
+        print(f"✅ Análise bem-sucedida!")
+        return dados
+        
+    except json.JSONDecodeError as e:
+        print(f"❌ Erro ao fazer parse JSON: {e}")
+        print(f"   Resposta: {resposta[:200]}")
+        return None
+    except Exception as e:
+        print(f"❌ Erro na análise: {e}")
+        return None
     
     def _gerar_clips(self, analise, modulo):
         """Gera 2-3 clips de 15-30 segundos"""
