@@ -5,22 +5,28 @@ import unicodedata
 import os
 import requests
 
+from datetime import datetime, timedelta
+
 PICOCLAW_BIN = '/opt/render/project/src/tools/picoclaw'
 
 # ─────────────────────────────────────────────
 # OPORTUNIDADES TOTAIS
 # ─────────────────────────────────────────────
 
+# A chave configurada no Render
+API_TOKEN = os.getenv("API_TOKEN_TRANSPARENCIA")
+
 def buscar_oportunidades_totais():
     """
-    Busca Licitações (PNCP) e Programas (TransfereGov) em uma única operação.
+    Função que agrega PNCP (Licitações) e TransfereGov (Fomento).
+    Removemos filtros de modalidade para trazer TUDO.
     """
     oportunidades = []
     
-    # 1. Busca PNCP (Removido o filtro 8 para trazer todas as modalidades)
+    # 1. Busca PNCP (Licitações)
     url_pncp = "https://pncp.gov.br/api/consulta/v1/contratacoes/publicacao"
     params = {
-        "dataInicial": (datetime.now() - timedelta(days=7)).strftime("%Y%m%d"),
+        "dataInicial": (datetime.now() - timedelta(days=30)).strftime("%Y%m%d"),
         "dataFinal": datetime.now().strftime("%Y%m%d"),
         "pagina": 1,
         "tamanhoPagina": 50
@@ -28,17 +34,25 @@ def buscar_oportunidades_totais():
     try:
         r_pncp = requests.get(url_pncp, params=params, timeout=15)
         if r_pncp.status_code == 200:
-            oportunidades.extend(r_pncp.json().get("data", []))
+            # Marcamos como tipo 'governo'
+            dados = r_pncp.json().get("data", [])
+            for item in dados:
+                item['tipo'] = 'governo'
+                oportunidades.append(item)
     except Exception as e:
         print(f"Erro PNCP: {e}")
 
     # 2. Busca Programas Federais (TransfereGov)
     url_prog = "https://api.portaldatransparencia.gov.br/api-de-dados/programas"
-    headers = {"chave-api-dados": os.getenv("API_TOKEN_TRANSPARENCIA")}
+    headers = {"chave-api-dados": API_TOKEN}
     try:
         r_prog = requests.get(url_prog, headers=headers, timeout=15)
         if r_prog.status_code == 200:
-            oportunidades.extend(r_prog.json())
+            # Marcamos como tipo 'fomento'
+            dados = r_prog.json()
+            for item in dados:
+                item['tipo'] = 'fomento'
+                oportunidades.append(item)
     except Exception as e:
         print(f"Erro TransfereGov: {e}")
         
