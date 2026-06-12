@@ -74,6 +74,10 @@ app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
+
+# Aumentar timeout do Gunicorn
+os.environ['GUNICORN_CMD_ARGS'] = '--timeout 120 --workers 1'
+
 # ===== ADICIONAR ESSAS ROTAS NO APP.PY =====
 
 @app.route("/gerar-conteudo")
