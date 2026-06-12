@@ -6,6 +6,12 @@ import mercadopago
 import urllib.parse
 import unicodedata
 import sys
+
+# ===== ADICIONAR ISSO NO TOPO DO SEU app.py =====
+
+import uuid
+import threading
+from dashboard.gerador_background import ProcessadorBackground
 # ===== IMPORTAR NO TOPO DO APP.PY =====
 import time
 from werkzeug.utils import secure_filename
@@ -80,6 +86,111 @@ app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 # Aumentar timeout do Gunicorn
 os.environ['GUNICORN_CMD_ARGS'] = '--timeout 120 --workers 1'
 
+
+# Inicializar processador
+processador = ProcessadorBackground()
+
+UPLOAD_FOLDER = '/tmp/coregov-uploads'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+# ===== ADICIONAR ESSAS ROTAS NO SEU app.py =====
+
+@app.route("/gerar-conteudo")
+def pagina_gerar_conteudo():
+    """Dashboard para gerar conteúdos"""
+    return render_template("gerar_conteudo.html")
+
+@app.route("/trilhas")
+def pagina_trilhas():
+    """Página de trilhas de conhecimento"""
+    return render_template("trilha.html")
+
+@app.route("/api/processar-conteudo", methods=["POST"])
+def processar_conteudo():
+    """
+    VERSÃO OTIMIZADA: Retorna imediatamente (202)
+    Processamento acontece em background thread
+    """
+    if 'file' not in request.files:
+        return jsonify({"success": False, "erro": "Arquivo não enviado"}), 400
+    
+    try:
+        file = request.files['file']
+        tipo = request.form.get('tipo', 'video')
+        modulo = int(request.form.get('modulo', 1))
+        
+        # Validar arquivo
+        if not file or file.filename == '':
+            return jsonify({"success": False, "erro": "Arquivo inválido"}), 400
+        
+        # Salvar arquivo temporário
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(UPLOAD_FOLDER, f"{time.time()}_{filename}")
+        file.save(filepath)
+        
+        # Gerar ID único para rastreamento
+        conteudo_id = str(uuid.uuid4())
+        
+        print(f"\n{'='*60}")
+        print(f"📤 NOVO PROCESSAMENTO INICIADO")
+        print(f"   ID: {conteudo_id}")
+        print(f"   Arquivo: {filename}")
+        print(f"   Tipo: {tipo}")
+        print(f"   Módulo: {modulo}")
+        print(f"{'='*60}\n")
+        
+        # **INICIAR PROCESSAMENTO EM BACKGROUND (não bloqueia)**
+        processador.processar_async(filepath, tipo, modulo, conteudo_id)
+        
+        # **RETORNAR IMEDIATAMENTE (202 = Accepted)**
+        return jsonify({
+            "success": True,
+            "conteudo_id": conteudo_id,
+            "status": "processando",
+            "mensagem": "✅ Processamento iniciado! Acompanhe o progresso abaixo.",
+            "progresso": 0
+        }), 202
+    
+    except Exception as e:
+        print(f"❌ ERRO na requisição: {str(e)}")
+        return jsonify({
+            "success": False,
+            "erro": str(e)
+        }), 500
+
+@app.route("/api/status-processamento/<conteudo_id>", methods=["GET"])
+def obter_status_processamento(conteudo_id):
+    """
+    Retorna status atual do processamento
+    Cliente faz polling para atualizar progresso
+    """
+    status = processador.obter_status(conteudo_id)
+    
+    return jsonify({
+        "success": True,
+        "conteudo_id": conteudo_id,
+        "status": status.get("status", "desconhecido"),
+        "progresso": status.get("progresso", 0),
+        "mensagem": status.get("mensagem", ""),
+        "conteudos": status.get("conteudos"),
+        "inicio": status.get("inicio"),
+        "fim": status.get("fim")
+    }), 200
+
+# ===== LIMPEZA PERIÓDICA DE CACHE (opcional) =====
+
+def limpar_cache_periodico():
+    """Remove itens concluídos do cache a cada 5 minutos"""
+    while True:
+        time.sleep(300)  # 5 minutos
+        processador.limpar_concluidos()
+
+# Iniciar thread de limpeza
+cleanup_thread = threading.Thread(target=limpar_cache_periodico, daemon=True)
+cleanup_thread.start()
+print("🧹 Thread de limpeza de cache iniciada")
+
+
 # ===== ADICIONAR ESSAS ROTAS NO APP.PY TRANSFEREGOV =====
 
 
@@ -116,6 +227,9 @@ def iniciar_monitoramento():
     # ... código para persistir o resultado ...
     
     return jsonify({"status": "sucesso", "mensagem": "Varredura concluída para o nicho: " + nicho})
+
+
+
     
 
 # ===== ADICIONAR ESSAS ROTAS NO APP.PY =====
