@@ -6,8 +6,10 @@ import mercadopago
 import urllib.parse
 import unicodedata
 import sys
-import os
+# ===== IMPORTAR NO TOPO DO APP.PY =====
 import time
+from werkzeug.utils import secure_filename
+from gerador_conteudo import GeradorConteudo
 from werkzeug.utils import secure_filename
 from dashboard.gerador_conteudo import GeradorConteudo
 from werkzeug.utils import secure_filename
@@ -54,67 +56,50 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from gerador_conteudo import GeradorConteudo
 
+
 UPLOAD_FOLDER = '/tmp/coregov-uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# ===== ROTAS TRILHA =====
+# ===== ADICIONAR ESSAS ROTAS NO APP.PY =====
 
 @app.route("/gerar-conteudo")
 def pagina_gerar_conteudo():
+    """Dashboard para gerar conteúdos"""
     return render_template("gerar_conteudo.html")
-
 
 @app.route("/trilhas")
 def pagina_trilhas():
-    return render_template("trilhas.html")
-
+    """Página de trilhas de conhecimento"""
+    return render_template("trilha.html")
 
 @app.route("/api/processar-conteudo", methods=["POST"])
 def processar_conteudo():
-
+    """Processa vídeo/imagem com PicoClaw"""
     if 'file' not in request.files:
-        return jsonify({
-            "success": False,
-            "erro": "Arquivo não enviado"
-        }), 400
-
-    file = request.files['file']
-
-    tipo = request.form.get('tipo', 'video')
-    modulo = int(request.form.get('modulo', 1))
-
-    filename = secure_filename(file.filename)
-
-    filepath = os.path.join(
-        UPLOAD_FOLDER,
-        f"{time.time()}_{filename}"
-    )
-
-    file.save(filepath)
-
+        return jsonify({"success": False, "erro": "Arquivo não enviado"}), 400
+    
     try:
-
+        file = request.files['file']
+        tipo = request.form.get('tipo', 'video')
+        modulo = int(request.form.get('modulo', 1))
+        
+        if not file or file.filename == '':
+            return jsonify({"success": False, "erro": "Arquivo inválido"}), 400
+        
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(UPLOAD_FOLDER, f"{time.time()}_{filename}")
+        file.save(filepath)
+        
         gerador = GeradorConteudo()
-
-        resultado = gerador.processar_arquivo(
-            filepath,
-            tipo,
-            modulo
-        )
-
+        resultado = gerador.processar_arquivo(filepath, tipo, modulo)
+        
         return jsonify(resultado)
-
+        
     except Exception as e:
-
-        print(f"❌ Erro: {e}")
-
-        return jsonify({
-            "success": False,
-            "erro": str(e)
-        }), 500
-
+        print(f"❌ Erro ao processar: {e}")
+        return jsonify({"success": False, "erro": str(e)}), 500
+    
     finally:
-
         if os.path.exists(filepath):
             os.remove(filepath)
 
