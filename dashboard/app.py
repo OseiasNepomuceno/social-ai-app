@@ -84,28 +84,37 @@ os.environ['GUNICORN_CMD_ARGS'] = '--timeout 120 --workers 1'
 
 @app.route('/gerar/monitorar-editais', methods=['POST'])
 def iniciar_monitoramento():
-    # 1. Puxa tudo
+    # 1. Captura o nicho enviado pelo JavaScript (do input-nicho)
+    # Se o cliente deixar vazio, definimos como 'Geral' para a IA não se perder
+    dados_recebidos = request.get_json()
+    nicho = dados_recebidos.get("nicho", "Geral")
+    
+    # 2. Puxa tudo
     dados_totais = buscar_oportunidades_totais()
     
-    # 2. Prompt Inteligente de Merge
+    # 3. Prompt Inteligente e Dinâmico
+    # Agora o nicho é uma variável {nicho} injetada na hora
     prompt = f"""
     Você é o analista CoreGov. Analise esta lista mista de oportunidades (Licitações do PNCP e Programas Federais de Fomento).
-    Identifique quais são RELEVANTES para uma empresa do nicho de tecnologia/automação.
+    
+    Identifique quais são RELEVANTES para uma empresa do nicho: '{nicho}'.
     
     Dados: {str(dados_totais)[:4000]}
     
-    Responda em formato de lista, separando: 
-    - Oportunidades de Licitação (PNCP)
-    - Oportunidades de Captação (Programas Federais)
-    Para cada item, dê o resumo e o link de acesso.
+    Responda em formato de JSON estruturado, classificando cada item em:
+    - tipo: 'governo' (para Licitações)
+    - tipo: 'fomento' (para Programas Federais)
+    
+    Para cada item, forneça: orgao, objeto, valor_estimado, link e tipo.
     """
     
-    # 3. Dispara a IA
+    # 4. Dispara a IA
     resultado = chamar_picoclaw(prompt)
     
-    # 4. Salva o resultado no seu banco de dados ou variável de cache
-    # para o front-end ler depois
-    return jsonify({"status": "sucesso", "mensagem": "Varredura concluída"})
+    # 5. Salva o resultado (Certifique-se que o seu banco/cache salva esse JSON retornado)
+    # ... código para persistir o resultado ...
+    
+    return jsonify({"status": "sucesso", "mensagem": "Varredura concluída para o nicho: " + nicho})
     
 
 # ===== ADICIONAR ESSAS ROTAS NO APP.PY =====
