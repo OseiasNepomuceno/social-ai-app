@@ -105,6 +105,19 @@ function dispararBuscaEditais() {
     });
 }
 
+
+    // Dentro da sua função dispararBuscaEditais, você pode chamar os dois endpoints
+async function dispararBuscaEditais() {
+    // ... seu código de carregamento ...
+
+    // Busca Licitações (PNCP)
+    const resEditais = await fetch('/api/verificar-editais');
+    // Busca Recursos (TransfereGov/Programas)
+    const resRecursos = await fetch('/api/monitor-recursos');
+    
+    // ... processa os dois resultados e mostra na tela ...
+}
+
 function carregarOportunidades(nichoBusca = null) {
     const resultadoDiv = document.getElementById('resultado-editais');
     
