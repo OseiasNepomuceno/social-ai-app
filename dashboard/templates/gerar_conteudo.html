@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container-fluid" style="padding: 24px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); min-height: 100vh;">
+<div class="container-fluid" style="padding: 24px; font-family: sans-serif; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); min-height: 100vh;">
     
-    <div class="dashboard-header" style="margin-bottom: 30px;">
+    <div class="dashboard-header" style="margin-bottom: 25px;">
         <h2 style="color: #ffffff; margin-bottom: 5px; font-size: 2rem; font-weight: 700;">📹 Gerador de Conteúdo</h2>
         <p style="color: #cbd5e1; margin-top: 0; font-size: 1rem;">Processe vídeos/imagens e gere conteúdos automaticamente para trilhas, TikTok e LinkedIn</p>
     </div>
@@ -47,25 +47,34 @@
         </button>
     </div>
 
-    <!-- STATUS DE PROCESSAMENTO -->
-    <div id="processing-status" style="display: none; background: linear-gradient(135deg, #1e3a8a 0%, #0c4a6e 100%); border: 2px solid #0ea5e9; padding: 20px; border-radius: 12px; margin-bottom: 30px;">
-        <div style="display: flex; align-items: center; margin-bottom: 15px;">
+    <!-- STATUS EM TEMPO REAL -->
+    <div id="processing-status" style="display: none; background: linear-gradient(135deg, #1e3a8a 0%, #0c4a6e 100%); border: 2px solid #0ea5e9; padding: 24px; border-radius: 12px; margin-bottom: 30px;">
+        <div style="display: flex; align-items: center; margin-bottom: 20px;">
             <div style="animation: spin 1s linear infinite; margin-right: 12px; color: #0ea5e9;">
                 <i class="fa-solid fa-spinner" style="font-size: 1.5rem;"></i>
             </div>
             <div>
                 <p style="color: #93c5fd; font-weight: 600; margin: 0;">Processando com PicoClaw...</p>
-                <p style="color: #cbd5e1; margin: 5px 0 0 0; font-size: 0.9rem;" id="status-text">Analisando conteúdo...</p>
+                <p style="color: #cbd5e1; margin: 5px 0 0 0; font-size: 0.9rem;" id="status-text">Iniciando...</p>
             </div>
         </div>
-        <div style="background: #0c4a6e; border-radius: 4px; overflow: hidden; height: 6px;">
+
+        <!-- BARRA DE PROGRESSO -->
+        <div style="background: #0c4a6e; border-radius: 8px; overflow: hidden; height: 8px; margin-bottom: 15px;">
             <div id="progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #0ea5e9 0%, #06b6d4 100%); transition: width 0.3s;"></div>
         </div>
+
+        <p style="color: #cbd5e1; margin: 0; font-size: 0.9rem;">
+            <strong id="progress-text">0%</strong> - <span id="status-mensagem">Iniciando...</span>
+        </p>
     </div>
 
-    <!-- CONTEÚDOS GERADOS -->
-    <div id="conteudos-gerados" style="display: none;">
-        <h3 style="color: #60a5fa; margin-bottom: 20px; font-size: 1.3rem;">✨ Conteúdos Gerados Automaticamente</h3>
+    <!-- RESULTADO -->
+    <div id="resultado-editais" style="display: none;">
+        <div style="background: linear-gradient(135deg, #065f46 0%, #047857 100%); border: 2px solid #10b981; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+            <h3 style="color: #10b981; margin: 0 0 10px 0;">✅ Processamento Concluído!</h3>
+            <p style="color: #d1fae5; margin: 0;">Seu conteúdo foi gerado com sucesso. Confira abaixo os resultados.</p>
+        </div>
 
         <!-- CLIPS -->
         <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border: 2px solid #10b981; padding: 24px; border-radius: 12px; margin-bottom: 20px;">
@@ -90,41 +99,13 @@
         </div>
 
         <!-- POSTS LINKEDIN -->
-        <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border: 2px solid #0ea5e9; padding: 24px; border-radius: 12px; margin-bottom: 20px;">
+        <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border: 2px solid #0ea5e9; padding: 24px; border-radius: 12px;">
             <h4 style="color: #0ea5e9; margin-top: 0; display: flex; align-items: center;"><i class="fa-brands fa-linkedin" style="margin-right: 8px;"></i> Post LinkedIn</h4>
             <div style="background: #0f172a; padding: 16px; border-radius: 8px; border-left: 4px solid #0ea5e9;">
                 <p id="linkedin-caption" style="color: #cbd5e1; line-height: 1.6; margin: 0;"></p>
                 <button onclick="copiarTexto('linkedin-caption')" style="margin-top: 12px; padding: 8px 16px; background: #0ea5e9; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">📋 Copiar Texto</button>
             </div>
         </div>
-
-        <!-- METADATA -->
-        <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border: 2px solid #f59e0b; padding: 24px; border-radius: 12px; margin-bottom: 20px;">
-            <h4 style="color: #f59e0b; margin-top: 0; display: flex; align-items: center;"><i class="fa-solid fa-tag" style="margin-right: 8px;"></i> Metadata</h4>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                <div>
-                    <p style="color: #94a3b8; margin: 0 0 5px 0; font-size: 0.9rem;">Título:</p>
-                    <input type="text" id="meta-titulo" style="width: 100%; padding: 10px; background: #0f172a; border: 1px solid #334155; color: #e0e7ff; border-radius: 6px;">
-                </div>
-                <div>
-                    <p style="color: #94a3b8; margin: 0 0 5px 0; font-size: 0.9rem;">Slug (URL):</p>
-                    <input type="text" id="meta-slug" style="width: 100%; padding: 10px; background: #0f172a; border: 1px solid #334155; color: #e0e7ff; border-radius: 6px;">
-                </div>
-            </div>
-            <div style="margin-top: 15px;">
-                <p style="color: #94a3b8; margin: 0 0 5px 0; font-size: 0.9rem;">Descrição:</p>
-                <textarea id="meta-descricao" style="width: 100%; padding: 10px; background: #0f172a; border: 1px solid #334155; color: #e0e7ff; border-radius: 6px; min-height: 80px; font-family: monospace; font-size: 0.85rem;"></textarea>
-            </div>
-            <div style="margin-top: 15px;">
-                <p style="color: #94a3b8; margin: 0 0 5px 0; font-size: 0.9rem;">Tags (separadas por vírgula):</p>
-                <input type="text" id="meta-tags" style="width: 100%; padding: 10px; background: #0f172a; border: 1px solid #334155; color: #e0e7ff; border-radius: 6px;">
-            </div>
-        </div>
-
-        <!-- BOTÃO PUBLICAR -->
-        <button id="btn-publicar" style="width: 100%; padding: 16px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 1.1rem; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);">
-            ✅ Publicar em Todos os Canais
-        </button>
     </div>
 
 </div>
@@ -155,9 +136,15 @@
     box-shadow: 0 0 12px rgba(96, 165, 250, 0.2);
 }
 
-#btn-processar:hover, #btn-publicar:hover {
+#btn-processar:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6);
+}
+
+#btn-processar:disabled {
+    background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+    cursor: not-allowed;
+    opacity: 0.6;
 }
 </style>
 
@@ -167,6 +154,7 @@ const fileInput = document.getElementById('file-input');
 const fileInfo = document.getElementById('file-info');
 const fileName = document.getElementById('file-name');
 let selectedFile = null;
+let conteudoIdAtual = null;
 
 // Drag and drop
 dropZone.addEventListener('click', () => fileInput.click());
@@ -208,8 +196,10 @@ document.getElementById('btn-processar').addEventListener('click', async () => {
     formData.append('tipo', document.getElementById('tipo-conteudo').value);
     formData.append('modulo', document.getElementById('modulo-trilha').value);
 
-    document.getElementById('processing-status').style.display = 'block';
-    
+    const btn = document.getElementById('btn-processar');
+    btn.disabled = true;
+    btn.innerText = '⏳ Enviando arquivo...';
+
     try {
         const response = await fetch('/api/processar-conteudo', {
             method: 'POST',
@@ -219,18 +209,61 @@ document.getElementById('btn-processar').addEventListener('click', async () => {
         const data = await response.json();
 
         if (data.success) {
-            exibirConteudosGerados(data.conteudos);
-            document.getElementById('conteudos-gerados').style.display = 'block';
+            conteudoIdAtual = data.conteudo_id;
+            document.getElementById('processing-status').style.display = 'block';
+            document.getElementById('resultado-editais').style.display = 'none';
+            
+            // Iniciar polling de status
+            aguardarProcessamento(conteudoIdAtual);
         } else {
             alert('Erro: ' + data.erro);
+            btn.disabled = false;
+            btn.innerText = '🚀 Processar com PicoClaw';
         }
     } catch (error) {
         console.error('Erro:', error);
         alert('Erro ao processar arquivo');
+        btn.disabled = false;
+        btn.innerText = '🚀 Processar com PicoClaw';
     }
-
-    document.getElementById('processing-status').style.display = 'none';
 });
+
+// Polling de status
+function aguardarProcessamento(conteudoId) {
+    const interval = setInterval(async () => {
+        try {
+            const response = await fetch(`/api/status-processamento/${conteudoId}`);
+            const data = await response.json();
+
+            // Atualizar barra de progresso
+            document.getElementById('progress-bar').style.width = data.progresso + '%';
+            document.getElementById('progress-text').textContent = data.progresso + '%';
+            document.getElementById('status-text').textContent = data.mensagem;
+            document.getElementById('status-mensagem').textContent = data.mensagem;
+
+            if (data.status === 'concluido') {
+                clearInterval(interval);
+                exibirConteudosGerados(data.conteudos);
+                document.getElementById('processing-status').style.display = 'none';
+                document.getElementById('resultado-editais').style.display = 'block';
+                
+                const btn = document.getElementById('btn-processar');
+                btn.disabled = false;
+                btn.innerText = '🚀 Processar com PicoClaw';
+            } else if (data.status === 'erro') {
+                clearInterval(interval);
+                alert('Erro no processamento: ' + data.mensagem);
+                document.getElementById('processing-status').style.display = 'none';
+                
+                const btn = document.getElementById('btn-processar');
+                btn.disabled = false;
+                btn.innerText = '🚀 Processar com PicoClaw';
+            }
+        } catch (error) {
+            console.error('Erro ao obter status:', error);
+        }
+    }, 1000); // Atualizar a cada 1 segundo
+}
 
 function exibirConteudosGerados(conteudos) {
     // Clips
@@ -257,12 +290,6 @@ function exibirConteudosGerados(conteudos) {
 
     // LinkedIn
     document.getElementById('linkedin-caption').textContent = conteudos.linkedin_caption;
-
-    // Metadata
-    document.getElementById('meta-titulo').value = conteudos.metadata.titulo;
-    document.getElementById('meta-slug').value = conteudos.metadata.slug;
-    document.getElementById('meta-descricao').value = conteudos.metadata.descricao;
-    document.getElementById('meta-tags').value = conteudos.metadata.tags.join(', ');
 }
 
 function copiarTexto(elementId) {
@@ -271,11 +298,6 @@ function copiarTexto(elementId) {
         alert('✅ Copiado!');
     });
 }
-
-document.getElementById('btn-publicar').addEventListener('click', async () => {
-    // Implementar publicação
-    alert('🚀 Publicação em desenvolvimento...');
-});
 </script>
 
 {% endblock %}
