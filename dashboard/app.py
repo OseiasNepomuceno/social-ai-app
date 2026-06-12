@@ -5,9 +5,11 @@ import requests
 import mercadopago
 import urllib.parse
 import unicodedata
-import os
-from dashboard.gerador_conteudo import GeradorConteudo
+import sys
+# ===== IMPORTAR NO TOPO DO APP.PY =====
+import time
 from werkzeug.utils import secure_filename
+from .gerador_conteudo import GeradorConteudo
 from flask import (
     Flask,
     render_template,
@@ -30,8 +32,8 @@ from dashboard.agents.analisador_media import gerar_relatorio_completo
 from services.supabase_storage import upload_image
 from dashboard.agents.media_selector import selecionar_imagem
 from dashboard.ia_engine import gerar_conteudo
-from dashboard.picoclaw_agent import gerar_post_picoclaw
 from dashboard.picoclaw_agent import gerar_post_picoclaw, inferir_nicho
+from dashboard.picoclawsite_flask import registrar_rotas_picoclaw
 
 #Segurança por Telegram
 from dashboard.telegram_alerts import (
@@ -41,6 +43,15 @@ from dashboard.telegram_alerts import (
     alerta_pagamento_aprovado,
     alerta_erro_critico
 )
+
+
+
+# Adicionar caminho para importar do trilha
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
+
+UPLOAD_FOLDER = '/tmp/coregov-uploads'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # =========================
 # CONFIGURAÇÃO DO FLASK
@@ -63,48 +74,50 @@ app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
-
-UPLOAD_FOLDER = '/tmp/coregov-uploads'
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+# ===== ADICIONAR ESSAS ROTAS NO APP.PY =====
 
 @app.route("/gerar-conteudo")
 def pagina_gerar_conteudo():
+    """Dashboard para gerar conteúdos"""
     return render_template("gerar_conteudo.html")
 
 @app.route("/trilhas")
 def pagina_trilhas():
+    """Página de trilhas de conhecimento"""
     return render_template("trilhas.html")
 
 @app.route("/api/processar-conteudo", methods=["POST"])
 def processar_conteudo():
+    """Processa vídeo/imagem com PicoClaw"""
     if 'file' not in request.files:
         return jsonify({"success": False, "erro": "Arquivo não enviado"}), 400
     
-    file = request.files['file']
-    tipo = request.form.get('tipo', 'video')
-    modulo = int(request.form.get('modulo', 1))
-    
-    filename = secure_filename(file.filename)
-    filepath = os.path.join(UPLOAD_FOLDER, f"{time.time()}_{filename}")
-    file.save(filepath)
-    
     try:
+        file = request.files['file']
+        tipo = request.form.get('tipo', 'video')
+        modulo = int(request.form.get('modulo', 1))
+        
+        if not file or file.filename == '':
+            return jsonify({"success": False, "erro": "Arquivo inválido"}), 400
+        
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(UPLOAD_FOLDER, f"{time.time()}_{filename}")
+        file.save(filepath)
+        
         gerador = GeradorConteudo()
         resultado = gerador.processar_arquivo(filepath, tipo, modulo)
+        
         return jsonify(resultado)
+        
     except Exception as e:
+        print(f"❌ Erro ao processar: {e}")
         return jsonify({"success": False, "erro": str(e)}), 500
+    
     finally:
         if os.path.exists(filepath):
             os.remove(filepath)
-PASSO 3: Criar tabelas no Supabase (opcional, para salvar histórico)
-sqlCREATE TABLE conteudos_gerados (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  tipo TEXT,
-  modulo INTEGER,
-  conteudos JSONB,
-  data_criacao TIMESTAMP DEFAULT NOW()
-);
+
+
 
 
 # =========================
@@ -200,6 +213,12 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+
+registrar_rotas_picoclaw(
+    app,
+    supabase
+)
 
 # =========================
 # MERCADO PAGO
