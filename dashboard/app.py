@@ -54,8 +54,6 @@ from dashboard.telegram_alerts import (
 # Adicionar caminho para importar do trilha
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from gerador_conteudo import GeradorConteudo
-
 
 UPLOAD_FOLDER = '/tmp/coregov-uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
