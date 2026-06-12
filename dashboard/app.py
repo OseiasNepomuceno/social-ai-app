@@ -81,21 +81,32 @@ os.environ['GUNICORN_CMD_ARGS'] = '--timeout 120 --workers 1'
 
 # ===== ADICIONAR ESSAS ROTAS NO APP.PY TRANSFEREGOV =====
 
-@app.route('/api/monitor-recursos', methods=['GET'])
-def monitor_recursos():
-    # 1. Busca programas brutos do governo
-    programas = buscar_programas_federais()
+
+@app.route('/gerar/monitorar-editais', methods=['POST'])
+def iniciar_monitoramento():
+    # 1. Puxa tudo
+    dados_totais = buscar_oportunidades_totais()
     
-    # 2. Envia para o DeepSeek analisar se há algo relevante para o seu nicho
-    # (Usamos o mesmo conceito de análise que você já tem para os editais)
-    prompt = f"Analise esta lista de programas federais e identifique oportunidades de captação de recursos para uma empresa de tecnologia/automação: {str(programas)[:3000]}"
+    # 2. Prompt Inteligente de Merge
+    prompt = f"""
+    Você é o analista CoreGov. Analise esta lista mista de oportunidades (Licitações do PNCP e Programas Federais de Fomento).
+    Identifique quais são RELEVANTES para uma empresa do nicho de tecnologia/automação.
     
+    Dados: {str(dados_totais)[:4000]}
+    
+    Responda em formato de lista, separando: 
+    - Oportunidades de Licitação (PNCP)
+    - Oportunidades de Captação (Programas Federais)
+    Para cada item, dê o resumo e o link de acesso.
+    """
+    
+    # 3. Dispara a IA
     resultado = chamar_picoclaw(prompt)
     
-    return jsonify({
-        "status": "sucesso",
-        "analise_ia": resultado.get("conteudo", "Nenhuma oportunidade relevante encontrada.")
-    })
+    # 4. Salva o resultado no seu banco de dados ou variável de cache
+    # para o front-end ler depois
+    return jsonify({"status": "sucesso", "mensagem": "Varredura concluída"})
+    
 
 # ===== ADICIONAR ESSAS ROTAS NO APP.PY =====
 
