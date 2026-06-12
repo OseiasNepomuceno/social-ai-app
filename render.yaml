@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: social-ai
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --timeout 300 --workers 1 --max-requests 1000 --worker-class sync dashboard.app:app
+    healthCheckPath: /
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.14
+      - key: PORT
+        value: 10000
