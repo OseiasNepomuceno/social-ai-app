@@ -84,7 +84,7 @@ def pagina_gerar_conteudo():
 @app.route("/trilhas")
 def pagina_trilhas():
     """Página de trilhas de conhecimento"""
-    return render_template("trilha.html")
+    return render_template("trilhas.html")
 
 @app.route("/api/processar-conteudo", methods=["POST"])
 def processar_conteudo():
