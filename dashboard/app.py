@@ -35,7 +35,7 @@ from dashboard.ia_engine import gerar_conteudo
 from dashboard.picoclaw_agent import gerar_post_picoclaw, inferir_nicho
 from dashboard.picoclawsite_flask import registrar_rotas_picoclaw
 # Como estão no mesmo diretório, use a importação direta:
-from picoclaw_agent import buscar_oportunidades_totais, chamar_picoclaw
+from .picoclaw_agent import buscar_oportunidades_totais, chamar_picoclaw
 
 #Segurança por Telegram
 from dashboard.telegram_alerts import (
