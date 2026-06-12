@@ -2,8 +2,42 @@ import re
 import subprocess
 import difflib
 import unicodedata
+import os
+import requests
 
 PICOCLAW_BIN = '/opt/render/project/src/tools/picoclaw'
+
+
+# ─────────────────────────────────────────────
+# API PORTAL DA TRANSPARENCIA
+# ─────────────────────────────────────────────
+
+API_TOKEN = os.getenv("API_TOKEN_TRANSPARENCIA")
+
+def buscar_programas_federais():
+    if not API_TOKEN:
+        print("❌ ERRO: Token não configurado!")
+        return []
+        
+    url = "https://api.portaldatransparencia.gov.br/api-de-dados/programas"
+    
+    # É AQUI que o header é montado conforme a instrução do site:
+    headers = {
+        "chave-api-dados": API_TOKEN
+    }
+    
+    try:
+        # A requisição passa o header como um dicionário
+        response = requests.get(url, headers=headers, timeout=10)
+        
+        if response.status_code == 200:
+            return response.json()
+        else:
+            print(f"❌ Erro na API: {response.status_code} - {response.text}")
+            return []
+    except Exception as e:
+        print(f"❌ Erro ao conectar: {e}")
+        return []
 
 
 # ─────────────────────────────────────────────
