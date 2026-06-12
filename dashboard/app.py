@@ -34,6 +34,7 @@ from dashboard.agents.media_selector import selecionar_imagem
 from dashboard.ia_engine import gerar_conteudo
 from dashboard.picoclaw_agent import gerar_post_picoclaw, inferir_nicho
 from dashboard.picoclawsite_flask import registrar_rotas_picoclaw
+from picoclaw_agent import buscar_programas_federais, chamar_picoclaw # Certifique-se de importar o que for necessário
 
 #Segurança por Telegram
 from dashboard.telegram_alerts import (
@@ -77,6 +78,24 @@ app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 # Aumentar timeout do Gunicorn
 os.environ['GUNICORN_CMD_ARGS'] = '--timeout 120 --workers 1'
+
+# ===== ADICIONAR ESSAS ROTAS NO APP.PY TRANSFEREGOV =====
+
+@app.route('/api/monitor-recursos', methods=['GET'])
+def monitor_recursos():
+    # 1. Busca programas brutos do governo
+    programas = buscar_programas_federais()
+    
+    # 2. Envia para o DeepSeek analisar se há algo relevante para o seu nicho
+    # (Usamos o mesmo conceito de análise que você já tem para os editais)
+    prompt = f"Analise esta lista de programas federais e identifique oportunidades de captação de recursos para uma empresa de tecnologia/automação: {str(programas)[:3000]}"
+    
+    resultado = chamar_picoclaw(prompt)
+    
+    return jsonify({
+        "status": "sucesso",
+        "analise_ia": resultado.get("conteudo", "Nenhuma oportunidade relevante encontrada.")
+    })
 
 # ===== ADICIONAR ESSAS ROTAS NO APP.PY =====
 
