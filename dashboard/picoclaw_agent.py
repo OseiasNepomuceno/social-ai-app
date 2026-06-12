@@ -7,6 +7,43 @@ import requests
 
 PICOCLAW_BIN = '/opt/render/project/src/tools/picoclaw'
 
+# ─────────────────────────────────────────────
+# OPORTUNIDADES TOTAIS
+# ─────────────────────────────────────────────
+
+def buscar_oportunidades_totais():
+    """
+    Busca Licitações (PNCP) e Programas (TransfereGov) em uma única operação.
+    """
+    oportunidades = []
+    
+    # 1. Busca PNCP (Removido o filtro 8 para trazer todas as modalidades)
+    url_pncp = "https://pncp.gov.br/api/consulta/v1/contratacoes/publicacao"
+    params = {
+        "dataInicial": (datetime.now() - timedelta(days=7)).strftime("%Y%m%d"),
+        "dataFinal": datetime.now().strftime("%Y%m%d"),
+        "pagina": 1,
+        "tamanhoPagina": 50
+    }
+    try:
+        r_pncp = requests.get(url_pncp, params=params, timeout=15)
+        if r_pncp.status_code == 200:
+            oportunidades.extend(r_pncp.json().get("data", []))
+    except Exception as e:
+        print(f"Erro PNCP: {e}")
+
+    # 2. Busca Programas Federais (TransfereGov)
+    url_prog = "https://api.portaldatransparencia.gov.br/api-de-dados/programas"
+    headers = {"chave-api-dados": os.getenv("API_TOKEN_TRANSPARENCIA")}
+    try:
+        r_prog = requests.get(url_prog, headers=headers, timeout=15)
+        if r_prog.status_code == 200:
+            oportunidades.extend(r_prog.json())
+    except Exception as e:
+        print(f"Erro TransfereGov: {e}")
+        
+    return oportunidades
+
 
 # ─────────────────────────────────────────────
 # API PORTAL DA TRANSPARENCIA
