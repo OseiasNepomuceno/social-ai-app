@@ -908,7 +908,7 @@ def ia():
 
 def verificar_e_atualizar_pagamento(user_id):
     try:
-        print(f"🔎 VERIFICANDO PAGAMENTOS - USER: {user_id}")
+        #print(f"🔎 VERIFICANDO PAGAMENTOS - USER: {user_id}")
         if not mp:
             return {"success": False, "message": "Mercado Pago não configurado"}
         pagamentos_response = mp.payment().search({"external_reference": user_id})
@@ -940,7 +940,8 @@ def verificar_pagamentos_todos_usuarios():
         for usuario in usuarios:
             user_id = usuario["id"]
             resultado = verificar_e_atualizar_pagamento(user_id)
-            print(f"{'✅' if resultado['success'] else '⚠️'} {user_id}: {resultado['message']}")
+            if resultado["success"]:
+                print(f"✅ {user_id}: {resultado['message']}")
     except Exception as e:
         print(f"❌ ERRO NA TAREFA AGENDADA: {str(e)}")
 
@@ -948,7 +949,7 @@ scheduler = BackgroundScheduler()
 scheduler.add_job(
     func=verificar_pagamentos_todos_usuarios,
     trigger="interval",
-    minutes=15,
+    hours=24,
     id="verificar_pagamentos",
     name="Verificar pagamentos pendentes",
     replace_existing=True
