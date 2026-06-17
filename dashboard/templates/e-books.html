@@ -29,13 +29,85 @@
         </form>
     </div>
 
+    <!-- ===== FORMULARIO: GERAR E-BOOK COM IA ===== -->
+    <div class="bg-gray-800/60 border border-emerald-700/30 rounded-2xl p-6 shadow-xl">
+        <div class="flex items-center gap-3 mb-4">
+            <div class="bg-emerald-600/20 border border-emerald-500/30 rounded-lg p-3">
+                <i class="fa-solid fa-wand-magic-sparkles text-emerald-400 text-xl"></i>
+            </div>
+            <div>
+                <h2 class="text-white font-bold text-lg">Gerar Novo E-book com IA</h2>
+                <p class="text-gray-400 text-xs">Digite o tema, escolha o nicho e clique em gerar.</p>
+            </div>
+        </div>
+
+        <form id="formGerarEbook" class="space-y-4">
+            <div>
+                <label class="text-gray-300 text-sm font-medium block mb-1">Tema do E-book</label>
+                <textarea name="tema" id="campoTema" rows="2" required
+                    placeholder="Ex: Como estruturar o estatuto de uma ONG..."
+                    class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-all text-sm"></textarea>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="text-gray-300 text-sm font-medium block mb-1">Nicho</label>
+                    <input type="text" name="nicho" id="campoNicho"
+                        placeholder="Ex: Terceiro Setor, ONGs..."
+                        class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-all text-sm">
+                </div>
+                <div>
+                    <label class="text-gray-300 text-sm font-medium block mb-1">Publico-alvo</label>
+                    <input type="text" name="publico_alvo" id="campoPublico"
+                        placeholder="Ex: gestores de ONGs"
+                        class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-all text-sm">
+                </div>
+            </div>
+            <button type="submit" id="btnGerarEbook"
+                class="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-3 rounded-xl font-bold transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                <span id="textoBtnGerar">Gerar E-book com IA</span>
+                <div id="spinnerGerar" class="hidden">
+                    <i class="fa-solid fa-spinner fa-spin"></i>
+                </div>
+            </button>
+        </form>
+
+        <!-- Resultado da geracao -->
+        <div id="resultadoGeracao" class="hidden mt-4 p-4 bg-gray-900 rounded-xl border border-gray-700">
+            <div class="flex items-center justify-between mb-2">
+                <h3 class="text-emerald-400 font-semibold text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-check-circle"></i> E-book gerado com sucesso!
+                </h3>
+                <button onclick="fecharResultado()" class="text-gray-500 hover:text-white transition-all">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <pre id="conteudoGerado" class="text-gray-300 text-xs leading-relaxed whitespace-pre-wrap font-sans max-h-60 overflow-y-auto"></pre>
+            <div class="flex gap-2 mt-3">
+                <button onclick="copiarConteudoGerado()"
+                    class="text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-2 rounded-lg transition-all flex items-center gap-1">
+                    <i class="fa-regular fa-copy"></i> Copiar
+                </button>
+                <button onclick="recarregarPagina()"
+                    class="text-xs bg-emerald-700 hover:bg-emerald-600 text-white px-3 py-2 rounded-lg transition-all flex items-center gap-1">
+                    <i class="fa-solid fa-rotate"></i> Atualizar lista
+                </button>
+            </div>
+        </div>
+
+        <div id="erroGeracao" class="hidden mt-4 p-4 bg-red-900/30 border border-red-700/50 rounded-xl text-red-400 text-sm">
+            <i class="fa-solid fa-triangle-exclamation mr-2"></i>
+            <span id="textoErroGeracao"></span>
+        </div>
+    </div>
+
     <!-- Grid de E-books -->
     {% if ebooks %}
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
             {% for ebook in ebooks %}
             <div class="bg-gray-800 border border-gray-700/70 rounded-2xl p-5 shadow-xl flex flex-col gap-3 hover:border-emerald-500/40 transition-all">
 
-                <!-- Capa fictícia do e-book -->
+                <!-- Capa ficticia do e-book -->
                 <div class="bg-gradient-to-br from-emerald-900/40 to-gray-900 border border-emerald-700/30 rounded-xl p-4 flex items-center gap-4">
                     <div class="bg-emerald-600/20 border border-emerald-500/30 rounded-lg p-3 shrink-0">
                         <i class="fa-solid fa-book text-emerald-400 text-2xl"></i>
@@ -51,7 +123,7 @@
                     </div>
                 </div>
 
-                <!-- Preview do conteúdo -->
+                <!-- Preview do conteudo -->
                 <div class="relative">
                     <pre id="ebook-{{ loop.index }}" class="text-gray-400 text-xs leading-relaxed whitespace-pre-wrap font-sans line-clamp-5 overflow-hidden transition-all duration-300">{{ ebook.conteudo }}</pre>
                     <button onclick="toggleEbook({{ loop.index }})" id="btn-ebook-{{ loop.index }}"
@@ -68,14 +140,14 @@
                     </span>
                     <button onclick="copiarTexto(this, `{{ ebook.conteudo | replace('`', "'") | replace('\n', '\\n') }}`)"
                         class="text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition-all">
-                        <i class="fa-regular fa-copy"></i> Copiar conteúdo
+                        <i class="fa-regular fa-copy"></i> Copiar conteudo
                     </button>
                 </div>
             </div>
             {% endfor %}
         </div>
 
-        <!-- Paginação -->
+        <!-- Paginacao -->
         {% if total_pages > 1 %}
         <div class="flex justify-center gap-2 pt-4">
             {% for p in range(1, total_pages + 1) %}
@@ -92,7 +164,7 @@
         <div class="flex flex-col items-center justify-center py-20 text-center">
             <i class="fa-solid fa-book-open text-5xl text-gray-700 mb-4"></i>
             <p class="text-gray-400 font-medium">Nenhum e-book publicado ainda.</p>
-            <p class="text-gray-600 text-sm mt-1">Os e-books gerados automaticamente aparecerão aqui.</p>
+            <p class="text-gray-600 text-sm mt-1">Os e-books gerados automaticamente aparecerao aqui.</p>
         </div>
     {% endif %}
 
@@ -114,10 +186,76 @@ function copiarTexto(btn, texto) {
         btn.innerHTML = '<i class="fa-solid fa-check"></i> Copiado!';
         btn.classList.replace('text-emerald-400', 'text-blue-400');
         setTimeout(() => {
-            btn.innerHTML = '<i class="fa-regular fa-copy"></i> Copiar conteúdo';
+            btn.innerHTML = '<i class="fa-regular fa-copy"></i> Copiar conteudo';
             btn.classList.replace('text-blue-400', 'text-emerald-400');
         }, 2000);
     });
+}
+
+// Formulario Gerar E-book
+document.getElementById('formGerarEbook').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const tema = document.getElementById('campoTema').value;
+    const nicho = document.getElementById('campoNicho').value;
+    const publico = document.getElementById('campoPublico').value || 'gestores e empresarios';
+
+    // Desabilitar botao
+    const btn = document.getElementById('btnGerarEbook');
+    const textoBtn = document.getElementById('textoBtnGerar');
+    const spinner = document.getElementById('spinnerGerar');
+    btn.disabled = true;
+    textoBtn.textContent = 'Gerando...';
+    spinner.classList.remove('hidden');
+
+    // Esconder resultados anteriores
+    document.getElementById('resultadoGeracao').classList.add('hidden');
+    document.getElementById('erroGeracao').classList.add('hidden');
+
+    try {
+        const response = await fetch('/gerar/ebook', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                tema: tema,
+                nicho: nicho,
+                publico_alvo: publico,
+                num_capitulos: 5
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.status === 'ok') {
+            document.getElementById('conteudoGerado').textContent = data.conteudo;
+            document.getElementById('resultadoGeracao').classList.remove('hidden');
+        } else {
+            document.getElementById('textoErroGeracao').textContent = data.erro || 'Erro ao gerar e-book. Tente novamente.';
+            document.getElementById('erroGeracao').classList.remove('hidden');
+        }
+    } catch (err) {
+        document.getElementById('textoErroGeracao').textContent = 'Erro de conexao: ' + err.message;
+        document.getElementById('erroGeracao').classList.remove('hidden');
+    } finally {
+        btn.disabled = false;
+        textoBtn.textContent = 'Gerar E-book com IA';
+        spinner.classList.add('hidden');
+    }
+});
+
+function fecharResultado() {
+    document.getElementById('resultadoGeracao').classList.add('hidden');
+}
+
+function copiarConteudoGerado() {
+    const texto = document.getElementById('conteudoGerado').textContent;
+    navigator.clipboard.writeText(texto).then(() => {
+        alert('Conteudo copiado!');
+    });
+}
+
+function recarregarPagina() {
+    window.location.reload();
 }
 </script>
 {% endblock %}

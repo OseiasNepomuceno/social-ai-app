@@ -323,11 +323,74 @@ SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-
 registrar_rotas_picoclaw(
     app,
     supabase
 )
+
+# ===== ROTA DE SEED DOS E-BOOKS PRONTOS =====
+
+@app.route("/interno/seed-ebooks")
+def seed_ebooks():
+    """Insere os 6 e-books prontos no banco (executar uma vez)."""
+    import secrets
+    token = request.args.get("token", "")
+    cron_secret = os.getenv("CRON_SECRET", "")
+    if cron_secret and not secrets.compare_digest(token, cron_secret):
+        return jsonify({"erro": "Token invalido"}), 401
+
+    ebooks_prontos = [
+        {
+            "titulo": "Como Estruturar o Estatuto de uma ONG",
+            "tipo": "ebook", "status": "publicado", "categoria": "gratuito",
+            "conteudo": "E-BOOK: Como Estruturar o Estatuto de uma ONG\n\nCAPITULO 1 - O que e um Estatuto Social\nO estatuto social e o documento fundamental de qualquer organizacao da sociedade civil. E a 'constituicao' da ONG, definindo seus objetivos, regras de funcionamento e estrutura de governanca."
+        },
+        {
+            "titulo": "Plano de Negocio para Organizacoes do Terceiro Setor",
+            "tipo": "ebook", "status": "publicado", "categoria": "gratuito",
+            "conteudo": "E-BOOK: Plano de Negocio para Organizacoes do Terceiro Setor\n\nCAPITULO 1 - Por que uma ONG precisa de um Plano de Negocio?\nDiferente do senso comum, organizacoes sociais tambem precisam de planejamento estrategico."
+        },
+        {
+            "titulo": "Captacao de Recursos: Editais Federais e Estaduais",
+            "tipo": "ebook", "status": "publicado", "categoria": "gratuito",
+            "conteudo": "E-BOOK: Captacao de Recursos - Editais Federais e Estaduais\n\nCAPITULO 1 - O Universo dos Editais Publicos\nO governo brasileiro investe bilhoes de reais por ano em parcerias com OSC."
+        },
+        {
+            "titulo": "Prestacao de Contas para ONGs",
+            "tipo": "ebook", "status": "publicado", "categoria": "gratuito",
+            "conteudo": "E-BOOK: Prestacao de Contas para ONGs\n\nCAPITULO 1 - A Importancia da Transparencia\nA prestacao de contas nao e apenas uma obrigacao legal, e um instrumento de credibilidade."
+        },
+        {
+            "titulo": "Gestao de Projetos Sociais",
+            "tipo": "ebook", "status": "publicado", "categoria": "pago",
+            "conteudo": "E-BOOK: Gestao de Projetos Sociais\n\nCAPITULO 1 - Ciclo de Vida do Projeto\nTodo projeto social passa por: diagnostico, planejamento, execucao, monitoramento e avaliacao."
+        },
+        {
+            "titulo": "Marketing Digital para Causas Sociais",
+            "tipo": "ebook", "status": "publicado", "categoria": "pago",
+            "conteudo": "E-BOOK: Marketing Digital para Causas Sociais\n\nCAPITULO 1 - Por que sua ONG precisa de Marketing Digital\nNo mundo digital, as organizacoes que nao se comunicam, nao existem."
+        }
+    ]
+
+    inseridos = 0
+    existentes = 0
+    for ebook in ebooks_prontos:
+        try:
+            existe = supabase.table("conteudos").select("id").eq("titulo", ebook["titulo"]).eq("tipo", "ebook").execute()
+            if existe.data:
+                existentes += 1
+                continue
+            supabase.table("conteudos").insert(ebook).execute()
+            inseridos += 1
+        except Exception as e:
+            print(f"Erro ao inserir ebook '{ebook['titulo']}': {e}")
+
+    return jsonify({
+        "status": "ok",
+        "inseridos": inseridos,
+        "existentes": existentes,
+        "mensagem": f"{inseridos} e-books inseridos, {existentes} ja existentes"
+    })
 
 # =========================
 # MERCADO PAGO
@@ -1229,3 +1292,7 @@ def planos():
     except Exception as e:
         print(f"❌ Erro na rota de planos: {str(e)}")
         return redirect("/")
+
+
+MERCADO_PAGO_TOKEN = os.getenv("MERCADO_PAGO_TOKEN")
+mp = mercadopago.SDK(MERCADO_PAGO_TOKEN) if MERCADO_PAGO_TOKEN else None
