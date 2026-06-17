@@ -320,19 +320,34 @@ Acesse o painel para revisar todas as oportunidades.
     @app.route("/gerar/ebook", methods=["POST"])
     def endpoint_gerar_ebook():
         body = request.get_json(force=True)
-        tema = body.get("tema")
-        nicho = body.get("nicho", "")
-        publico_alvo = body.get("publico_alvo", "gestores e empresários")
-        num_capitulos = body.get("num_capitulos", 5)
+        tema = body.get("tema", "").strip()
+        nicho = body.get("nicho", "").strip()
+        publico_alvo = body.get("publico_alvo", "gestores e empresarios").strip()
+        num_capitulos = int(body.get("num_capitulos", 5))
+
+        if not tema:
+            return jsonify({"status": "erro", "erro": "O campo tema e obrigatorio."}), 400
 
         nicho = nicho or inferir_nicho(tema, NICHOS_FALLBACK)
-        resultado = gerar_ebook(tema, nicho, publico_alvo, num_capitulos)
 
-        if not resultado.get("success"):
-            return jsonify({"status": "erro", "erro": resultado.get("erro")}), 500
+        def processar_ebook():
+            try:
+                resultado = gerar_ebook(tema, nicho, publico_alvo, num_capitulos)
+                if resultado.get("success"):
+                    salvo = salvar_conteudo(supabase, tema, "ebook", resultado["conteudo"])
+                    print(f"OK E-book salvo: {salvo.get(chr(105)+chr(100), chr(63))}")
+                else:
+                    print(f"FALHA: {resultado.get(chr(101)+chr(114)+chr(114)+chr(111))}")
+            except Exception as e:
+                print(f"EXC: {e}")
 
-        salvo = salvar_conteudo(supabase, tema, "ebook", resultado["conteudo"])
-        return jsonify({"status": "ok", "nicho": nicho, "conteudo": resultado["conteudo"], "salvo": salvo})
+        threading.Thread(target=processar_ebook, daemon=True).start()
+
+        return jsonify({
+            "status": "processando",
+            "mensagem": "Geracao do e-book iniciada em segundo plano. Recarregue a pagina para ve-lo.",
+            "nicho": nicho
+        }), 202
 
     @app.route("/gerar/infografico", methods=["POST"])
     def endpoint_gerar_infografico():

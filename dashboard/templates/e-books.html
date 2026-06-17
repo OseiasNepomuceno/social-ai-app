@@ -229,6 +229,11 @@ document.getElementById('formGerarEbook').addEventListener('submit', async funct
         if (data.status === 'ok') {
             document.getElementById('conteudoGerado').textContent = data.conteudo;
             document.getElementById('resultadoGeracao').classList.remove('hidden');
+        } else if (data.status === 'processando' || response.status === 202) {
+            document.getElementById('textoErroGeracao').innerHTML = '<i class="fa-solid fa-hourglass-half mr-2"></i> ' + (data.mensagem || 'Geracao em segundo plano...');
+            document.getElementById('erroGeracao').classList.remove('hidden');
+            document.getElementById('erroGeracao').className = 'mt-4 p-4 bg-emerald-900/30 border border-emerald-700/50 rounded-xl text-emerald-400 text-sm';
+            setTimeout(function() { window.location.reload(); }, 15000);
         } else {
             document.getElementById('textoErroGeracao').textContent = data.erro || 'Erro ao gerar e-book. Tente novamente.';
             document.getElementById('erroGeracao').classList.remove('hidden');
