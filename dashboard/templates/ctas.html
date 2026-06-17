@@ -14,6 +14,12 @@
             <p class="text-sm text-gray-400 mt-1">Chamadas para ação geradas automaticamente pela IA.</p>
         </div>
         <form method="GET" class="flex gap-2">
+                <select name="categoria" onchange="this.form.submit()"
+                    class="bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-yellow-500">
+                    <option value="">Todas</option>
+                    <option value="gratuito" {% if request.args.get('categoria') == 'gratuito' %}selected{% endif %}>Gratuito</option>
+                    <option value="pago" {% if request.args.get('categoria') == 'pago' %}selected{% endif %}>Pago</option>
+                </select>
             <input type="text" name="q" value="{{ request.args.get('q', '') }}"
                 placeholder="Buscar CTAs..."
                 class="bg-gray-800 border border-gray-700 rounded-xl px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-yellow-500 transition-all text-sm w-56">
@@ -33,9 +39,16 @@
                         <i class="fa-solid fa-arrow-pointer text-yellow-400 text-sm"></i>
                         {{ cta.titulo }}
                     </h2>
-                    <span class="shrink-0 text-[10px] font-semibold px-2 py-1 rounded-lg bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">
-                        CTA
-                    </span>
+                    <div class="flex gap-2 shrink-0">
+                        <span class="text-[10px] font-semibold px-2 py-1 rounded-lg
+                            {% if cta.categoria == 'pago' %} bg-amber-500/10 text-amber-400 border border-amber-500/20
+                            {% else %} bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 {% endif %}">
+                            {{ cta.categoria | default('gratuito') | upper }}
+                        </span>
+                        <span class="shrink-0 text-[10px] font-semibold px-2 py-1 rounded-lg bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">
+                            CTA
+                        </span>
+                    </div>
                 </div>
 
                 <!-- Variações de CTA -->
@@ -100,7 +113,7 @@
         {% if total_pages > 1 %}
         <div class="flex justify-center gap-2 pt-4">
             {% for p in range(1, total_pages + 1) %}
-            <a href="?page={{ p }}{% if request.args.get('q') %}&q={{ request.args.get('q') }}{% endif %}"
+            <a href="?page={{ p }}{% if request.args.get('q') %}&q={{ request.args.get('q') }}{% endif %}{% if request.args.get('categoria') %}&categoria={{ request.args.get('categoria') }}{% endif %}"
                 class="px-4 py-2 rounded-xl text-sm font-semibold transition-all
                 {% if p == page %} bg-yellow-600 text-white {% else %} bg-gray-800 text-gray-400 hover:bg-gray-700 border border-gray-700 {% endif %}">
                 {{ p }}

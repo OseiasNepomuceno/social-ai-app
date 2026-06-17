@@ -164,7 +164,7 @@ def buscar_nichos_tiktok() -> list:
         return NICHOS_FALLBACK
 
 
-def salvar_conteudo(titulo: str, tipo: str, conteudo: str) -> dict:
+def salvar_conteudo(titulo: str, tipo: str, conteudo: str, categoria: str = "gratuito") -> dict:
     """Salva conteúdo diretamente como publicado — fluxo 100% automático."""
     try:
         if not conteudo or len(conteudo.strip()) < 50:
@@ -175,6 +175,7 @@ def salvar_conteudo(titulo: str, tipo: str, conteudo: str) -> dict:
             "tipo":     tipo,
             "conteudo": conteudo.strip(),
             "status":   "publicado",
+            "categoria": categoria,
         }).execute()
         return response.data[0] if response.data else {}
     except Exception as e:

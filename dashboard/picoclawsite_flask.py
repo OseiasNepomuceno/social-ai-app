@@ -31,7 +31,7 @@ def buscar_nichos_tiktok(supabase):
         print(f"❌ ERRO ao buscar nichos: {e}")
         return NICHOS_FALLBACK
 
-def salvar_conteudo(supabase, titulo, tipo, conteudo):
+def salvar_conteudo(supabase, titulo, tipo, conteudo, categoria="gratuito"):
     try:
         if not conteudo or len(conteudo.strip()) < 50:
             return {}
@@ -39,7 +39,8 @@ def salvar_conteudo(supabase, titulo, tipo, conteudo):
             "titulo": titulo,
             "tipo": tipo,
             "conteudo": conteudo.strip(),
-            "status": "publicado"
+            "status": "publicado",
+            "categoria": categoria
         }).execute()
         return response.data[0] if response.data else {}
     except Exception as e:

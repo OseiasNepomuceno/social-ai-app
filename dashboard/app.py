@@ -361,13 +361,15 @@ def paginar(lista: list, pagina: int, por_pagina: int = POR_PAGINA):
     fim = inicio + por_pagina
     return lista[inicio:fim], total_pages, pagina
 
-def buscar_conteudos(tipo: str, q: str = "") -> list:
+def buscar_conteudos(tipo: str, q: str = "", categoria: str = "") -> list:
     """Busca conteúdos publicados do Supabase por tipo, com filtro opcional."""
     try:
         query = supabase.table("conteudos").select("*") \
             .eq("tipo", tipo) \
             .eq("status", "publicado") \
             .order("created_at", desc=True)
+        if categoria:
+            query = query.eq("categoria", categoria)
         resultado = query.execute()
         dados = resultado.data or []
         if q:
@@ -388,12 +390,13 @@ def posts_site():
     if "user_id" not in session:
         return redirect("/login")
     q = request.args.get("q", "").strip()
+    categoria = request.args.get("categoria", "").strip()
     pagina = int(request.args.get("page", 1))
-    dados = buscar_conteudos("post", q)
+    dados = buscar_conteudos("post", q, categoria)
     posts, total_pages, pagina = paginar(dados, pagina)
     return render_template("posts.html",
         posts=posts, page=pagina,
-        total_pages=total_pages, q=q)
+        total_pages=total_pages, q=q, categoria=categoria)
 
 
 @app.route("/roteiros-tiktok-site")
@@ -401,12 +404,13 @@ def roteiros_tiktok_site():
     if "user_id" not in session:
         return redirect("/login")
     q = request.args.get("q", "").strip()
+    categoria = request.args.get("categoria", "").strip()
     pagina = int(request.args.get("page", 1))
-    dados = buscar_conteudos("roteiro_tiktok", q)
+    dados = buscar_conteudos("roteiro_tiktok", q, categoria)
     roteiros, total_pages, pagina = paginar(dados, pagina)
     return render_template("roteiros.html",
         roteiros=roteiros, page=pagina,
-        total_pages=total_pages, q=q)
+        total_pages=total_pages, q=q, categoria=categoria)
 
 
 @app.route("/ctas-site")
@@ -414,12 +418,13 @@ def ctas_site():
     if "user_id" not in session:
         return redirect("/login")
     q = request.args.get("q", "").strip()
+    categoria = request.args.get("categoria", "").strip()
     pagina = int(request.args.get("page", 1))
-    dados = buscar_conteudos("cta", q)
+    dados = buscar_conteudos("cta", q, categoria)
     ctas, total_pages, pagina = paginar(dados, pagina)
     return render_template("ctas.html",
         ctas=ctas, page=pagina,
-        total_pages=total_pages, q=q)
+        total_pages=total_pages, q=q, categoria=categoria)
 
 
 @app.route("/ebooks-site")
@@ -427,12 +432,13 @@ def ebooks_site():
     if "user_id" not in session:
         return redirect("/login")
     q = request.args.get("q", "").strip()
+    categoria = request.args.get("categoria", "").strip()
     pagina = int(request.args.get("page", 1))
-    dados = buscar_conteudos("ebook", q)
+    dados = buscar_conteudos("ebook", q, categoria)
     ebooks, total_pages, pagina = paginar(dados, pagina)
     return render_template("e-books.html",
         ebooks=ebooks, page=pagina,
-        total_pages=total_pages, q=q)
+        total_pages=total_pages, q=q, categoria=categoria)
 
 
 @app.route("/infograficos-site")
@@ -440,12 +446,13 @@ def infograficos_site():
     if "user_id" not in session:
         return redirect("/login")
     q = request.args.get("q", "").strip()
+    categoria = request.args.get("categoria", "").strip()
     pagina = int(request.args.get("page", 1))
-    dados = buscar_conteudos("infografico", q)
+    dados = buscar_conteudos("infografico", q, categoria)
     infograficos, total_pages, pagina = paginar(dados, pagina)
     return render_template("infografico.html",
         infograficos=infograficos, page=pagina,
-        total_pages=total_pages, q=q)
+        total_pages=total_pages, q=q, categoria=categoria)
 
 
 @app.route("/templates-site")
@@ -453,12 +460,13 @@ def templates_site():
     if "user_id" not in session:
         return redirect("/login")
     q = request.args.get("q", "").strip()
+    categoria = request.args.get("categoria", "").strip()
     pagina = int(request.args.get("page", 1))
-    dados = buscar_conteudos("template", q)
+    dados = buscar_conteudos("template", q, categoria)
     templates_list, total_pages, pagina = paginar(dados, pagina)
     return render_template("templates.html",
         templates_list=templates_list, page=pagina,
-        total_pages=total_pages, q=q)
+        total_pages=total_pages, q=q, categoria=categoria)
 
 
 # =========================

@@ -14,7 +14,13 @@
             <p class="text-sm text-gray-400 mt-1">Conteúdo visual estruturado gerado automaticamente pela IA.</p>
         </div>
         <form method="GET" class="flex gap-2">
-            <input type="text" name="q" value="{{ request.args.get('q', '') }}"
+                <select name="categoria" onchange="this.form.submit()"
+                    class="bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-purple-500">
+                    <option value="">Todas</option>
+                    <option value="gratuito" {% if request.args.get('categoria') == 'gratuito' %}selected{% endif %}>Gratuito</option>
+                    <option value="pago" {% if request.args.get('categoria') == 'pago' %}selected{% endif %}>Pago</option>
+                </select>
+                <input type="text" name="q" value="{{ request.args.get('q', '') }}"
                 placeholder="Buscar infográficos..."
                 class="bg-gray-800 border border-gray-700 rounded-xl px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-all text-sm w-56">
             <button type="submit" class="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all">
@@ -34,9 +40,16 @@
                         <i class="fa-solid fa-diagram-project text-purple-400 text-sm"></i>
                         {{ info.titulo }}
                     </h2>
-                    <span class="shrink-0 text-[10px] font-semibold px-2 py-1 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20">
-                        INFOGRÁFICO
-                    </span>
+                    <div class="flex gap-2 shrink-0">
+                        <span class="text-[10px] font-semibold px-2 py-1 rounded-lg
+                            {% if info.categoria == 'pago' %} bg-amber-500/10 text-amber-400 border border-amber-500/20
+                            {% else %} bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 {% endif %}">
+                            {{ info.categoria | default('gratuito') | upper }}
+                        </span>
+                        <span class="shrink-0 text-[10px] font-semibold px-2 py-1 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                            INFOGRÁFICO
+                        </span>
+                    </div>
                 </div>
 
                 <!-- Blocos do infográfico parseados -->
@@ -91,7 +104,7 @@
         {% if total_pages > 1 %}
         <div class="flex justify-center gap-2 pt-4">
             {% for p in range(1, total_pages + 1) %}
-            <a href="?page={{ p }}{% if request.args.get('q') %}&q={{ request.args.get('q') }}{% endif %}"
+            <a href="?page={{ p }}{% if request.args.get('q') %}&q={{ request.args.get('q') }}{% endif %}{% if request.args.get('categoria') %}&categoria={{ request.args.get('categoria') }}{% endif %}"
                 class="px-4 py-2 rounded-xl text-sm font-semibold transition-all
                 {% if p == page %} bg-purple-600 text-white {% else %} bg-gray-800 text-gray-400 hover:bg-gray-700 border border-gray-700 {% endif %}">
                 {{ p }}

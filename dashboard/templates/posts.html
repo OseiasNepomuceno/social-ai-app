@@ -13,8 +13,14 @@
             </h1>
             <p class="text-sm text-gray-400 mt-1">Conteúdo gerado automaticamente pela IA para redes sociais.</p>
         </div>
-        <div class="flex gap-3">
+        <div class="flex gap-3 items-center">
             <form method="GET" class="flex gap-2">
+                <select name="categoria" onchange="this.form.submit()"
+                    class="bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500">
+                    <option value="">Todas</option>
+                    <option value="gratuito" {% if request.args.get('categoria') == 'gratuito' %}selected{% endif %}>Gratuito</option>
+                    <option value="pago" {% if request.args.get('categoria') == 'pago' %}selected{% endif %}>Pago</option>
+                </select>
                 <input type="text" name="q" value="{{ request.args.get('q', '') }}"
                     placeholder="Buscar posts..."
                     class="bg-gray-800 border border-gray-700 rounded-xl px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-all text-sm w-56">
@@ -32,11 +38,18 @@
             <div class="bg-gray-800 border border-gray-700/70 rounded-2xl p-5 shadow-xl flex flex-col gap-3 hover:border-blue-500/40 transition-all">
                 <div class="flex items-start justify-between gap-3">
                     <h2 class="text-white font-bold text-base leading-snug">{{ post.titulo }}</h2>
-                    <span class="shrink-0 text-[10px] font-semibold px-2 py-1 rounded-lg
-                        {% if post.tipo == 'post' %} bg-blue-500/10 text-blue-400 border border-blue-500/20
-                        {% else %} bg-gray-700 text-gray-400 {% endif %}">
-                        {{ post.tipo | upper }}
-                    </span>
+                    <div class="flex gap-2 shrink-0">
+                        <span class="text-[10px] font-semibold px-2 py-1 rounded-lg
+                            {% if post.categoria == 'pago' %} bg-amber-500/10 text-amber-400 border border-amber-500/20
+                            {% else %} bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 {% endif %}">
+                            {{ post.categoria | default('gratuito') | upper }}
+                        </span>
+                        <span class="text-[10px] font-semibold px-2 py-1 rounded-lg
+                            {% if post.tipo == 'post' %} bg-blue-500/10 text-blue-400 border border-blue-500/20
+                            {% else %} bg-gray-700 text-gray-400 {% endif %}">
+                            {{ post.tipo | upper }}
+                        </span>
+                    </div>
                 </div>
                 <p class="text-gray-400 text-sm leading-relaxed line-clamp-4">{{ post.conteudo }}</p>
                 <div class="flex items-center justify-between pt-2 border-t border-gray-700/50 mt-auto">
@@ -57,7 +70,7 @@
         {% if total_pages > 1 %}
         <div class="flex justify-center gap-2 pt-4">
             {% for p in range(1, total_pages + 1) %}
-            <a href="?page={{ p }}{% if request.args.get('q') %}&q={{ request.args.get('q') }}{% endif %}"
+            <a href="?page={{ p }}{% if request.args.get('q') %}&q={{ request.args.get('q') }}{% endif %}{% if request.args.get('categoria') %}&categoria={{ request.args.get('categoria') }}{% endif %}"
                 class="px-4 py-2 rounded-xl text-sm font-semibold transition-all
                 {% if p == page %} bg-blue-600 text-white {% else %} bg-gray-800 text-gray-400 hover:bg-gray-700 border border-gray-700 {% endif %}">
                 {{ p }}
