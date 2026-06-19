@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vagas | COREGOV - Oportunidades de Emprego</title>
+    <meta name="description" content="Encontre as melhores vagas de emprego. Portal de oportunidades do COREGOV com busca inteligente e rastreamento de vagas.">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1a1a2e; background: #f5f6fa; line-height: 1.6; }
+
+        :root {
+            --primary: #0f3460;
+            --primary-light: #16213e;
+            --primary-dark: #0a1f3d;
+            --accent: #e94560;
+            --accent-hover: #d63851;
+            --gold: #f5c518;
+            --green: #2ecc71;
+            --bg: #f5f6fa;
+            --card-bg: #ffffff;
+            --text: #1a1a2e;
+            --text-light: #6c757d;
+            --border: #e1e4e8;
+        }
+
+        /* NAV */
+        .nav {
+            background: var(--primary); color: white;
+            padding: 0 24px; position: sticky; top: 0; z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .nav-inner {
+            max-width: 1280px; margin: 0 auto;
+            display: flex; justify-content: space-between; align-items: center;
+            height: 64px;
+        }
+        .nav .logo { font-size: 1.5rem; font-weight: 800; }
+        .nav .logo span { color: var(--accent); }
+        .nav-links { display: flex; gap: 8px; align-items: center; }
+        .nav-links a {
+            color: rgba(255,255,255,0.85); text-decoration: none;
+            padding: 8px 16px; border-radius: 8px; font-weight: 500;
+            transition: all 0.2s; font-size: 0.95rem;
+        }
+        .nav-links a:hover { background: rgba(255,255,255,0.1); color: white; }
+        .nav-links .btn-nav {
+            background: var(--accent); color: white; padding: 8px 20px;
+            border-radius: 8px; font-weight: 600;
+        }
+        .nav-links .btn-nav:hover { background: var(--accent-hover); transform: none; }
+
+        /* HERO BUSCA */
+        .hero-busca {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white; padding: 48px 24px 40px;
+        }
+        .hero-busca-inner { max-width: 1280px; margin: 0 auto; text-align: center; }
+        .hero-busca h1 { font-size: 2.2rem; margin-bottom: 8px; }
+        .hero-busca p { opacity: 0.85; font-size: 1.1rem; margin-bottom: 28px; }
+        .busca-bar {
+            display: flex; gap: 12px; max-width: 700px; margin: 0 auto;
+            flex-wrap: wrap; justify-content: center;
+        }
+        .busca-bar input {
+            flex: 1; min-width: 200px; padding: 16px 20px; border: none;
+            border-radius: 12px; font-size: 1rem; outline: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+        .busca-bar input::placeholder { color: #999; }
+        .busca-bar .btn-search {
+            background: var(--accent); color: white; border: none;
+            padding: 16px 36px; border-radius: 12px; font-size: 1rem;
+            font-weight: 700; cursor: pointer; transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(233,69,96,0.3);
+        }
+        .busca-bar .btn-search:hover { background: var(--accent-hover); transform: translateY(-2px); }
+        .stats-bar {
+            margin-top: 20px; display: flex; justify-content: center; gap: 40px;
+            flex-wrap: wrap; opacity: 0.8; font-size: 0.95rem;
+        }
+        .stats-bar strong { color: var(--gold); font-size: 1.1rem; }
+
+        /* LAYOUT PRINCIPAL */
+        .main-layout {
+            max-width: 1280px; margin: 0 auto; padding: 32px 24px;
+            display: grid; grid-template-columns: 280px 1fr; gap: 28px;
+        }
+
+        /* FILTROS LATERAL */
+        .filtros {
+            background: var(--card-bg); border-radius: 16px;
+            padding: 24px; border: 1px solid var(--border);
+            height: fit-content; position: sticky; top: 88px;
+        }
+        .filtros h3 { font-size: 1.1rem; margin-bottom: 16px; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+        .filtros h3::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+        .filtro-grupo { margin-bottom: 20px; }
+        .filtro-grupo label { display: block; font-weight: 600; font-size: 0.85rem; color: var(--text-light); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .filtro-grupo select, .filtro-grupo input {
+            width: 100%; padding: 10px 12px; border: 1px solid var(--border);
+            border-radius: 8px; font-size: 0.9rem; background: white;
+            transition: all 0.2s;
+        }
+        .filtro-grupo select:focus, .filtro-grupo input:focus {
+            border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px rgba(15,52,96,0.1);
+        }
+        .filtro-check { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+        .filtro-check label { font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--text); font-size: 0.9rem; cursor: pointer; }
+        .filtro-check input[type="checkbox"] { accent-color: var(--accent); width: 16px; height: 16px; }
+        .btn-filtrar {
+            width: 100%; background: var(--primary); color: white; border: none;
+            padding: 12px; border-radius: 8px; font-weight: 700; cursor: pointer;
+            transition: all 0.3s; font-size: 0.95rem;
+        }
+        .btn-filtrar:hover { background: var(--primary-light); }
+        .btn-limpar {
+            width: 100%; background: transparent; color: var(--text-light); border: 1px solid var(--border);
+            padding: 10px; border-radius: 8px; font-weight: 500; cursor: pointer;
+            transition: all 0.3s; margin-top: 8px; font-size: 0.9rem;
+        }
+        .btn-limpar:hover { border-color: var(--accent); color: var(--accent); }
+
+        /* LISTAGEM DE VAGAS */
+        .vagas-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 20px; flex-wrap: wrap; gap: 12px;
+        }
+        .vagas-header h2 { font-size: 1.4rem; color: var(--primary); }
+        .vagas-header .total { color: var(--text-light); font-size: 0.95rem; }
+        .vagas-header .sort select {
+            padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px;
+            font-size: 0.9rem; background: white; cursor: pointer;
+        }
+
+        .vaga-card {
+            background: var(--card-bg); border-radius: 14px; border: 1px solid var(--border);
+            padding: 24px; margin-bottom: 16px;
+            transition: all 0.3s; cursor: pointer; position: relative;
+        }
+        .vaga-card:hover {
+            transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+            border-color: var(--primary);
+        }
+        .vaga-card .vaga-tag {
+            display: inline-block; background: var(--primary); color: white;
+            padding: 3px 12px; border-radius: 20px; font-size: 0.75rem;
+            font-weight: 600; margin-bottom: 10px;
+        }
+        .vaga-card .vaga-tag.sesi { background: #1a7ea8; }
+        .vaga-card .vaga-tag.senai { background: #e67e22; }
+        .vaga-card .vaga-tag.corp { background: var(--primary); }
+        .vaga-card .vaga-tag.novo {
+            background: var(--green); margin-left: 6px;
+        }
+        .vaga-card h3 { font-size: 1.15rem; margin-bottom: 8px; color: var(--text); }
+        .vaga-card .vaga-empresa { color: var(--primary); font-weight: 600; font-size: 0.9rem; margin-bottom: 8px; }
+        .vaga-card .vaga-desc { color: var(--text-light); font-size: 0.9rem; margin-bottom: 14px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .vaga-card .vaga-meta {
+            display: flex; flex-wrap: wrap; gap: 16px;
+            padding-top: 14px; border-top: 1px solid var(--border);
+        }
+        .vaga-card .vaga-meta span {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 0.85rem; color: var(--text-light);
+        }
+        .vaga-card .vaga-meta .salario {
+            color: var(--green); font-weight: 700; font-size: 1rem;
+        }
+        .vaga-card .vaga-meta .data { margin-left: auto; }
+        .vaga-card .vaga-actions {
+            margin-top: 12px; display: flex; gap: 8px;
+        }
+        .vaga-card .btn-candidatar {
+            background: var(--primary); color: white; border: none;
+            padding: 8px 20px; border-radius: 8px; font-weight: 600;
+            font-size: 0.85rem; cursor: pointer; transition: all 0.2s;
+            text-decoration: none; display: inline-block;
+        }
+        .vaga-card .btn-candidatar:hover { background: var(--primary-light); }
+        .vaga-card .btn-rastrear {
+            background: transparent; color: var(--accent); border: 1px solid var(--accent);
+            padding: 8px 20px; border-radius: 8px; font-weight: 600;
+            font-size: 0.85rem; cursor: pointer; transition: all 0.2s;
+            text-decoration: none; display: inline-block;
+        }
+        .vaga-card .btn-rastrear:hover { background: var(--accent); color: white; }
+
+        /* PAGINAÇÃO */
+        .paginacao {
+            display: flex; justify-content: center; align-items: center;
+            gap: 8px; margin-top: 32px;
+        }
+        .paginacao a, .paginacao span {
+            display: flex; align-items: center; justify-content: center;
+            min-width: 40px; height: 40px; padding: 0 12px;
+            border: 1px solid var(--border); border-radius: 8px;
+            text-decoration: none; color: var(--text); font-weight: 500;
+            transition: all 0.2s; font-size: 0.9rem;
+        }
+        .paginacao a:hover { border-color: var(--primary); color: var(--primary); }
+        .paginacao .active { background: var(--primary); color: white; border-color: var(--primary); }
+        .paginacao .next { font-weight: 700; }
+
+        /* SEÇÃO RASTREAMENTO */
+        .rastreio-section {
+            background: linear-gradient(135deg, var(--primary-light), var(--primary-dark));
+            color: white; padding: 56px 24px; text-align: center;
+            margin-top: 40px;
+        }
+        .rastreio-inner { max-width: 700px; margin: 0 auto; }
+        .rastreio-inner h2 { font-size: 1.8rem; margin-bottom: 12px; }
+        .rastreio-inner p { opacity: 0.85; margin-bottom: 24px; }
+        .rastreio-inner .btn-app {
+            background: var(--gold); color: var(--primary-dark); border: none;
+            padding: 16px 40px; border-radius: 12px; font-size: 1.1rem;
+            font-weight: 800; cursor: pointer; transition: all 0.3s;
+            text-decoration: none; display: inline-block;
+        }
+        .rastreio-inner .btn-app:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(245,197,24,0.3); }
+
+        /* FOOTER */
+        .footer {
+            background: var(--primary); color: rgba(255,255,255,0.8);
+            padding: 48px 24px; text-align: center;
+        }
+        .footer .logo { font-size: 1.5rem; font-weight: 800; }
+        .footer .logo span { color: var(--accent); }
+        .footer-links { margin: 16px 0; display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; }
+        .footer-links a { color: rgba(255,255,255,0.7); text-decoration: none; }
+        .footer-links a:hover { color: white; }
+
+        /* RESPONSIVO */
+        @media (max-width: 900px) {
+            .main-layout { grid-template-columns: 1fr; }
+            .filtros { position: static; display: none; }
+            .filtros.mobile-show { display: block; }
+            .btn-mobile-filtros {
+                display: block; background: var(--primary); color: white;
+                border: none; padding: 12px 24px; border-radius: 8px;
+                font-weight: 600; cursor: pointer; margin-bottom: 16px;
+                width: 100%;
+            }
+        }
+        @media (max-width: 768px) {
+            .hero-busca h1 { font-size: 1.5rem; }
+            .nav-links a { padding: 6px 10px; font-size: 0.85rem; }
+            .vaga-card .vaga-meta { flex-direction: column; gap: 8px; }
+            .vaga-card .vaga-meta .data { margin-left: 0; }
+        }
+        @media (min-width: 901px) {
+            .btn-mobile-filtros { display: none; }
+        }
+
+        /* HOME OFFICE SECTION */
+        .homeoffice-section {
+            background: linear-gradient(135deg, #0f3460 0%, #16213e 100%);
+            padding: 60px 24px;
+            position: relative;
+            overflow: hidden;
+        }
+        .homeoffice-section::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            pointer-events: none;
+        }
+        .homeoffice-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+        .ho-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .ho-header h2 {
+            color: white;
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+        }
+        .ho-header p {
+            color: rgba(255,255,255,0.7);
+            font-size: 1.05rem;
+        }
+        .ho-categorias {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .ho-card {
+            background: rgba(255,255,255,0.06);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s;
+        }
+        .ho-card:hover {
+            background: rgba(255,255,255,0.1);
+            transform: translateY(-3px);
+            border-color: var(--gold);
+        }
+        .ho-card-full {
+            grid-column: 1 / -1;
+        }
+        .ho-card-warning {
+            border-color: rgba(245,197,24,0.3);
+            background: rgba(245,197,24,0.06);
+        }
+        .ho-card-warning:hover {
+            border-color: var(--gold);
+            background: rgba(245,197,24,0.1);
+        }
+        .ho-card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .ho-card-header h3 {
+            color: white;
+            font-size: 1.05rem;
+            flex: 1;
+        }
+        .ho-icon {
+            font-size: 1.5rem;
+        }
+        .ho-badge {
+            background: rgba(245,197,24,0.2);
+            color: var(--gold);
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .ho-links {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .ho-link {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.04);
+            color: rgba(255,255,255,0.85);
+            text-decoration: none;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+        .ho-link:hover {
+            background: rgba(255,255,255,0.1);
+            color: var(--gold);
+            padding-left: 16px;
+        }
+        .ho-link span { font-weight: 600; }
+        .ho-link small {
+            font-size: 0.8rem;
+            opacity: 0.5;
+            font-weight: 400;
+        }
+        .ho-grid-areas {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 10px;
+        }
+        .ho-area {
+            background: rgba(255,255,255,0.06);
+            padding: 12px 16px;
+            border-radius: 10px;
+            color: rgba(255,255,255,0.85);
+            font-size: 0.9rem;
+            font-weight: 500;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .ho-area:hover {
+            background: rgba(255,255,255,0.12);
+            color: var(--gold);
+        }
+        .ho-dicas p {
+            color: rgba(255,255,255,0.8);
+            font-size: 0.9rem;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .ho-dicas p:last-child { border-bottom: none; }
+        .ho-cta {
+            text-align: center;
+            margin-top: 32px;
+            padding: 20px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .ho-cta p {
+            color: rgba(255,255,255,0.7);
+            font-size: 1rem;
+        }
+        .ho-cta a {
+            color: var(--gold);
+            font-weight: 700;
+            text-decoration: none;
+        }
+        .ho-cta a:hover { text-decoration: underline; }
+
+        @media (max-width: 768px) {
+            .ho-categorias { grid-template-columns: 1fr; }
+            .ho-grid-areas { grid-template-columns: 1fr 1fr; }
+            .ho-header h2 { font-size: 1.3rem; }
+        }
+
+        /* MODAL VAGA */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 200;
+            align-items: center; justify-content: center;
+            padding: 24px;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: white; border-radius: 20px; max-width: 700px; width: 100%;
+            max-height: 85vh; overflow-y: auto; padding: 36px;
+            position: relative; animation: modalIn 0.3s ease;
+        }
+        @keyframes modalIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .modal .modal-close {
+            position: absolute; top: 16px; right: 20px; font-size: 1.5rem;
+            cursor: pointer; color: var(--text-light); background: none; border: none;
+        }
+        .modal .modal-close:hover { color: var(--accent); }
+        .modal h2 { margin-bottom: 8px; }
+        .modal .modal-empresa { color: var(--primary); font-weight: 600; margin-bottom: 16px; }
+        .modal .modal-info { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
+        .modal .modal-info .info-item { background: var(--bg); border-radius: 8px; padding: 12px; }
+        .modal .modal-info .info-item .label { font-size: 0.8rem; color: var(--text-light); text-transform: uppercase; }
+        .modal .modal-info .info-item .value { font-weight: 600; }
+        .modal .modal-body { margin: 16px 0; color: var(--text-light); line-height: 1.7; }
+        .modal .btn-candidatar-modal {
+            background: var(--primary); color: white; border: none;
+            padding: 14px 36px; border-radius: 10px; font-weight: 700; font-size: 1rem;
+            cursor: pointer; transition: all 0.2s; width: 100%;
+        }
+        .modal .btn-candidatar-modal:hover { background: var(--primary-light); }
+    </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+    <div class="nav-inner">
+        <div class="logo">CORE<span>GOV</span></div>
+        <div class="nav-links">
+            <a href="index.html">Início</a>
+            <a href="trilha.html">Trilha</a>
+            <a href="vagas.html" style="color: var(--gold);">Vagas</a>
+            <a href="#homeoffice">🌐 Home Office</a>
+            <a href="https://app.coregov.com.br" class="btn-nav" target="_blank">App →</a>
+        </div>
+    </div>
+</nav>
+
+<!-- HERO BUSCA -->
+<section class="hero-busca">
+    <div class="hero-busca-inner">
+        <h1>🔍 Encontre sua próxima oportunidade</h1>
+        <p>Vagas de emprego reais do SESI, SENAI e muito mais — tudo em um só lugar</p>
+        <div class="busca-bar">
+            <input type="text" id="inputBusca" placeholder="Cargo, palavra-chave...">
+            <input type="text" id="inputLocal" placeholder="Cidade ou região...">
+            <button class="btn-search" onclick="filtrarVagas()">🔎 Buscar</button>
+        </div>
+        <div class="stats-bar">
+            <span>📋 <strong id="totalVagas">44</strong> vagas disponíveis</span>
+            <span>🏢 <strong>36</strong> anúncios ativos</span>
+            <span>💰 Salários de <strong>R$ 2.213</strong> até <strong>R$ 18.077</strong></span>
+        </div>
+    </div>
+</section>
+
+<!-- LAYOUT -->
+<div class="main-layout">
+    <!-- FILTROS LATERAL -->
+    <aside class="filtros" id="filtros">
+        <h3>📌 Filtros</h3>
+
+        <div class="filtro-grupo">
+            <label>Unidade</label>
+            <select id="filtroUnidade">
+                <option value="">Todas</option>
+                <option value="SESI SP">SESI SP</option>
+                <option value="SENAI SP">SENAI SP</option>
+                <option value="SESI SENAI SP">SESI SENAI SP</option>
+                <option value="SESI SENAI SP - CORPORATIVO">Corporativo</option>
+            </select>
+        </div>
+
+        <div class="filtro-grupo">
+            <label>Cidade</label>
+            <select id="filtroCidade">
+                <option value="">Todas</option>
+                <option value="São Paulo">São Paulo</option>
+                <option value="São Bernardo do Campo">São Bernardo do Campo</option>
+                <option value="Campinas">Campinas</option>
+                <option value="Santo André">Santo André</option>
+                <option value="São Caetano do Sul">São Caetano do Sul</option>
+                <option value="Bauru">Bauru</option>
+                <option value="Barretos">Barretos</option>
+                <option value="Americana">Americana</option>
+            </select>
+        </div>
+
+        <div class="filtro-grupo">
+            <label>Modalidade</label>
+            <div class="filtro-check"><input type="checkbox" id="modPresencial" onchange="filtrarVagas()"><label for="modPresencial">Presencial</label></div>
+        </div>
+
+        <div class="filtro-grupo">
+            <label>Tipo</label>
+            <div class="filtro-check"><input type="checkbox" id="tipoBanco" onchange="filtrarVagas()"><label for="tipoBanco">Banco de Talentos</label></div>
+            <div class="filtro-check"><input type="checkbox" id="tipoEfetiva" onchange="filtrarVagas()"><label for="tipoEfetiva">Vaga Efetiva</label></div>
+        </div>
+
+        <div class="filtro-grupo">
+            <label>Período</label>
+            <select id="filtroPeriodo" onchange="filtrarVagas()">
+                <option value="">Todos</option>
+                <option value="7">Últimos 7 dias</option>
+                <option value="14">Últimos 14 dias</option>
+                <option value="30">Últimos 30 dias</option>
+                <option value="60">Últimos 60 dias</option>
+            </select>
+        </div>
+
+        <button class="btn-filtrar" onclick="filtrarVagas()">🔎 Filtrar Vagas</button>
+        <button class="btn-limpar" onclick="limparFiltros()">⟲ Limpar Filtros</button>
+    </aside>
+
+    <!-- LISTAGEM -->
+    <main>
+        <button class="btn-mobile-filtros" onclick="document.getElementById('filtros').classList.toggle('mobile-show')">
+            📌 Mostrar / Ocultar Filtros
+        </button>
+
+        <div class="vagas-header">
+            <h2>📋 Resultados <span class="total" id="resultadoCount">(44 vagas encontradas)</span></h2>
+            <div class="sort">
+                <select id="sortSelect" onchange="filtrarVagas()">
+                    <option value="data">Mais Recentes</option>
+                    <option value="salario-desc">Maior Salário</option>
+                    <option value="salario-asc">Menor Salário</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="vagasContainer"></div>
+
+        <div class="paginacao" id="paginacao"></div>
+    </main>
+</div>
+
+<!-- SEÇÃO HOME OFFICE & PJ — REFERÊNCIAS -->
+<section class="homeoffice-section" id="homeoffice">
+    <div class="homeoffice-inner">
+        <div class="ho-header">
+            <h2>🌐 Vagas Home Office & PJ — Referências</h2>
+            <p>Os melhores portais para encontrar trabalho remoto, freelancer e PJ. Links diretos e curadoria feita em junho/2026.</p>
+        </div>
+
+        <div class="ho-categorias">
+            <!-- PLATAFORMAS GERAIS -->
+            <div class="ho-card">
+                <div class="ho-card-header">
+                    <span class="ho-icon">📊</span>
+                    <h3>Plataformas Gerais</h3>
+                    <span class="ho-badge">CLT • PJ • Remoto</span>
+                </div>
+                <div class="ho-links">
+                    <a href="https://indeed.com.br" target="_blank" class="ho-link"><span>Indeed</span> <small>indeed.com.br</small> ↗</a>
+                    <a href="https://linkedin.com" target="_blank" class="ho-link"><span>LinkedIn</span> <small>linkedin.com</small> ↗</a>
+                    <a href="https://glassdoor.com.br" target="_blank" class="ho-link"><span>Glassdoor</span> <small>glassdoor.com.br</small> ↗</a>
+                    <a href="https://infojobs.com.br" target="_blank" class="ho-link"><span>Infojobs</span> <small>infojobs.com.br</small> ↗</a>
+                    <a href="https://catho.com.br" target="_blank" class="ho-link"><span>Catho</span> <small>catho.com.br</small> ↗</a>
+                    <a href="https://portal.gupy.io" target="_blank" class="ho-link"><span>Gupy</span> <small>portal.gupy.io</small> ↗</a>
+                    <a href="https://melhoresempregos.com/remoto/" target="_blank" class="ho-link"><span>Melhores Empregos</span> <small>35k+ vagas</small> ↗</a>
+                </div>
+            </div>
+
+            <!-- EXCLUSIVAS HOME OFFICE -->
+            <div class="ho-card">
+                <div class="ho-card-header">
+                    <span class="ho-icon">🏠</span>
+                    <h3>Exclusivas Home Office</h3>
+                    <span class="ho-badge">Remoto • Freelancer</span>
+                </div>
+                <div class="ho-links">
+                    <a href="https://remotar.com.br" target="_blank" class="ho-link"><span>Remotar</span> <small>remotar.com.br</small> ↗</a>
+                    <a href="https://homeofficebr.com" target="_blank" class="ho-link"><span>Home Office BR</span> <small>homeofficebr.com</small> ↗</a>
+                    <a href="https://remoteok.com" target="_blank" class="ho-link"><span>Remote OK</span> <small>🌎 remoteok.com</small> ↗</a>
+                    <a href="https://weworkremotely.com" target="_blank" class="ho-link"><span>We Work Remotely</span> <small>🌎 curadoria</small> ↗</a>
+                    <a href="https://remote.co" target="_blank" class="ho-link"><span>Remote.co</span> <small>🌎 vagas + artigos</small> ↗</a>
+                    <a href="https://flexjobs.com" target="_blank" class="ho-link"><span>FlexJobs</span> <small>🌎 vagas verificadas</small> ↗</a>
+                </div>
+            </div>
+
+            <!-- FREELAS / PJ -->
+            <div class="ho-card">
+                <div class="ho-card-header">
+                    <span class="ho-icon">💰</span>
+                    <h3>Freelas & PJ</h3>
+                    <span class="ho-badge">Projetos • Contratos</span>
+                </div>
+                <div class="ho-links">
+                    <a href="https://workana.com" target="_blank" class="ho-link"><span>Workana</span> <small>workana.com</small> ↗</a>
+                    <a href="https://99freelas.com.br" target="_blank" class="ho-link"><span>99Freelas</span> <small>🇧🇷 projetos remotos</small> ↗</a>
+                    <a href="https://fiverr.com" target="_blank" class="ho-link"><span>Fiverr</span> <small>🌎 gigs internacionais</small> ↗</a>
+                    <a href="https://upwork.com" target="_blank" class="ho-link"><span>Upwork</span> <small>🌎 maior plataforma</small> ↗</a>
+                    <a href="https://br.jooble.org/vagas-de-emprego-pj/Home-office" target="_blank" class="ho-link"><span>Jooble PJ</span> <small>259k+ vagas</small> ↗</a>
+                </div>
+            </div>
+
+            <!-- ÁREAS EM ALTA -->
+            <div class="ho-card ho-card-full">
+                <div class="ho-card-header">
+                    <span class="ho-icon">🚀</span>
+                    <h3>Áreas com mais vagas Home Office PJ</h3>
+                    <span class="ho-badge">Junho/2026</span>
+                </div>
+                <div class="ho-grid-areas">
+                    <span class="ho-area">💻 Tecnologia</span>
+                    <span class="ho-area">📱 Marketing Digital</span>
+                    <span class="ho-area">🎨 Design</span>
+                    <span class="ho-area">📞 Vendas</span>
+                    <span class="ho-area">📋 Administrativo</span>
+                    <span class="ho-area">🎧 Atendimento</span>
+                    <span class="ho-area">📚 Educação</span>
+                    <span class="ho-area">✍️ Redação/Tradução</span>
+                </div>
+            </div>
+
+            <!-- CUIDADOS -->
+            <div class="ho-card ho-card-full ho-card-warning">
+                <div class="ho-card-header">
+                    <span class="ho-icon">🛡️</span>
+                    <h3>Dicas de Segurança</h3>
+                    <span class="ho-badge">Evite golpes</span>
+                </div>
+                <div class="ho-dicas">
+                    <p>✅ Nunca pague taxa para se candidatar</p>
+                    <p>✅ Verifique o CNPJ da empresa no site oficial</p>
+                    <p>✅ Pesquise no Glassdoor / Reclame Aqui antes</p>
+                    <p>✅ Desconfie de promessas de dinheiro fácil</p>
+                    <p>✅ Prefira plataformas conhecidas (as listadas acima)</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="ho-cta">
+            <p>⚡ Quer automatizar suas candidaturas? <a href="https://app.coregov.com.br" target="_blank">Ative o rastreamento inteligente 🛰️</a></p>
+        </div>
+    </div>
+</section>
+
+<!-- SEÇÃO RASTREAMENTO -->
+<section class="rastreio-section" id="rastrear">
+    <div class="rastreio-inner">
+        <h2>🛰️ Rastreamento Inteligente de Vagas</h2>
+        <p>Cadastre seu perfil no App COREGOV e receba alertas personalizados quando novas vagas compatíveis com seu perfil forem publicadas. Filtre por área, salário, cidade e muito mais.</p>
+        <a href="https://app.coregov.com.br" class="btn-app" target="_blank">
+            🚀 ATIVAR RASTREAMENTO
+        </a>
+        <p style="margin-top: 16px; opacity: 0.6; font-size: 0.9rem;">🔔 Notificações em tempo real • Grátis para começar</p>
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+    <div class="logo">CORE<span>GOV</span></div>
+    <p style="margin: 8px 0;">Gestão Inteligente para o Terceiro Setor</p>
+    <div class="footer-links">
+        <a href="index.html">Início</a>
+        <a href="trilha.html">Trilha do Conhecimento</a>
+        <a href="vagas.html">Vagas</a>
+        <a href="https://app.coregov.com.br" target="_blank">App</a>
+    </div>
+    <p style="font-size: 0.85rem; margin-top: 16px; opacity: 0.6;">© 2026 COREGOV. Todos os direitos reservados.</p>
+</footer>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalVaga" onclick="if(event.target===this)fecharModal()">
+    <div class="modal">
+        <button class="modal-close" onclick="fecharModal()">✕</button>
+        <h2 id="modalTitulo"></h2>
+        <p class="modal-empresa" id="modalEmpresa"></p>
+        <div class="modal-info">
+            <div class="info-item"><div class="label">📍 Local</div><div class="value" id="modalLocal"></div></div>
+            <div class="info-item"><div class="label">💼 Modalidade</div><div class="value" id="modalModalidade"></div></div>
+            <div class="info-item"><div class="label">💰 Salário</div><div class="value" id="modalSalario"></div></div>
+            <div class="info-item"><div class="label">📅 Publicação</div><div class="value" id="modalData"></div></div>
+        </div>
+        <div class="modal-body" id="modalDescricao"></div>
+        <a id="modalLink" href="#" target="_blank" class="btn-candidatar-modal">📝 Candidatar-se no site oficial</a>
+    </div>
+</div>
+
+<script>
+// ===== DADOS DAS VAGAS =====
+const vagas = [
+    { id: 1, cargo: "Pesquisador I – Simulação Numérica Computacional (CFD)", empresa: "SESI SENAI SP", unidade: "SESI SENAI SP", local: "São Bernardo do Campo, SP", modalidade: "Presencial", salario: 10407.71, data: "2026-06-18", tipo: "Efetiva", descricao: "Atuar na execução de projetos de pesquisa aplicada, propondo e desenvolvendo soluções inovadoras. Trabalhar sob orientação direta, com foco em melhorar produtos e serviços existentes através de pesquisa aplicada em simulação computacional (CFD).", link: "https://sesisenaisp.empregare.com/pt-br/vagas" },
+    { id: 2, cargo: "Banco de Talentos - Cuidador Escolar", empresa: "SESI SP", unidade: "SESI SP", local: "São Paulo, SP", modalidade: "Presencial", salario: 2213.72, data: "2026-06-18", tipo: "Banco de Talentos", descricao: "O SESI SP está em busca de profissionais para compor nosso Banco de Talentos em todo o Estado de São Paulo. Venha transformar o futuro da educação e da indústria.", link: "https://sesisenaisp.empregare.com/pt-br/vagas" },
+    { id: 3, cargo: "Assistente de Tecnologia - Automotiva", empresa: "SENAI SP", unidade: "SENAI SP", local: "Ipiranga, São Paulo, SP", modalidade: "Presencial", salario: 4457.89, data: "2026-06-17", tipo: "Efetiva", descricao: "Suporte técnico e administrativo relacionado à assistência técnica automotiva. Interpretação de literatura técnica de serviços, além de raciocínio lógico.", link: "https://sesisenaisp.empregare.com/pt-br/vagas" },
+    { id: 4, cargo: "Consultor em Tecnologia II - Programação de CLP e Realidades Imersivas", empresa: "SENAI SP", unidade: "SENAI SP", local: "São Bernardo do Campo, SP", modalidade: "Presencial", salario: 10407.71, data: "2026-06-17", tipo: "Efetiva", descricao: "Assessorar pesquisas aplicadas, desenvolvimento e validação de produtos, processos e protótipos, identificando e visitando clientes, participando de eventos para divulgar ações e realizar prospecção tecnológica.", link: "https://sesisenaisp.empregare.com/pt-br/vagas" },
+    { id: 5, cargo: "Fonoaudiólogo Ocupacional", empresa: "SESI SP", unidade: "SESI SP", local: "Santo André, SP", modalidade: "Presencial", salario: 4583.86, data: "2026-06-17", tipo: "Efetiva", descricao: "Implantar estratégias de programas de promoção de saúde auditiva e implementar programas de conservação auditiva para os trabalhadores expostos.", link: "https://sesisenaisp.empregare.com/pt-br/vagas" },
+    { id: 6, cargo: "Banco de Talentos - Professor de Educação Básica I, II e III", empresa: "SESI SP", unidade: "SESI SP", local: "São Paulo, SP", modalidade: "Presencial", salario: null, data: "2026-06-17", tipo: "Banco de Talentos", descricao: "O SESI está em busca de profissionais para compor nosso Banco de Talentos de Professores de Educação Básica em todo o Estado de São Paulo.", link: "https://sesisenaisp.empregare.com/pt-br/vagas" },
+    { id: 7, cargo: "Bolsista - Economia", empresa: "SENAI SP", unidade: "SENAI SP", local: "São Paulo, SP", modalidade: "Presencial", salario: 4700, data: "2026-06-17", tipo: "Efetiva", descricao: "O bolsista deverá possuir formação sólida em Economia e elevada capacidade analítica, responsável por estudos estruturados de competitividade setorial com foco em transformação tecnológica e inovação.", link: "https://sesisenaisp.empregare.com/pt-br/vagas" },
+    { id: 8, cargo: "Consultor em Tecnologia I - Digitalização e Indústria 4.0", empresa: "SENAI SP", unidade: "SENAI SP", local: "Campinas, SP", modalidade: "Presencial", salario: 8174.85, data: "2026-06-16", tipo: "Efetiva", descricao: "Participar de eventos para divulgar ações do SENAI e prospecção tecnológica, atuando como multiplicador na capacitação dos profissionais da rede, prestando serviços de assessoria técnica e tecnológica.", link: "https://sesisenaisp.empregare.com/pt-br/vagas" },
+    { id: 9, cargo: "Consultor em Tecnologia II - Gestão de Desempenho", empresa: "SENAI SP", unidade: "SENAI SP", local: "São Paulo, SP", modalidade: "Presencial", salario: 10407.71, data: "2026-06-16", tipo: "Efetiva", descricao: "Assessorar pesquisas aplicadas, desenvolvimento e validação de produtos, processos e protótipos, identificando e visitando clientes, participando de eventos para divulgar ações e realizar prospecção tecnológica.", link: "https://sesisenaisp.empregare.com/pt-br/vagas" },
+    { id: 10, cargo: "Enfermeiro do Trabalho", empresa: "SESI SP", unidade: "SESI SP", local: "Bauru, SP", modalidade: "Presencial", salario: 6050.71, data: "2026-06-16", tipo: "Efetiva", descricao: "Responsabilizar-se pelos assuntos ligados ao PCMSO das empresas atendidas. Realizar visitas no ambiente laboral e prestar esclarecimentos sobre saúde ocupacional.", link: "https://sesisenaisp.empregare.com/pt-br/vagas" },
+    { id: 11, cargo: "Operador Técnico de Teatro", empresa: "SESI SP", unidade: "SESI SP", local: "Barretos, SP", modalidade: "Presencial", salario: 6789.32, data: "2026-06-16", tipo: "Efetiva", descricao: "Montar e operar equipamentos de áudio, luz, vídeo, acessórios e periféricos. Zelar pela organização e manutenção dos equipamentos. Cotar preços de materiais.", link: "https://sesisenaisp.empregare.com/pt-br/vagas" },
+    { id: 12, cargo: "Nutricionista", empresa: "SESI SP", unidade: "SESI SP", local: "Americana e Pederneiras, SP", modalidade: "Presencial", salario: 7334.18, data: "2026-06-16", tipo: "Efetiva", descricao: "Responsável pela criação, gestão e operacionalização dos cardápios, além de atividades relacionadas à nutrição e alimentação escolar nas unidades do SESI-SP.", link: "https://sesisenaisp.empregare.com/pt-br/vagas" },
+    { id: 13, cargo: "Pesquisador III - Robótica Humanoide", empresa: "SENAI SP", unidade: "SENAI SP", local: "São Bernardo do Campo, SP", modalidade: "Presencial", salario: 18077.64, data: "2026-06-15", tipo: "Efetiva", descricao: "Atuar na execução de projetos de pesquisa aplicada, propondo e desenvolvendo soluções inovadoras. Orientando equipes quanto aos aspectos técnicos e procedimentos internos estabelecidos.", link: "https://sesisenaisp.empregare.com/pt-br/vagas" },
+    { id: 14, cargo: "Auxiliar Técnico de Inclusão - Deficiência Intelectual", empresa: "SENAI SP", unidade: "SENAI SP", local: "São Paulo, SP", modalidade: "Presencial", salario: 5390.17, data: "2026-06-15", tipo: "Banco de Talentos", descricao: "O SENAI SP está em busca de profissionais para formação de Banco de Talentos em todo o Estado de São Paulo para a área de educação inclusiva.", link: "https://sesisenaisp.empregare.com/pt-br/vagas" },
+    { id: 15, cargo: "Contrarregra - Teatro", empresa: "SESI SP", unidade: "SESI SP", local: "São Paulo, SP", modalidade: "Presencial", salario: 4292.36, data: "2026-06-15", tipo: "Efetiva", descricao: "Executar montagens e desmontagens de cenários, movimentar cenário e objetos cenográficos. Acionar o sinal sonoro indicando o início dos espetáculos.", link: "https://sesisenaisp.empregare.com/pt-br/vagas" },
+    { id: 16, cargo: "Analista de Tecnologia - Gestão de Processos e Serviços Tecnológicos", empresa: "SENAI SP", unidade: "SENAI SP", local: "São Caetano do Sul, SP", modalidade: "Presencial", salario: 6326.06, data: "2026-06-08", tipo: "Efetiva", descricao: "Prestar serviços tecnológicos para a indústria. Executar atividades de suporte ao planejamento, acompanhamento e controle dos serviços tecnológicos.", link: "https://sesisenaisp.empregare.com/pt-br/vagas" },
+    { id: 17, cargo: "Professor de Educação Superior e Acadêmico - Tecnologia da Informação", empresa: "SENAI SP", unidade: "SENAI SP", local: "São Caetano do Sul, SP", modalidade: "Presencial", salario: null, data: "2026-06-08", tipo: "Banco de Talentos", descricao: "O SENAI SP está em busca de profissionais para atuar como professor de Tecnologia da Informação na cidade de São Caetano do Sul.", link: "https://sesisenaisp.empregare.com/pt-br/vagas" },
+    { id: 18, cargo: "Banco de Talentos - Inspetor de Alunos I", empresa: "SESI SP", unidade: "SESI SP", local: "São Paulo, SP", modalidade: "Presencial", salario: 2213.72, data: "2026-06-08", tipo: "Banco de Talentos", descricao: "O SESI SP está em busca de profissionais para compor nosso Banco de Talentos em todo o Estado de São Paulo.", link: "https://sesisenaisp.empregare.com/pt-br/vagas" },
+    { id: 19, cargo: "Banco de Talentos - Guarda Vidas", empresa: "SESI SP", unidade: "SESI SP", local: "São Paulo, SP", modalidade: "Presencial", salario: 3642.05, data: "2026-06-08", tipo: "Banco de Talentos", descricao: "O SESI SP está em busca de profissionais para compor nosso Banco de Talentos em todo o Estado de São Paulo.", link: "https://sesisenaisp.empregare.com/pt-br/vagas" },
+    { id: 20, cargo: "Banco de Talentos - Auxiliar de Expediente (PcD)", empresa: "SESI SENAI SP - CORPORATIVO", unidade: "SESI SENAI SP - CORPORATIVO", local: "São Paulo, SP", modalidade: "Presencial", salario: 2213.72, data: "2026-06-08", tipo: "Banco de Talentos", descricao: "Banco de Talentos exclusivo para Pessoas com Deficiência. O SESI e SENAI SP está em busca de profissionais para compor nosso Banco de Talentos.", link: "https://sesisenaisp.empregare.com/pt-br/vagas" },
+    { id: 21, cargo: "Banco de Talentos - Oficial de Serviços de Manutenção e Conservação I", empresa: "SESI SENAI SP - CORPORATIVO", unidade: "SESI SENAI SP - CORPORATIVO", local: "São Paulo, SP", modalidade: "Presencial", salario: 2637.09, data: "2026-06-03", tipo: "Banco de Talentos", descricao: "O SESI e SENAI SP está em busca de profissionais para compor nosso Banco de Talentos em todo o Estado de São Paulo.", link: "https://sesisenaisp.empregare.com/pt-br/vagas" },
+    { id: 22, cargo: "Instrutor de Formação Profissional - Construção Civil", empresa: "SENAI SP", unidade: "SENAI SP", local: "São Paulo, SP", modalidade: "Presencial", salario: null, data: "2026-06-01", tipo: "Banco de Talentos", descricao: "O SENAI SP está em busca de profissionais para formação de Banco de Talentos. Se você é da área de Construção Civil e tem habilidade para compartilhar o seu conhecimento, inscreva-se.", link: "https://sesisenaisp.empregare.com/pt-br/vagas" },
+    { id: 23, cargo: "Instrutor de Formação Profissional - Segurança do Trabalho", empresa: "SENAI SP", unidade: "SENAI SP", local: "São Paulo, SP", modalidade: "Presencial", salario: null, data: "2026-06-01", tipo: "Banco de Talentos", descricao: "O SENAI SP está em busca de profissionais para formação de Banco de Talentos. Se você é da área de Segurança do Trabalho e tem habilidade para compartilhar o seu conhecimento, inscreva-se.", link: "https://sesisenaisp.empregare.com/pt-br/vagas" },
+    { id: 24, cargo: "Instrutor de Formação Profissional - Metalmecânica e Manutenção Mecânica", empresa: "SENAI SP", unidade: "SENAI SP", local: "São Paulo, SP", modalidade: "Presencial", salario: null, data: "2026-06-01", tipo: "Banco de Talentos", descricao: "O SENAI SP está em busca de profissionais para formação de Banco de Talentos para a área de Metalmecânica e Manutenção Mecânica.", link: "https://sesisenaisp.empregare.com/pt-br/vagas" },
+    { id: 25, cargo: "Instrutor de Formação Profissional - Gestão e Logística", empresa: "SENAI SP", unidade: "SENAI SP", local: "São Paulo, SP", modalidade: "Presencial", salario: null, data: "2026-06-01", tipo: "Banco de Talentos", descricao: "O SENAI SP está em busca de profissionais para formação de Banco de Talentos para a área de Gestão e Logística.", link: "https://sesisenaisp.empregare.com/pt-br/vagas" },
+    { id: 26, cargo: "Instrutor de Formação Profissional - Têxtil e Vestuário", empresa: "SENAI SP", unidade: "SENAI SP", local: "São Paulo, SP", modalidade: "Presencial", salario: null, data: "2026-06-01", tipo: "Banco de Talentos", descricao: "O SENAI SP está em busca de profissionais para formação de Banco de Talentos para a área de Têxtil e Vestuário.", link: "https://sesisenaisp.empregare.com/pt-br/vagas" },
+    { id: 27, cargo: "Instrutor de Formação Profissional - Tecnologia da Informação", empresa: "SENAI SP", unidade: "SENAI SP", local: "São Paulo, SP", modalidade: "Presencial", salario: null, data: "2026-06-01", tipo: "Banco de Talentos", descricao: "O SENAI SP está em busca de profissionais para formação de Banco de Talentos para a área de Tecnologia da Informação.", link: "https://sesisenaisp.empregare.com/pt-br/vagas" },
+    { id: 28, cargo: "Instrutor de Formação Profissional - Automação e Eletroeletrônica", empresa: "SENAI SP", unidade: "SENAI SP", local: "São Paulo, SP", modalidade: "Presencial", salario: null, data: "2026-06-01", tipo: "Banco de Talentos", descricao: "O SENAI SP está em busca de profissionais para formação de Banco de Talentos para a área de Automação e Eletroeletrônica.", link: "https://sesisenaisp.empregare.com/pt-br/vagas" },
+    { id: 29, cargo: "Instrutor de Formação Profissional - Alimentos", empresa: "SENAI SP", unidade: "SENAI SP", local: "São Paulo, SP", modalidade: "Presencial", salario: null, data: "2026-06-01", tipo: "Banco de Talentos", descricao: "O SENAI SP está em busca de profissionais para formação de Banco de Talentos para a área de Alimentos e Bebidas.", link: "https://sesisenaisp.empregare.com/pt-br/vagas" },
+    { id: 30, cargo: "Instrutor de Formação Profissional - Automotiva", empresa: "SENAI SP", unidade: "SENAI SP", local: "São Paulo, SP", modalidade: "Presencial", salario: null, data: "2026-06-01", tipo: "Banco de Talentos", descricao: "O SENAI SP está em busca de profissionais para formação de Banco de Talentos para a área Automotiva.", link: "https://sesisenaisp.empregare.com/pt-br/vagas" },
+    { id: 31, cargo: "Instrutor de Formação Profissional - Metalurgia", empresa: "SENAI SP", unidade: "SENAI SP", local: "São Paulo, SP", modalidade: "Presencial", salario: null, data: "2026-06-01", tipo: "Banco de Talentos", descricao: "O SENAI SP está em busca de profissionais para formação de Banco de Talentos para a área de Metalurgia.", link: "https://sesisenaisp.empregare.com/pt-br/vagas" },
+    { id: 32, cargo: "Banco de Talentos - Professor de Atividade Acadêmica e Docente", empresa: "SESI SP", unidade: "SESI SP", local: "São Paulo, SP", modalidade: "Presencial", salario: null, data: "2026-05-29", tipo: "Banco de Talentos", descricao: "A Faculdade SESI de Educação está em busca de profissionais para compor o Banco de Talentos de Professor de Atividade Acadêmica e/ou Professor de Atividade Docente.", link: "https://sesisenaisp.empregare.com/pt-br/vagas" },
+    { id: 33, cargo: "Banco de Talentos - Auxiliar de Cozinha", empresa: "SESI SP", unidade: "SESI SP", local: "São Paulo, SP", modalidade: "Presencial", salario: 2535.31, data: "2026-05-29", tipo: "Banco de Talentos", descricao: "O SESI SP está em busca de profissionais para compor nosso Banco de Talentos em todo o Estado de São Paulo.", link: "https://sesisenaisp.empregare.com/pt-br/vagas" },
+    { id: 34, cargo: "Banco de Talentos - Professor Facilitador de Educação Inclusiva", empresa: "SESI SP", unidade: "SESI SP", local: "São Paulo, SP", modalidade: "Presencial", salario: 6214.73, data: "2026-05-14", tipo: "Banco de Talentos", descricao: "O SESI SP está em busca de profissionais para compor nosso Banco de Talentos em todo o Estado de São Paulo.", link: "https://sesisenaisp.empregare.com/pt-br/vagas" },
+    { id: 35, cargo: "Banco de Talentos - Assistente de Serviços Administrativos", empresa: "SESI SENAI SP - CORPORATIVO", unidade: "SESI SENAI SP - CORPORATIVO", local: "São Paulo, SP", modalidade: "Presencial", salario: 3642.05, data: "2026-04-28", tipo: "Banco de Talentos", descricao: "O SESI e SENAI SP está em busca de profissionais para compor nosso Banco de Talentos em todo o Estado de São Paulo.", link: "https://sesisenaisp.empregare.com/pt-br/vagas" },
+    { id: 36, cargo: "Banco de Talentos - Professor de Atividades Esportivas", empresa: "SESI SP", unidade: "SESI SP", local: "São Paulo, SP", modalidade: "Presencial", salario: null, data: "2026-04-13", tipo: "Banco de Talentos", descricao: "O SESI SP está em busca de profissionais para compor nosso Banco de Talentos em todo o Estado de São Paulo.", link: "https://sesisenaisp.empregare.com/pt-br/vagas" }
+];
+
+// ===== LÓGICA =====
+let paginaAtual = 1;
+const porPagina = 10;
+
+function formatarSalario(valor) {
+    if (valor === null) return 'A combinar';
+    return `R$ ${valor.toFixed(2).replace('.', ',')}`;
+}
+
+function formatarData(dataStr) {
+    const d = new Date(dataStr + 'T12:00:00');
+    return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+}
+
+function getDiasAtras(dataStr) {
+    const hoje = new Date();
+    const data = new Date(dataStr + 'T12:00:00');
+    return Math.floor((hoje - data) / (1000 * 60 * 60 * 24));
+}
+
+function getTagUnidade(unidade) {
+    if (unidade.includes('SESI SP') && !unidade.includes('SENAI')) return 'sesi';
+    if (unidade.includes('SENAI') && !unidade.includes('SESI')) return 'senai';
+    if (unidade.includes('CORPORATIVO')) return 'corp';
+    return 'corp';
+}
+
+function getUnidadeLabel(unidade) {
+    if (unidade.includes('SESI SP') && !unidade.includes('SENAI')) return 'SESI SP';
+    if (unidade.includes('SENAI') && !unidade.includes('SESI')) return 'SENAI SP';
+    return 'CORPORATIVO';
+}
+
+function filtrarVagas() {
+    const busca = document.getElementById('inputBusca').value.toLowerCase();
+    const local = document.getElementById('inputLocal').value.toLowerCase();
+    const unidade = document.getElementById('filtroUnidade').value;
+    const cidade = document.getElementById('filtroCidade').value;
+    const modPresencial = document.getElementById('modPresencial').checked;
+    const tipoBanco = document.getElementById('tipoBanco').checked;
+    const tipoEfetiva = document.getElementById('tipoEfetiva').checked;
+    const periodo = parseInt(document.getElementById('filtroPeriodo').value);
+    const sort = document.getElementById('sortSelect').value;
+
+    let resultado = vagas.filter(v => {
+        if (busca && !v.cargo.toLowerCase().includes(busca) && !v.descricao.toLowerCase().includes(busca)) return false;
+        if (local && !v.local.toLowerCase().includes(local)) return false;
+        if (unidade && v.unidade !== unidade) return false;
+        if (cidade && !v.local.toLowerCase().includes(cidade.toLowerCase())) return false;
+        if (modPresencial && v.modalidade !== 'Presencial') return false;
+        if (tipoBanco && v.tipo !== 'Banco de Talentos') return false;
+        if (tipoEfetiva && v.tipo !== 'Efetiva') return false;
+        if (periodo) {
+            const dias = getDiasAtras(v.data);
+            if (dias > periodo) return false;
+        }
+        return true;
+    });
+
+    // Ordenação
+    resultado.sort((a, b) => {
+        if (sort === 'data') return new Date(b.data) - new Date(a.data);
+        if (sort === 'salario-desc') return (b.salario || 0) - (a.salario || 0);
+        if (sort === 'salario-asc') return (a.salario || 999999) - (b.salario || 999999);
+        return 0;
+    });
+
+    paginaAtual = 1;
+    renderizarVagas(resultado);
+}
+
+function renderizarVagas(resultado) {
+    const container = document.getElementById('vagasContainer');
+    const totalEl = document.getElementById('resultadoCount');
+    totalEl.textContent = `(${resultado.length} vagas encontradas)`;
+
+    const totalPaginas = Math.ceil(resultado.length / porPagina);
+    const inicio = (paginaAtual - 1) * porPagina;
+    const fim = inicio + porPagina;
+    const paginadas = resultado.slice(inicio, fim);
+
+    container.innerHTML = paginadas.map(v => {
+        const tagClass = getTagUnidade(v.unidade);
+        const unidadeLabel = getUnidadeLabel(v.unidade);
+        const dias = getDiasAtras(v.data);
+        const novoLabel = dias <= 2 ? '<span class="vaga-tag novo">🆕 Nova</span>' : '';
+        return `
+            <div class="vaga-card" onclick="abrirModal(${v.id})">
+                <div>
+                    <span class="vaga-tag ${tagClass}">${unidadeLabel}</span>
+                    ${novoLabel}
+                </div>
+                <h3>${v.cargo}</h3>
+                <div class="vaga-empresa">${v.empresa}</div>
+                <div class="vaga-desc">${v.descricao}</div>
+                <div class="vaga-meta">
+                    <span>📍 ${v.local}</span>
+                    <span>💼 ${v.modalidade}</span>
+                    <span class="salario">${formatarSalario(v.salario)}</span>
+                    <span class="data">📅 ${formatarData(v.data)}</span>
+                </div>
+                <div class="vaga-actions">
+                    <a href="${v.link}" target="_blank" class="btn-candidatar" onclick="event.stopPropagation()">📝 Candidatar-se</a>
+                    <a href="https://app.coregov.com.br" target="_blank" class="btn-rastrear" onclick="event.stopPropagation()">🛰️ Rastrear</a>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    if (paginadas.length === 0) {
+        container.innerHTML = '<div style="text-align:center;padding:60px 24px;color:var(--text-light)"><div style="font-size:4rem;margin-bottom:16px;">🔍</div><h3>Nenhuma vaga encontrada</h3><p style="margin-top:8px;">Tente ajustar os filtros ou buscar por outros termos.</p></div>';
+    }
+
+    // Paginação
+    renderizarPaginacao(totalPaginas);
+}
+
+function renderizarPaginacao(total) {
+    const el = document.getElementById('paginacao');
+    if (total <= 1) { el.innerHTML = ''; return; }
+
+    let html = '';
+    html += `<a href="#" onclick="mudarPagina(${paginaAtual - 1});return false" style="${paginaAtual === 1 ? 'opacity:0.4;pointer-events:none' : ''}">‹</a>`;
+    for (let i = 1; i <= total; i++) {
+        if (i === paginaAtual) {
+            html += `<span class="active">${i}</span>`;
+        } else {
+            html += `<a href="#" onclick="mudarPagina(${i});return false">${i}</a>`;
+        }
+    }
+    html += `<a href="#" onclick="mudarPagina(${paginaAtual + 1});return false" style="${paginaAtual === total ? 'opacity:0.4;pointer-events:none' : ''}">›</a>`;
+    el.innerHTML = html;
+}
+
+function mudarPagina(pagina) {
+    const container = document.getElementById('vagasContainer');
+    const totalCards = container.children.length; // não é confiável, melhor recalcular
+    // Vou re-filtrar e usar a pagina
+    // Preciso obter o resultado filtrado atual
+    // Como não tenho acesso fácil, vou usar o mesmo método de filtro
+    paginaAtual = pagina;
+    // Re-aplica o filtro mantendo a página
+    // Mas o filtro zera a página... Vou fazer um workaround
+    // Na verdade, o filtrarVagas seta paginaAtual = 1, então não posso chamar ele
+    // Vou fazer de outro jeito: re-aplicar filtro mas manter pagina
+    const busca = document.getElementById('inputBusca').value.toLowerCase();
+    const local = document.getElementById('inputLocal').value.toLowerCase();
+    const unidade = document.getElementById('filtroUnidade').value;
+    const cidade = document.getElementById('filtroCidade').value;
+    const modPresencial = document.getElementById('modPresencial').checked;
+    const tipoBanco = document.getElementById('tipoBanco').checked;
+    const tipoEfetiva = document.getElementById('tipoEfetiva').checked;
+    const periodo = parseInt(document.getElementById('filtroPeriodo').value);
+    const sort = document.getElementById('sortSelect').value;
+
+    let resultado = vagas.filter(v => {
+        if (busca && !v.cargo.toLowerCase().includes(busca) && !v.descricao.toLowerCase().includes(busca)) return false;
+        if (local && !v.local.toLowerCase().includes(local)) return false;
+        if (unidade && v.unidade !== unidade) return false;
+        if (cidade && !v.local.toLowerCase().includes(cidade.toLowerCase())) return false;
+        if (modPresencial && v.modalidade !== 'Presencial') return false;
+        if (tipoBanco && v.tipo !== 'Banco de Talentos') return false;
+        if (tipoEfetiva && v.tipo !== 'Efetiva') return false;
+        if (periodo) {
+            const dias = getDiasAtras(v.data);
+            if (dias > periodo) return false;
+        }
+        return true;
+    });
+
+    resultado.sort((a, b) => {
+        if (sort === 'data') return new Date(b.data) - new Date(a.data);
+        if (sort === 'salario-desc') return (b.salario || 0) - (a.salario || 0);
+        if (sort === 'salario-asc') return (a.salario || 999999) - (b.salario || 999999);
+        return 0;
+    });
+
+    // override paginaAtual
+    // mas o renderizarVagas usa paginaAtual, então tá ok
+    const totalPaginas = Math.ceil(resultado.length / porPagina);
+    if (pagina < 1) paginaAtual = 1;
+    else if (pagina > totalPaginas) paginaAtual = totalPaginas;
+    else paginaAtual = pagina;
+
+    renderizarVagas(resultado);
+}
+
+function limparFiltros() {
+    document.getElementById('inputBusca').value = '';
+    document.getElementById('inputLocal').value = '';
+    document.getElementById('filtroUnidade').value = '';
+    document.getElementById('filtroCidade').value = '';
+    document.getElementById('modPresencial').checked = false;
+    document.getElementById('tipoBanco').checked = false;
+    document.getElementById('tipoEfetiva').checked = false;
+    document.getElementById('filtroPeriodo').value = '';
+    document.getElementById('sortSelect').value = 'data';
+    filtrarVagas();
+}
+
+function abrirModal(id) {
+    const v = vagas.find(x => x.id === id);
+    if (!v) return;
+    document.getElementById('modalTitulo').textContent = v.cargo;
+    document.getElementById('modalEmpresa').textContent = v.empresa;
+    document.getElementById('modalLocal').textContent = v.local;
+    document.getElementById('modalModalidade').textContent = v.modalidade;
+    document.getElementById('modalSalario').textContent = formatarSalario(v.salario);
+    document.getElementById('modalData').textContent = new Date(v.data + 'T12:00:00').toLocaleDateString('pt-BR');
+    document.getElementById('modalDescricao').textContent = v.descricao;
+    document.getElementById('modalLink').href = v.link;
+    document.getElementById('modalVaga').classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function fecharModal() {
+    document.getElementById('modalVaga').classList.remove('active');
+    document.body.style.overflow = 'auto';
+}
+
+// Inicializar
+filtrarVagas();
+</script>
+
+</body>
+</html>
