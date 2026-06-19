@@ -1296,3 +1296,13 @@ def planos():
 
 MERCADO_PAGO_TOKEN = os.getenv("MERCADO_PAGO_TOKEN")
 mp = mercadopago.SDK(MERCADO_PAGO_TOKEN) if MERCADO_PAGO_TOKEN else None
+
+
+# =========================
+# VAGAS
+# =========================
+
+@app.route("/vagas")
+def pagina_vagas():
+    """Página de vagas: coregov.com.br/vagas"""
+    return render_template("vagas.html")
