@@ -248,8 +248,57 @@ ESTATUTO:
         return None, f"Erro na análise: {str(e)}"
 
 
+def sanitizar_texto_pdf(texto):
+    """Remove caracteres não suportados pela fonte Helvetica do FPDF."""
+    if not texto:
+        return texto
+    # Substitui emojis e caracteres especiais por alternativas ASCII
+    substituicoes = {
+        '✅': '[OK]', '⚠️': '[!]', '❌': '[X]', '❓': '[?]',
+        '📋': '[LISTA]', '💡': '[DICA]', '🚀': '[AVANCO]',
+        '➡': '->', '—': '-', '–': '-', '🔴': '[V]',
+        '🟢': '[V]', '🟡': '[!]', '🔵': '[I]',
+        '👤': '[USUARIO]', '📅': '[DATA]', '💰': '[DINHEIRO]',
+        '🏆': '[VITORIA]', '⭐': '[DESTAQUE]', '🔗': '[LINK]',
+        '📝': '[NOTA]', '📄': '[DOC]', '⚡': '[ALERTA]',
+        '🎯': '[ALVO]', '💪': '[FORCA]', '🤝': '[PARCERIA]',
+        '🌐': '[WEB]', '🔒': '[SEGURO]', '🔓': '[ABERTO]',
+    }
+    for emoji, replacement in substituicoes.items():
+        texto = texto.replace(emoji, replacement)
+    # Remove quaisquer outros caracteres não-ASCII que o FPDF não suporta
+    import unicodedata
+    resultado = []
+    for char in texto:
+        try:
+            char.encode('latin-1')
+            resultado.append(char)
+        except UnicodeEncodeError:
+            # Tenta substituir por similar ASCII ou remove
+            try:
+                simplificado = unicodedata.normalize('NFKD', char).encode('ascii', 'ignore').decode('ascii')
+                if simplificado:
+                    resultado.append(simplificado)
+            except:
+                pass
+    return ''.join(resultado)
+
+
 def gerar_pdf_diagnostico(analise, nome_cliente="", email_cliente=""):
     """Gera PDF com o diagnóstico do estatuto."""
+    # Sanitizar todos os campos de texto para evitar erros de fonte no PDF
+    for key in ['orgao', 'resumo_curto', 'status_geral', 'recomendacoes_gerais']:
+        if key in analise and isinstance(analise[key], str):
+            analise[key] = sanitizar_texto_pdf(analise[key])
+    for item in analise.get('itens_analisados', []):
+        for key in ['item', 'descricao', 'base_legal', 'recomendacao']:
+            if key in item and isinstance(item[key], str):
+                item[key] = sanitizar_texto_pdf(item[key])
+    if 'pontos_fortes' in analise and isinstance(analise['pontos_fortes'], list):
+        analise['pontos_fortes'] = [sanitizar_texto_pdf(p) for p in analise['pontos_fortes']]
+    if 'pontos_criticos' in analise and isinstance(analise['pontos_criticos'], list):
+        analise['pontos_criticos'] = [sanitizar_texto_pdf(p) for p in analise['pontos_criticos']]
+
     pdf = FPDF()
     pdf.add_page()
 
@@ -306,9 +355,9 @@ def gerar_pdf_diagnostico(analise, nome_cliente="", email_cliente=""):
 
     # Status textual
     status_texto = {
-        "adequado": "✅ ADEQUADO - Estatuto atende aos requisitos legais",
-        "parcial": "⚠️ PARCIAL - Estatuto precisa de ajustes",
-        "inadequado": "❌ INADEQUADO - Estatuto precisa ser reformulado"
+        "adequado": "[OK] ADEQUADO - Estatuto atende aos requisitos legais",
+        "parcial": "[ATENCAO] PARCIAL - Estatuto precisa de ajustes",
+        "inadequado": "[INADEQUADO] INADEQUADO - Estatuto precisa ser reformulado"
     }
     pdf.set_font("Helvetica", "B", 11)
     cor_status = (34, 197, 94) if status == "adequado" else (DOURADO if status == "parcial" else VERMELHO)
@@ -332,68 +381,42 @@ def gerar_pdf_diagnostico(analise, nome_cliente="", email_cliente=""):
     if resumo:
         pdf.multi_cell(0, 6, resumo)
 
-    # === ITENS ANALISADOS ===
-    itens = analise.get("itens_analisados", [])
-    if itens:
-        pdf.add_page()
-        pdf.set_fill_color(*AZUL)
-        pdf.set_text_color(255, 255, 255)
-        pdf.set_font("Helvetica", "B", 16)
-        pdf.cell(0, 12, "  ITENS ANALISADOS DETALHADAMENTE", ln=True, fill=True)
-        pdf.ln(6)
-
-        for item in itens:
-            status_item = item.get("status", "atencao")
-            cor_item = (34, 197, 94) if status_item == "ok" else (DOURADO if status_item == "atencao" else VERMELHO)
-            simbolo = "✅" if status_item == "ok" else ("⚠️" if status_item == "atencao" else "❌")
-
-            pdf.set_font("Helvetica", "B", 10)
-            pdf.set_text_color(*AZUL)
-            pdf.cell(0, 7, f"{simbolo} {item.get('item', 'Item')}", ln=True)
-
-            if item.get("descricao"):
-                pdf.set_font("Helvetica", "", 9)
-                pdf.set_text_color(*CINZA)
-                pdf.multi_cell(0, 5, f"  {item.get('descricao', '')}")
-            if item.get("base_legal"):
-                pdf.set_font("Helvetica", "I", 8)
-                pdf.set_text_color(100, 100, 100)
-                pdf.cell(0, 5, f"  Base legal: {item.get('base_legal', '')}", ln=True)
-            if item.get("recomendacao"):
-                pdf.set_font("Helvetica", "", 9)
-                pdf.set_text_color(*VERMELHO)
-                pdf.multi_cell(0, 5, f"  Recomendacao: {item.get('recomendacao', '')}")
-            pdf.ln(3)
+    # === ITENS ANALISADOS === (omitido na versão gratuita — é o serviço pago)
+    # Os detalhes de cada item, recomendações e o que alterar
+    # são EXIBIDOS apenas quando o cliente CONTRATA o serviço
 
     # === RECOMENDAÇÕES ===
     pdf.add_page()
     pdf.set_fill_color(*AZUL)
     pdf.set_text_color(255, 255, 255)
     pdf.set_font("Helvetica", "B", 16)
-    pdf.cell(0, 12, "  RECOMENDACOES E PROXIMOS PASSOS", ln=True, fill=True)
+    pdf.cell(0, 12, "  PROXIMOS PASSOS", ln=True, fill=True)
     pdf.ln(8)
 
     pdf.set_text_color(*AZUL)
     pdf.set_font("Helvetica", "B", 11)
-    pdf.cell(0, 7, "Pontos criticos identificados:", ln=True)
+    pdf.cell(0, 7, "O que o diagnostico revelou:", ln=True)
     pdf.ln(4)
     pdf.set_font("Helvetica", "", 10)
-    pdf.set_text_color(*VERMELHO)
-
-    for critico in analise.get("pontos_criticos", []):
-        pdf.cell(5, 6, "")
-        pdf.cell(0, 6, f"  - {critico}", ln=True)
-
+    pdf.set_text_color(*CINZA)
+    pdf.multi_cell(0, 6, (
+        f"Seu estatuto recebeu uma pontuacao de {pontuacao}/100, "
+        f"sendo classificado como \"{status_texto.get(analise.get('status_geral'), 'pendente')}\". "
+        f"{'Isso significa que a organizacao ATENDE aos requisitos minimos para captacao.' if pode_captar else 'Isso significa que a organizacao NAO ATENDE aos requisitos e precisa de atualizacoes urgentes.'}"
+    ))
     pdf.ln(6)
-    pdf.set_text_color(*AZUL)
+
+    pdf.set_text_color(*VERMELHO)
     pdf.set_font("Helvetica", "B", 11)
-    pdf.cell(0, 7, "Pontos fortes:", ln=True)
+    pdf.cell(0, 7, "Para visualizar as alteracoes necessarias em detalhes:", ln=True)
     pdf.ln(4)
     pdf.set_font("Helvetica", "", 10)
-    pdf.set_text_color(34, 197, 94)
-    for forte in analise.get("pontos_fortes", []):
-        pdf.cell(5, 6, "")
-        pdf.cell(0, 6, f"  + {forte}", ln=True)
+    pdf.set_text_color(*CINZA)
+    pdf.multi_cell(0, 6, (
+        "O relatorio completo com cada clausula analisada, recomendacoes especificas "
+        "de alteracao e prioridades e FORNECIDO MEDIANTE CONTRATACAO DO SERVICO "
+        "DE ATUALIZACAO DE ESTATUTO pela COREGOV."
+    ))
 
     # === CTA ===
     pdf.ln(10)
@@ -422,7 +445,7 @@ def gerar_pdf_diagnostico(analise, nome_cliente="", email_cliente=""):
     pdf.cell(0, 5, "Este documento e uma analise automatizada e nao substitui consultoria juridica especializada.", ln=True, align="C")
 
     # Salvar em memória
-    pdf_bytes = pdf.output(dest='S').encode('latin-1')
+    pdf_bytes = pdf.output(dest='S').encode('utf-8')
     return pdf_bytes
 
 

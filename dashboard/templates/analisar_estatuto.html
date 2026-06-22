@@ -453,28 +453,6 @@ function renderResultado(data) {
     if (score < 40) corCirculo = '#e94560';
     else if (score < 70) corCirculo = '#f5c518';
 
-    // Itens
-    let itensHtml = '';
-    const itens = analise.itens_analisados || [];
-    for (const item of itens) {
-        const icone = item.status === 'ok' ? '✅' : (item.status === 'atencao' ? '⚠️' : '❌');
-        itensHtml += `
-            <div class="item-row">
-                <div class="item-icon">${icone}</div>
-                <div class="item-content">
-                    <div class="item-title">${item.item || 'Item'}</div>
-                    ${item.descricao ? `<div class="item-desc">${item.descricao}</div>` : ''}
-                    ${item.base_legal ? `<div class="item-legal">📖 ${item.base_legal}</div>` : ''}
-                    ${item.recomendacao ? `<div class="item-desc" style="color:#e94560;">🔧 ${item.recomendacao}</div>` : ''}
-                </div>
-            </div>
-        `;
-    }
-
-    // Pontos
-    const fortes = analise.pontos_fortes || [];
-    const criticos = analise.pontos_criticos || [];
-
     card.innerHTML = `
         <div class="result-header">
             <div class="score-circle" style="background: ${corCirculo}; font-size: 1rem; line-height: 1.4; display: flex; flex-direction: column; align-items: center; justify-content: center;">
@@ -500,37 +478,31 @@ function renderResultado(data) {
                     }
                 </p>
                 ${analise.resumo_curto ? `<p style="color: var(--text); margin-top: 10px; font-size: 0.95rem;">${analise.resumo_curto}</p>` : ''}
-                ${data.pdf_url ? `<a href="${data.pdf_url}" class="btn-download" download>📥 Baixar relatório completo em PDF</a>` : ''}
+                ${data.pdf_url ? `<a href="${data.pdf_url}" class="btn-download" download>📥 Baixar diagnóstico em PDF</a>` : ''}
             </div>
         </div>
 
-        ${criticos.length > 0 ? `
-            <div style="background: #fef2f2; border-radius: 12px; padding: 16px; margin: 16px 0;">
-                <h4 style="color: #dc2626; margin-bottom: 8px;">❌ Pontos Críticos</h4>
-                ${criticos.map(c => `<div style="font-size: 0.9rem; color: #991b1b; padding: 2px 0;">• ${c}</div>`).join('')}
+        <!-- Diagnóstico geral - mostra o PROBLEMA, não a SOLUÇÃO -->
+        <div style="background: #fef2f2; border-radius: 12px; padding: 16px; margin: 16px 0;">
+            <h4 style="color: #dc2626; margin-bottom: 8px;">📋 Diagnóstico Geral</h4>
+            <div style="font-size: 0.9rem; color: #991b1b;">
+                ${podeCaptar
+                    ? '<p>✅ Seu estatuto está adequado para captação de recursos. Consulte um especialista para maximizar suas oportunidades.</p>'
+                    : '<p>❌ Seu estatuto <strong>NÃO está adequado</strong> para captação de recursos públicos e privados. <strong>Alterações são necessárias</strong> para adequação ao MROSC (Lei 13.019/2014) e demais legislações.</p>'
+                }
             </div>
-        ` : ''}
+        </div>
 
-        ${fortes.length > 0 ? `
-            <div style="background: #f0fdf4; border-radius: 12px; padding: 16px; margin: 16px 0;">
-                <h4 style="color: #15803d; margin-bottom: 8px;">✅ Pontos Fortes</h4>
-                ${fortes.map(f => `<div style="font-size: 0.9rem; color: #166534; padding: 2px 0;">• ${f}</div>`).join('')}
-            </div>
-        ` : ''}
-
-        ${analise.recomendacoes_gerais ? `
-            <div style="background: #f0f7ff; border-radius: 12px; padding: 16px; margin: 16px 0;">
-                <h4 style="color: var(--primary); margin-bottom: 8px;">💡 Recomendações Gerais</h4>
-                <div style="font-size: 0.9rem; color: var(--text);">${analise.recomendacoes_gerais}</div>
-            </div>
-        ` : ''}
-
-        ${itensHtml ? `
-            <div style="margin-top: 20px; border-top: 1px solid var(--border); padding-top: 16px;">
-                <h4 style="color: var(--primary); margin-bottom: 8px;">📋 Detalhamento por Item</h4>
-                <div class="item-list">${itensHtml}</div>
-            </div>
-        ` : ''}
+        <!-- Aviso: Serviço Pago -->
+        <div style="background: #fff7ed; border: 2px dashed #f5c518; border-radius: 12px; padding: 20px; margin: 16px 0; text-align: center;">
+            <h4 style="color: #92400e; margin-bottom: 8px;">🔒 Detalhamento Completo</h4>
+            <p style="font-size: 0.9rem; color: #78350f;">
+                O relatório completo com <strong>cada cláusula analisada</strong>,
+                <strong>recomendações específicas de alteração</strong> e
+                <strong>prioridades</strong> está disponível mediante contratação do serviço
+                de <strong>Atualização de Estatuto COREGOV</strong>.
+            </p>
+        </div>
     `;
 }
 </script>

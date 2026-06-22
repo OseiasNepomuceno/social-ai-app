@@ -1634,7 +1634,10 @@ def api_analisar_estatuto():
         if erro or not analise:
             return jsonify({"success": False, "erro": erro or "Falha na analise. Tente novamente."}), 500
 
-        # Garantir campos padrao
+        # Garantir campos padrao — usar valores REAIS do formulário (não confiar na IA)
+        # datetime já importado no topo do arquivo
+        analise["orgao"] = org or analise.get("orgao", "—")
+        analise["data_analise"] = datetime.now().strftime("%Y-%m-%d")
         if "pontuacao" not in analise:
             analise["pontuacao"] = 50
         if "status_geral" not in analise:
@@ -1648,14 +1651,47 @@ def api_analisar_estatuto():
         if "pontos_criticos" not in analise:
             analise["pontos_criticos"] = []
 
-        # Gerar PDF
+        # ===== SALVAR ANALISE COMPLETA NO SUPPABASE (USO INTERNO) =====
+        # Antes de sanitizar, salva tudo para quando o cliente contratar
         try:
-            pdf_bytes = gerar_pdf_diagnostico(analise, nome, email)
+            supabase.table("analises_estatuto").insert({
+                "nome": nome,
+                "email": email,
+                "organizacao": org,
+                "pontuacao": analise.get("pontuacao", 0),
+                "status_geral": analise.get("status_geral", "parcial"),
+                "pode_captar": analise.get("pode_captar_recursos", False),
+                "analise_json": json.dumps(analise, ensure_ascii=False),
+                "created_at": datetime.utcnow().isoformat()
+            }).execute()
+        except Exception as e_save:
+            print(f"Aviso: Erro ao salvar analise: {e_save}")
+
+        # ===== SANITIZAR PARA EXIBIÇÃO PÚBLICA =====
+        # Remove detalhes que são o SERVIÇO PAGO (não mostrar de graça)
+        analise_publica = {
+            "orgao": analise["orgao"],
+            "data_analise": analise["data_analise"],
+            "status_geral": analise["status_geral"],
+            "pontuacao": analise["pontuacao"],
+            "pode_captar_recursos": analise["pode_captar_recursos"],
+            "resumo_curto": analise.get("resumo_curto", ""),
+            # NÃO incluir: itens_analisados, pontos_fortes, pontos_criticos, recomendacoes_gerais
+            # Isso é o SERVIÇO PAGO — o cliente vê que PRECISA, mas não vê COMO fazer
+            "itens_analisados": [],
+            "pontos_fortes": [],
+            "pontos_criticos": [],
+            "recomendacoes_gerais": None
+        }
+
+        # Gerar PDF com versão sanitizada (sem instruções de alteração)
+        try:
+            pdf_bytes = gerar_pdf_diagnostico(analise_publica, nome, email)
         except Exception as e:
             print(f"Aviso: Erro ao gerar PDF: {e}")
             pdf_bytes = None
 
-        # Salvar analise no Supabase
+        # Upload PDF
         pdf_url = None
         if pdf_bytes:
             try:
@@ -1664,7 +1700,6 @@ def api_analisar_estatuto():
                 pdf_temp.close()
 
                 from services.supabase_storage import upload_file
-                from datetime import datetime
                 timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
                 import secrets
                 token_arquivo = secrets.token_hex(8)
@@ -1684,25 +1719,18 @@ def api_analisar_estatuto():
             except Exception as e_pdf:
                 print(f"Aviso: Erro ao processar PDF: {e_pdf}")
 
-        # Salvar metadados da analise
-        try:
-            supabase.table("analises_estatuto").insert({
-                "nome": nome,
-                "email": email,
-                "organizacao": org,
-                "pontuacao": analise.get("pontuacao", 0),
-                "status_geral": analise.get("status_geral", "parcial"),
-                "pode_captar": analise.get("pode_captar_recursos", False),
-                "pdf_url": pdf_url,
-                "analise_json": str(analise)[:3000],
-                "created_at": datetime.utcnow().isoformat()
-            }).execute()
-        except Exception as e_save:
-            print(f"Aviso: Erro ao salvar analise: {e_save}")
+        # Atualizar registro com URL do PDF
+        if pdf_url:
+            try:
+                supabase.table("analises_estatuto").update({
+                    "pdf_url": pdf_url
+                }).eq("email", email).eq("created_at", datetime.utcnow().isoformat()).execute()
+            except:
+                pass
 
         return jsonify({
             "success": True,
-            "analise": analise,
+            "analise": analise_publica,
             "pdf_url": pdf_url,
             "mensagem": "Analise concluida com sucesso!"
         }), 200
