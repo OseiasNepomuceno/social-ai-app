@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>{% block title %}Social AI{% endblock %}</title>
+
+<link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+<link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+
+.sidebar{
+    transition: all .3s ease;
+}
+
+.sidebar.collapsed{
+    width:80px;
+}
+
+.sidebar.collapsed .menu-text{
+    display:none;
+}
+
+.sidebar.collapsed .logo-text{
+    display:none;
+}
+
+.sidebar.collapsed .submenu{
+    display:none !important;
+}
+
+.menu-link{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:12px;
+    border-radius:10px;
+    transition:.2s;
+}
+
+.menu-link:hover{
+    background:#374151;
+}
+
+.submenu-link{
+    display:block;
+    padding:10px 12px;
+    border-radius:8px;
+    color:#cbd5e1;
+    transition:.2s;
+}
+
+.submenu-link:hover{
+    background:#374151;
+    color:white;
+}
+
+</style>
+
+{% block head %}{% endblock %}
+
+</head>
+
+<body class="bg-gray-900 text-gray-100 min-h-screen">
+
+<div class="flex min-h-screen">
+
+    <!-- SIDEBAR -->
+
+    <aside
+        id="sidebar"
+        class="sidebar w-72 bg-gray-800 border-r border-gray-700 flex flex-col">
+
+        <!-- LOGO -->
+
+        <div class="p-4 border-b border-gray-700">
+
+            <div class="flex items-center justify-between">
+
+                <div class="flex items-center gap-3">
+
+                    <i class="fa-solid fa-brain text-blue-500 text-2xl"></i>
+
+                    <span class="logo-text text-xl font-bold">
+                        Social AI
+                    </span>
+
+                </div>
+
+                <button onclick="toggleSidebar()">
+
+                    <i class="fa-solid fa-bars"></i>
+
+                </button>
+
+            </div>
+
+        </div>
+
+        <!-- MENU -->
+
+        <nav class="p-3 flex-1 overflow-y-auto">
+
+            <!-- DASHBOARD -->
+
+            <button
+                onclick="toggleMenu('dashboardMenu')"
+                class="menu-link w-full justify-between">
+
+                <div class="flex items-center gap-3">
+
+                    <i class="fa-solid fa-chart-pie"></i>
+
+                    <span class="menu-text">
+                        Dashboard
+                    </span>
+
+                </div>
+
+                <i class="fa-solid fa-chevron-down menu-text"></i>
+
+            </button>
+
+            <div
+                id="dashboardMenu"
+                class="submenu hidden pl-10 pb-2">
+
+                <a href="/ia" class="submenu-link">
+                    Criar Posts com IA
+                </a>
+
+                <a href="/agendamentos" class="submenu-link">
+                    Agendamentos
+                </a>
+
+                <a href="/publicacoes" class="submenu-link">
+                    Publicações
+                </a>
+
+                <a href="/planos" class="submenu-link">
+                    Meu Plano
+                </a>
+
+                <a href="/configuracoes" class="submenu-link">
+                    Configurações
+                </a>
+
+            </div>
+
+            <!-- CONTEUDO IA -->
+
+            {% if session.get('email') == 'oseiasnepom@gmail.com' %}
+
+            <button
+                onclick="toggleMenu('conteudoMenu')"
+                class="menu-link w-full justify-between">
+
+                <div class="flex items-center gap-3">
+
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+
+                    <span class="menu-text">
+                        Conteúdo IA
+                    </span>
+
+                </div>
+
+                <i class="fa-solid fa-chevron-down menu-text"></i>
+
+            </button>
+
+            <div
+                id="conteudoMenu"
+                class="submenu hidden pl-10 pb-2">
+
+                <a href="/posts-site" class="submenu-link">
+                    Posts
+                </a>
+
+                <a href="/roteiros-tiktok-site" class="submenu-link">
+                    Roteiros TikTok
+                </a>
+
+                <a href="/ctas-site" class="submenu-link">
+                    CTAs
+                </a>
+
+                <a href="/ebooks-site" class="submenu-link">
+                    E-books
+                </a>
+
+                <a href="/infograficos-site" class="submenu-link">
+                    Infográficos
+                </a>
+
+                <a href="/templates-site" class="submenu-link">
+                    Templates
+                </a>
+
+            </div>
+
+            {% endif %}
+
+            <!-- ADMIN -->
+
+            {% if session.get('email') == 'oseiasnepom@gmail.com' %}
+
+            <button
+                onclick="toggleMenu('adminMenu')"
+                class="menu-link w-full justify-between">
+
+                <div class="flex items-center gap-3">
+
+                    <i class="fa-solid fa-gear"></i>
+
+                    <span class="menu-text">
+                        Administração
+                    </span>
+
+                </div>
+
+                <i class="fa-solid fa-chevron-down menu-text"></i>
+
+            </button>
+
+            <div
+                id="adminMenu"
+                class="submenu hidden pl-10">
+
+                <a href="/monitoramento" class="submenu-link">
+                    Monitoramento
+                </a>
+
+            </div>
+
+            {% endif %}
+
+        </nav>
+
+    </aside>
+
+    <!-- ÁREA PRINCIPAL -->
+
+    <div class="flex-1 flex flex-col">
+
+        <!-- TOPO -->
+
+        <header
+            class="bg-gray-800 border-b border-gray-700 px-6 py-4 flex justify-between items-center">
+
+            <h1 class="font-semibold text-lg">
+
+                Social AI Dashboard
+
+            </h1>
+
+            <div class="flex items-center gap-4">
+
+                <span class="text-gray-300">
+
+                    {{ session.get('email', 'Usuário') }}
+
+                </span>
+
+                <a
+                    href="/logout"
+                    class="text-red-400 hover:text-red-300">
+
+                    <i class="fa-solid fa-right-from-bracket"></i>
+
+                    Sair
+
+                </a>
+
+            </div>
+
+        </header>
+
+        <!-- CONTEÚDO -->
+
+        <main class="flex-1 p-6 overflow-y-auto">
+
+            {% block content %}
+            {% endblock %}
+
+        </main>
+
+    </div>
+
+</div>
+
+<script>
+
+function toggleMenu(id){
+
+    document
+        .getElementById(id)
+        .classList
+        .toggle("hidden");
+
+}
+
+function toggleSidebar(){
+
+    document
+        .getElementById("sidebar")
+        .classList
+        .toggle("collapsed");
+
+}
+
+</script>
+
+{% block scripts %}
+{% endblock %}
+
+</body>
+</html>

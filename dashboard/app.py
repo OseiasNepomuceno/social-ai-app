@@ -452,6 +452,8 @@ def buscar_conteudos(tipo: str, q: str = "", categoria: str = "") -> list:
 def posts_site():
     if "user_id" not in session:
         return redirect("/login")
+    if session.get("email") != ADMIN_EMAIL:
+        return redirect("/")
     q = request.args.get("q", "").strip()
     categoria = request.args.get("categoria", "").strip()
     pagina = int(request.args.get("page", 1))
@@ -466,6 +468,8 @@ def posts_site():
 def roteiros_tiktok_site():
     if "user_id" not in session:
         return redirect("/login")
+    if session.get("email") != ADMIN_EMAIL:
+        return redirect("/")
     q = request.args.get("q", "").strip()
     categoria = request.args.get("categoria", "").strip()
     pagina = int(request.args.get("page", 1))
@@ -480,6 +484,8 @@ def roteiros_tiktok_site():
 def ctas_site():
     if "user_id" not in session:
         return redirect("/login")
+    if session.get("email") != ADMIN_EMAIL:
+        return redirect("/")
     q = request.args.get("q", "").strip()
     categoria = request.args.get("categoria", "").strip()
     pagina = int(request.args.get("page", 1))
@@ -494,6 +500,8 @@ def ctas_site():
 def ebooks_site():
     if "user_id" not in session:
         return redirect("/login")
+    if session.get("email") != ADMIN_EMAIL:
+        return redirect("/")
     q = request.args.get("q", "").strip()
     categoria = request.args.get("categoria", "").strip()
     pagina = int(request.args.get("page", 1))
@@ -508,6 +516,8 @@ def ebooks_site():
 def infograficos_site():
     if "user_id" not in session:
         return redirect("/login")
+    if session.get("email") != ADMIN_EMAIL:
+        return redirect("/")
     q = request.args.get("q", "").strip()
     categoria = request.args.get("categoria", "").strip()
     pagina = int(request.args.get("page", 1))
@@ -522,6 +532,8 @@ def infograficos_site():
 def templates_site():
     if "user_id" not in session:
         return redirect("/login")
+    if session.get("email") != ADMIN_EMAIL:
+        return redirect("/")
     q = request.args.get("q", "").strip()
     categoria = request.args.get("categoria", "").strip()
     pagina = int(request.args.get("page", 1))
@@ -1296,6 +1308,253 @@ def planos():
 
 MERCADO_PAGO_TOKEN = os.getenv("MERCADO_PAGO_TOKEN")
 mp = mercadopago.SDK(MERCADO_PAGO_TOKEN) if MERCADO_PAGO_TOKEN else None
+
+
+# =========================
+# VAGAS — WEBHOOK MERCADO PAGO & VERIFICAÇÃO
+# =========================
+
+# Valor único do link MP para acesso VIP às vagas
+PRECO_UNICO_VAGAS = 9.90
+LINK_MP_VAGAS = "https://mpago.la/2UmiPMV"
+NOME_PLANO_VAGAS = "vip"
+
+
+@app.route("/api/mercadopago/ipn", methods=["POST"])
+def mercadopago_ipn():
+    """
+    Webhook do Mercado Pago (IPN)
+    O MP notifica aqui quando um pagamento é criado/atualizado
+    """
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"status": "ignorado"}), 200
+
+        # Extrair payment_id (MP pode enviar em formatos diferentes)
+        payment_id = None
+        if "data" in data and "id" in data["data"]:
+            payment_id = data["data"]["id"]
+        elif "id" in data:
+            payment_id = data["id"]
+
+        if not payment_id:
+            return jsonify({"status": "sem_payment_id"}), 200
+
+        if not mp:
+            return jsonify({"status": "mp_nao_configurado"}), 200
+
+        # Buscar detalhes do pagamento na API do MP
+        payment_info = mp.payment().get(payment_id)
+        payment = payment_info.get("response", {})
+
+        status = payment.get("status")
+        if status != "approved":
+            return jsonify({"status": "nao_aprovado", "payment_status": status}), 200
+
+        # Identificar o plano pelo valor pago - usando valor único
+        plano = NOME_PLANO_VAGAS  # "vip"
+
+        # Email do pagador
+        payer_email = payment.get("payer", {}).get("email", "").strip().lower()
+        if not payer_email:
+            return jsonify({"status": "email_nao_encontrado"}), 200
+
+        # Salvar/atualizar no Supabase
+        expires_at = (datetime.utcnow() + timedelta(days=90)).isoformat()
+
+        # Verificar se já tem assinatura ativa
+        existing = supabase.table("vagas_assinantes").select("*").eq("email", payer_email).eq("status", "ativo").execute()
+        if existing.data:
+            supabase.table("vagas_assinantes").update({
+                "plano": plano,
+                "status": "ativo",
+                "payment_id": str(payment_id),
+                "expires_at": expires_at,
+                "updated_at": datetime.utcnow().isoformat()
+            }).eq("email", payer_email).execute()
+        else:
+            supabase.table("vagas_assinantes").insert({
+                "email": payer_email,
+                "plano": plano,
+                "status": "ativo",
+                "payment_id": str(payment_id),
+                "created_at": datetime.utcnow().isoformat(),
+                "expires_at": expires_at
+            }).execute()
+
+        # Se tinha pending, atualizar
+        pending = supabase.table("vagas_assinantes").select("*").eq("email", payer_email).eq("status", "pending").execute()
+        if pending.data:
+            supabase.table("vagas_assinantes").update({
+                "status": "ativo",
+                "plano": plano,
+                "payment_id": str(payment_id),
+                "expires_at": expires_at
+            }).eq("email", payer_email).eq("status", "pending").execute()
+
+        print(f"✅ VAGAS IPN - Pagamento aprovado: {payer_email} - Plano: {plano}")
+        return jsonify({"status": "ok", "email": payer_email, "plano": plano}), 200
+
+    except Exception as e:
+        print(f"❌ ERRO NO WEBHOOK MP IPN: {str(e)}")
+        return jsonify({"status": "erro", "message": str(e)}), 200
+
+
+@app.route("/api/vagas/verificar-acesso", methods=["GET"])
+def verificar_acesso_vagas():
+    """Verifica se um email tem assinatura ativa"""
+    email = request.args.get("email", "").strip().lower()
+    if not email:
+        return jsonify({"success": False, "acesso": False, "erro": "Email não informado"}), 400
+
+    try:
+        resultado = supabase.table("vagas_assinantes").select("*").eq("email", email).eq("status", "ativo").execute()
+
+        if not resultado.data:
+            return jsonify({
+                "success": True,
+                "acesso": False,
+                "plano": None,
+                "mensagem": "Nenhuma assinatura ativa para este email."
+            }), 200
+
+        assinatura = resultado.data[0]
+        expires_at = assinatura.get("expires_at", "")
+
+        # Verificar expiração
+        if expires_at:
+            exp_date = datetime.fromisoformat(expires_at.replace("Z", ""))
+            if datetime.utcnow() > exp_date:
+                supabase.table("vagas_assinantes").update({"status": "expirado"}).eq("id", assinatura["id"]).execute()
+                return jsonify({
+                    "success": True,
+                    "acesso": False,
+                    "plano": assinatura.get("plano"),
+                    "mensagem": "Assinatura expirou. Renove para continuar."
+                }), 200
+
+        return jsonify({
+            "success": True,
+            "acesso": True,
+            "plano": assinatura.get("plano"),
+            "expira": expires_at,
+            "mensagem": f"Acesso ativo! Plano {assinatura.get('plano', '').title()}"
+        }), 200
+
+    except Exception as e:
+        return jsonify({"success": False, "acesso": False, "erro": str(e)}), 500
+
+
+@app.route("/api/vagas/capturar-email", methods=["POST"])
+def capturar_email_vagas():
+    """Captura email antes do redirecionamento ao MP"""
+    try:
+        data = request.get_json()
+        email = data.get("email", "").strip().lower()
+        plano = data.get("plano", "").strip().lower()
+
+        if not email or not plano:
+            return jsonify({"success": False, "erro": "Email e plano são obrigatórios"}), 400
+        if plano != NOME_PLANO_VAGAS:
+            return jsonify({"success": False, "erro": "Plano inválido"}), 400
+
+        # Verificar se já tem assinatura ativa
+        ativo = supabase.table("vagas_assinantes").select("*").eq("email", email).eq("status", "ativo").execute()
+        if ativo.data:
+            return jsonify({
+                "success": True,
+                "ja_assinante": True,
+                "plano": ativo.data[0].get("plano"),
+                "mensagem": "Você já possui assinatura ativa!"
+            }), 200
+
+        # Salvar como pending
+        supabase.table("vagas_assinantes").insert({
+            "email": email,
+            "plano": plano,
+            "status": "pending",
+            "created_at": datetime.utcnow().isoformat()
+        }).execute()
+
+        return jsonify({
+            "success": True,
+            "redirect_url": LINK_MP_VAGAS,
+            "mensagem": "Email registrado! Redirecionando..."
+        }), 200
+
+    except Exception as e:
+        print(f"❌ Erro capturar email vagas: {str(e)}")
+        supabase.table("vagas_assinantes").insert({
+            "email": email,
+            "plano": plano,
+            "status": "pending",
+            "created_at": datetime.utcnow().isoformat()
+        }).execute()
+        return jsonify({
+            "success": True,
+            "redirect_url": LINK_MP_VAGAS,
+            "mensagem": "Redirecionando..."
+        }), 200
+
+
+@app.route("/api/vagas/cron-verificar", methods=["GET"])
+def cron_verificar_vagas():
+    """
+    Cron-job: verifica pagamentos pendentes e ativa assinaturas
+    Chamar a cada 30min: GET /api/vagas/cron-verificar?token=SEU_TOKEN
+    """
+    cron_secret = os.getenv("CRON_SECRET", "")
+    token = request.args.get("token", "")
+    if cron_secret and token != cron_secret:
+        return jsonify({"erro": "Token invalido"}), 401
+
+    try:
+        print("🔄 CRON VAGAS: Verificando pendentes...")
+        pendentes = supabase.table("vagas_assinantes").select("*").eq("status", "pending").execute()
+        if not pendentes.data:
+            return jsonify({"status": "ok", "processados": 0}), 200
+
+        if not mp:
+            return jsonify({"status": "erro", "mensagem": "MP nao configurado"}), 200
+
+        processados = 0
+        for pending in pendentes.data:
+            email_pendente = pending.get("email", "")
+            plano_pendente = pending.get("plano", "")
+
+            # Buscar pagamentos recentes no MP
+            pagamentos = mp.payment().search({
+                "sort": "date_created",
+                "criteria": "desc",
+                "limit": 50
+            })
+            results = pagamentos.get("response", {}).get("results", [])
+
+            for pagamento in results:
+                if pagamento.get("status") != "approved":
+                    continue
+                payer_email = pagamento.get("payer", {}).get("email", "").strip().lower()
+                if payer_email == email_pendente:
+                    plano_encontrado = NOME_PLANO_VAGAS
+
+                    expires_at = (datetime.utcnow() + timedelta(days=90)).isoformat()
+                    supabase.table("vagas_assinantes").update({
+                        "status": "ativo",
+                        "plano": plano_encontrado,
+                        "payment_id": str(pagamento.get("id")),
+                        "expires_at": expires_at,
+                        "updated_at": datetime.utcnow().isoformat()
+                    }).eq("id", pending["id"]).execute()
+                    processados += 1
+                    print(f"✅ CRON: {email_pendente} ativado - {plano_encontrado}")
+                    break
+
+        return jsonify({"status": "ok", "processados": processados, "total_pendentes": len(pendentes.data)}), 200
+
+    except Exception as e:
+        print(f"❌ ERRO CRON VAGAS: {str(e)}")
+        return jsonify({"status": "erro", "message": str(e)}), 500
 
 
 # =========================

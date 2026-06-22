@@ -1,5 +1,5 @@
 import json
-from openai import OpenAI
+import subprocess
 from dotenv import load_dotenv
 import os
 import re
@@ -19,15 +19,66 @@ SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # =========================
-# IA CLIENT
+# PICOCLAW
 # =========================
 
-client = OpenAI(
-    api_key=os.getenv("GROQ_API_KEY"),
-    base_url="https://api.groq.com/openai/v1"
-)
+PICOCLAW_BIN = os.getenv("PICOCLAW_BIN", "/opt/render/project/src/tools/picoclaw")
 
-print("Sistema IA SaaS iniciado 🚀")
+def chamar_picoclaw(mensagem: str, timeout: int = 120) -> dict:
+    """Envia prompt ao PicoClaw e retorna conteúdo limpo."""
+    print(f"🦞 PicoClaw acionado — {len(mensagem)} chars no prompt")
+    try:
+        resultado = subprocess.run(
+            [PICOCLAW_BIN, 'agent', '-m', mensagem],
+            capture_output=True,
+            text=True,
+            timeout=timeout
+        )
+        saida = resultado.stdout.strip()
+
+        # Remove linhas de UI do terminal (bordas, ícones, progresso)
+        linhas = saida.split('\n')
+        linhas_limpas = [
+            l for l in linhas
+            if l.strip()
+            and '█' not in l
+            and '╚' not in l
+            and '╔' not in l
+            and '╗' not in l
+            and '╝' not in l
+            and '🦞' not in l
+            and not l.startswith('0')
+        ]
+        resposta = '\n'.join(linhas_limpas).strip()
+
+        # Remove códigos ANSI de cor/formatação
+        resposta = re.sub(r'\x1b\[[0-9;]*m', '', resposta)
+        resposta = re.sub(r'\[0m', '', resposta)
+
+        # Remove markdown desnecessário
+        resposta = re.sub(r'\*\*(.*?)\*\*', r'\1', resposta)
+        resposta = re.sub(r'\*(.*?)\*', r'\1', resposta)
+
+        # Garante parágrafos separados por linha em branco
+        resposta = '\n\n'.join(
+            p.strip() for p in resposta.split('\n') if p.strip()
+        )
+
+        if resultado.returncode != 0 or not resposta:
+            print(f"❌ PicoClaw erro: {resultado.stderr.strip()}")
+            return {"success": False, "conteudo": resultado.stderr.strip() or "Sem resposta"}
+
+        print(f"✅ PicoClaw respondeu: {len(resposta)} caracteres")
+        return {"success": True, "conteudo": resposta}
+
+    except subprocess.TimeoutExpired:
+        print("⏱️ PicoClaw timeout")
+        return {"success": False, "conteudo": "Timeout"}
+    except Exception as e:
+        print(f"❌ PicoClaw exceção: {str(e)}")
+        return {"success": False, "conteudo": str(e)}
+
+print("🚀 Sistema IA SaaS com PicoClaw iniciado 🦞")
 
 # =========================
 # INPUTS
@@ -86,7 +137,7 @@ nicho_nome = nichos.get(nicho_escolha, "marketing")
 
 arquivo_prompt = f"prompts/{rede}.txt"
 
-# Lê prompt base do arquivo, que deve conter o texto robusto para geração do LinkedIn adaptado por nicho e modo
+# Lê prompt base do arquivo
 with open(arquivo_prompt, "r", encoding="utf-8") as f:
     prompt_base = f.read()
 
@@ -105,22 +156,21 @@ Crie o conteúdo conforme acima, entregando um texto pronto para publicação no
 """
 
 # =========================
-# CHAMADA À IA
+# CHAMADA AO PICOCLAW
 # =========================
 
-response = client.chat.completions.create(
-    model="llama-3.3-70b-versatile",
-    messages=[{"role": "user", "content": prompt_final}]
-)
+print("\n🦞 Gerando conteúdo com PicoClaw...")
+resultado = chamar_picoclaw(prompt_final, timeout=120)
 
-conteudo_ia = response.choices[0].message.content
+if not resultado.get("success"):
+    print(f"\n❌ Erro na geração: {resultado.get('conteudo', 'Desconhecido')}")
+    exit(1)
+
+conteudo_ia = resultado["conteudo"]
 
 # =========================
 # FORMATAÇÃO DO CONTEÚDO (PARÁGRAFOS)
 # =========================
-
-# Garantir espaçamento profissional com linhas em branco entre parágrafos.
-# Remove linhas vazias e junta parágrafos com duas quebras de linha
 
 conteudo_formatado = "\n\n".join(
     [paragrafo.strip() for paragrafo in conteudo_ia.split("\n") if paragrafo.strip() != ""]
