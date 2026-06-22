@@ -44,6 +44,14 @@ from dashboard.picoclawsite_flask import registrar_rotas_picoclaw
 from .picoclaw_agent import buscar_oportunidades_totais, chamar_picoclaw
 
 #Segurança por Telegram
+# ===== ANALISADOR DE ESTATUTO =====
+from dashboard.analisador_estatuto import (
+    analisar_estatuto_picoclaw,
+    extrair_texto_pdf,
+    gerar_pdf_diagnostico,
+    gerar_relatorio_markdown
+)
+
 from dashboard.telegram_alerts import (
     alerta_ataque,
     alerta_rate_limit,
@@ -1565,3 +1573,138 @@ def cron_verificar_vagas():
 def pagina_vagas():
     """Página de vagas: coregov.com.br/vagas"""
     return render_template("vagas.html")
+
+# =========================
+# ANALISADOR DE ESTATUTO
+# =========================
+import tempfile
+import os
+from werkzeug.utils import secure_filename
+from dashboard.analisador_estatuto import (
+    analisar_estatuto_picoclaw,
+    extrair_texto_pdf,
+    gerar_pdf_diagnostico,
+    gerar_relatorio_markdown
+)
+
+
+@app.route("/analisar-estatuto")
+def pagina_analisar_estatuto():
+    """Pagina publica de analise de estatuto (lead magnet)"""
+    return render_template("analisar_estatuto.html")
+
+
+@app.route("/api/analisar-estatuto", methods=["POST"])
+def api_analisar_estatuto():
+    """API para analisar estatuto via PicoClaw e gerar PDF"""
+    try:
+        nome = request.form.get("nome", "").strip()
+        email = request.form.get("email", "").strip()
+        org = request.form.get("org", "").strip()
+        texto_estatuto = request.form.get("estatuto_texto", "").strip()
+        pdf_file = request.files.get("estatuto_pdf")
+
+        if not texto_estatuto and (not pdf_file or pdf_file.filename == ""):
+            return jsonify({"success": False, "erro": "Envie o texto do estatuto ou um arquivo PDF."}), 400
+
+        # Extrair texto do PDF se enviado
+        if not texto_estatuto and pdf_file:
+            temp_dir = tempfile.mkdtemp()
+            pdf_path = os.path.join(temp_dir, secure_filename(pdf_file.filename))
+            pdf_file.save(pdf_path)
+            texto_estatuto, erro_extrair = extrair_texto_pdf(pdf_path)
+            if erro_extrair:
+                return jsonify({"success": False, "erro": f"Erro ao ler PDF: {erro_extrair}"}), 400
+            try:
+                os.remove(pdf_path)
+                os.rmdir(temp_dir)
+            except:
+                pass
+
+        if not texto_estatuto or len(texto_estatuto) < 100:
+            return jsonify({"success": False, "erro": "Texto do estatuto muito curto. Cole o estatuto completo (minimo 100 caracteres)."}), 400
+
+        # Analisar com PicoClaw
+        analise, erro = analisar_estatuto_picoclaw(texto_estatuto, org)
+
+        if erro or not analise:
+            return jsonify({"success": False, "erro": erro or "Falha na analise. Tente novamente."}), 500
+
+        # Garantir campos padrao
+        if "pontuacao" not in analise:
+            analise["pontuacao"] = 50
+        if "status_geral" not in analise:
+            analise["status_geral"] = "parcial"
+        if "pode_captar_recursos" not in analise:
+            analise["pode_captar_recursos"] = False
+        if "itens_analisados" not in analise:
+            analise["itens_analisados"] = []
+        if "pontos_fortes" not in analise:
+            analise["pontos_fortes"] = []
+        if "pontos_criticos" not in analise:
+            analise["pontos_criticos"] = []
+
+        # Gerar PDF
+        try:
+            pdf_bytes = gerar_pdf_diagnostico(analise, nome, email)
+        except Exception as e:
+            print(f"Aviso: Erro ao gerar PDF: {e}")
+            pdf_bytes = None
+
+        # Salvar analise no Supabase
+        pdf_url = None
+        if pdf_bytes:
+            try:
+                pdf_temp = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
+                pdf_temp.write(pdf_bytes)
+                pdf_temp.close()
+
+                from services.supabase_storage import upload_file
+                from datetime import datetime
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                import secrets
+                token_arquivo = secrets.token_hex(8)
+                nome_arquivo = f"diagnosticos/diagnostico_{timestamp}_{token_arquivo}.pdf"
+
+                try:
+                    up_result = upload_file(pdf_temp.name, nome_arquivo)
+                    if up_result and up_result.get("public_url"):
+                        pdf_url = up_result.get("public_url")
+                except Exception as e_up:
+                    print(f"Aviso: Erro upload PDF: {e_up}")
+
+                try:
+                    os.unlink(pdf_temp.name)
+                except:
+                    pass
+            except Exception as e_pdf:
+                print(f"Aviso: Erro ao processar PDF: {e_pdf}")
+
+        # Salvar metadados da analise
+        try:
+            supabase.table("analises_estatuto").insert({
+                "nome": nome,
+                "email": email,
+                "organizacao": org,
+                "pontuacao": analise.get("pontuacao", 0),
+                "status_geral": analise.get("status_geral", "parcial"),
+                "pode_captar": analise.get("pode_captar_recursos", False),
+                "pdf_url": pdf_url,
+                "analise_json": str(analise)[:3000],
+                "created_at": datetime.utcnow().isoformat()
+            }).execute()
+        except Exception as e_save:
+            print(f"Aviso: Erro ao salvar analise: {e_save}")
+
+        return jsonify({
+            "success": True,
+            "analise": analise,
+            "pdf_url": pdf_url,
+            "mensagem": "Analise concluida com sucesso!"
+        }), 200
+
+    except Exception as e:
+        print(f"ERRO ANALISAR ESTATUTO: {str(e)}")
+        return jsonify({"success": False, "erro": f"Erro interno: {str(e)}"}), 500
+
+

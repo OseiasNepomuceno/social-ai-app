@@ -10,3 +10,5 @@ Pillow>=10.0.0
 Flask-Limiter==3.5.0
 
 
+fpdf2
+PyMuPDF

@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analisar Estatuto | COREGOV - Diagnóstico Gratuito</title>
+    <meta name="description" content="Descubra se o estatuto da sua ONG está adequado para captar recursos. Diagnóstico gratuito com base na Lei 13.019/2014 (MROSC), Lei Rouanet e mais.">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: #1a1a2e; background: #f5f6fa; line-height: 1.6;
+        }
+        :root {
+            --primary: #0f3460;
+            --primary-light: #16213e;
+            --accent: #e94560;
+            --accent-hover: #d63851;
+            --gold: #f5c518;
+            --green: #2ecc71;
+            --bg: #f5f6fa;
+            --card-bg: #ffffff;
+            --text: #1a1a2e;
+            --text-light: #6c757d;
+            --border: #e1e4e8;
+        }
+
+        /* NAV */
+        .nav {
+            background: var(--primary); color: white;
+            padding: 0 24px; position: sticky; top: 0; z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .nav-inner {
+            max-width: 1100px; margin: 0 auto;
+            display: flex; justify-content: space-between; align-items: center;
+            height: 64px;
+        }
+        .nav .logo { font-size: 1.5rem; font-weight: 800; }
+        .nav .logo span { color: var(--accent); }
+        .nav-links { display: flex; gap: 8px; align-items: center; }
+        .nav-links a {
+            color: rgba(255,255,255,0.85); text-decoration: none;
+            padding: 8px 16px; border-radius: 8px; font-weight: 500;
+            transition: all 0.2s; font-size: 0.95rem;
+        }
+        .nav-links a:hover { background: rgba(255,255,255,0.1); color: white; }
+
+        /* HERO */
+        .hero {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white; padding: 60px 24px 50px; text-align: center;
+        }
+        .hero h1 { font-size: 2.5rem; margin-bottom: 12px; }
+        .hero h1 span { color: var(--gold); }
+        .hero p { font-size: 1.15rem; opacity: 0.9; max-width: 700px; margin: 0 auto 8px; }
+        .hero .badge {
+            display: inline-block; background: var(--accent); color: white;
+            padding: 6px 20px; border-radius: 20px; font-weight: 700;
+            font-size: 0.85rem; margin-bottom: 20px; text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* LEIS REFERENCIA */
+        .leis-bar {
+            background: white; border-bottom: 1px solid var(--border);
+            padding: 16px 24px; text-align: center;
+        }
+        .leis-bar span {
+            display: inline-block; background: #f0f4ff; color: var(--primary);
+            padding: 4px 14px; border-radius: 12px; font-size: 0.8rem;
+            font-weight: 600; margin: 3px 5px;
+        }
+
+        /* MAIN */
+        .main {
+            max-width: 1100px; margin: 0 auto; padding: 40px 24px;
+        }
+
+        /* COMO FUNCIONA */
+        .steps {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 24px; margin-bottom: 48px;
+        }
+        .step {
+            background: var(--card-bg); border-radius: 16px;
+            padding: 28px; border: 1px solid var(--border); text-align: center;
+        }
+        .step .num {
+            width: 48px; height: 48px; border-radius: 50%;
+            background: var(--primary); color: white; font-size: 1.3rem;
+            font-weight: 800; display: flex; align-items: center;
+            justify-content: center; margin: 0 auto 16px;
+        }
+        .step h3 { font-size: 1.1rem; color: var(--primary); margin-bottom: 8px; }
+        .step p { font-size: 0.9rem; color: var(--text-light); }
+
+        /* FORM */
+        .form-section {
+            background: var(--card-bg); border-radius: 16px;
+            padding: 36px; border: 2px solid var(--primary);
+            box-shadow: 0 10px 40px rgba(15,52,96,0.08);
+            margin-bottom: 40px;
+        }
+        .form-section h2 {
+            font-size: 1.5rem; color: var(--primary); margin-bottom: 6px;
+        }
+        .form-section .subtitle {
+            color: var(--text-light); margin-bottom: 24px; font-size: 0.95rem;
+        }
+        .form-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+        }
+        .form-group { margin-bottom: 16px; }
+        .form-group.full { grid-column: 1 / -1; }
+        .form-group label {
+            display: block; font-weight: 600; font-size: 0.9rem;
+            color: var(--text); margin-bottom: 6px;
+        }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%; padding: 12px 14px; border: 1px solid var(--border);
+            border-radius: 10px; font-size: 0.95rem; transition: all 0.2s;
+            background: #fafbfc;
+        }
+        .form-group input:focus, .form-group textarea:focus {
+            border-color: var(--primary); outline: none;
+            box-shadow: 0 0 0 3px rgba(15,52,96,0.1);
+        }
+        .form-group textarea { min-height: 200px; resize: vertical; font-family: 'Courier New', monospace; font-size: 0.85rem; }
+        .form-group .helper {
+            font-size: 0.8rem; color: var(--text-light); margin-top: 4px;
+        }
+        .btn-submit {
+            background: var(--accent); color: white; border: none;
+            padding: 16px 48px; border-radius: 12px; font-size: 1.1rem;
+            font-weight: 700; cursor: pointer; transition: all 0.3s;
+            width: 100%; margin-top: 8px;
+        }
+        .btn-submit:hover { background: var(--accent-hover); transform: translateY(-1px); }
+        .btn-submit:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+        .btn-submit .spinner { display: none; }
+        .btn-submit.loading .spinner { display: inline-block; }
+        .btn-submit.loading .text { display: none; }
+
+        /* RESULTADOS */
+        .result-section {
+            display: none; margin-top: 40px;
+        }
+        .result-section.show { display: block; }
+
+        .result-card {
+            background: var(--card-bg); border-radius: 16px;
+            padding: 36px; border: 1px solid var(--border);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.06);
+            margin-bottom: 24px;
+        }
+        .result-header {
+            display: flex; align-items: center; gap: 20px;
+            margin-bottom: 24px; flex-wrap: wrap;
+        }
+        .score-circle {
+            width: 100px; height: 100px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.8rem; font-weight: 800; color: white;
+            flex-shrink: 0;
+        }
+        .result-info h3 { font-size: 1.4rem; color: var(--primary); }
+        .result-info .status-label {
+            display: inline-block; padding: 4px 16px; border-radius: 20px;
+            font-weight: 700; font-size: 0.85rem; margin-top: 4px;
+        }
+        .status-adequado { background: #d4edda; color: #155724; }
+        .status-parcial { background: #fff3cd; color: #856404; }
+        .status-inadequado { background: #f8d7da; color: #721c24; }
+
+        .item-list { margin-top: 20px; }
+        .item-row {
+            display: flex; align-items: flex-start; gap: 12px;
+            padding: 12px 0; border-bottom: 1px solid var(--border);
+        }
+        .item-row:last-child { border-bottom: none; }
+        .item-icon { font-size: 1.2rem; width: 24px; text-align: center; }
+        .item-content { flex: 1; }
+        .item-title { font-weight: 600; font-size: 0.95rem; color: var(--text); }
+        .item-desc { font-size: 0.85rem; color: var(--text-light); margin-top: 2px; }
+        .item-legal { font-size: 0.78rem; color: #888; font-style: italic; margin-top: 2px; }
+
+        .cta-box {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            border-radius: 16px; padding: 36px; color: white; text-align: center;
+        }
+        .cta-box h3 { font-size: 1.5rem; margin-bottom: 12px; }
+        .cta-box h3 span { color: var(--gold); }
+        .cta-box p { opacity: 0.9; margin-bottom: 20px; font-size: 1rem; }
+        .cta-box .btn-cta {
+            display: inline-block; background: var(--accent); color: white;
+            padding: 14px 36px; border-radius: 12px; text-decoration: none;
+            font-weight: 700; font-size: 1.05rem; transition: all 0.3s;
+        }
+        .cta-box .btn-cta:hover { background: var(--accent-hover); transform: translateY(-2px); }
+        .cta-box .small { font-size: 0.85rem; opacity: 0.7; margin-top: 12px; }
+
+        .btn-download {
+            display: inline-block; background: var(--green); color: white;
+            padding: 12px 28px; border-radius: 10px; text-decoration: none;
+            font-weight: 700; font-size: 0.95rem; transition: all 0.3s;
+            margin-top: 16px;
+        }
+        .btn-download:hover { opacity: 0.9; transform: translateY(-1px); }
+
+        .loading-bar {
+            display: none; text-align: center; padding: 40px;
+        }
+        .loading-bar.show { display: block; }
+        .loading-bar .loader {
+            width: 48px; height: 48px; border: 4px solid var(--border);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%; animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* ERROR */
+        .error-box {
+            background: #f8d7da; color: #721c24; border-radius: 12px;
+            padding: 16px 20px; margin-bottom: 20px; display: none;
+            border: 1px solid #f5c6cb; font-size: 0.95rem;
+        }
+        .error-box.show { display: block; }
+
+        /* FOOTER */
+        .footer {
+            background: var(--primary); color: rgba(255,255,255,0.7);
+            text-align: center; padding: 24px; font-size: 0.85rem;
+        }
+
+        /* RESPONSIVO */
+        @media (max-width: 768px) {
+            .steps { grid-template-columns: 1fr; }
+            .form-grid { grid-template-columns: 1fr; }
+            .hero h1 { font-size: 1.8rem; }
+            .result-header { flex-direction: column; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+    <div class="nav-inner">
+        <div class="logo">COREGOV<span>.</span></div>
+        <div class="nav-links">
+            <a href="https://coregov.com.br">Site</a>
+            <a href="https://app.coregov.com.br">App</a>
+        </div>
+    </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+    <div class="badge">🔍 Diagnóstico Gratuito</div>
+    <h1>Seu estatuto está pronto para <span>captar recursos</span>?</h1>
+    <p>Descubra em minutos se a sua ONG/OSC atende aos requisitos legais da <strong>Lei 13.019/2014 (MROSC)</strong>, <strong>Lei Rouanet</strong> e demais normas para receber verbas públicas e privadas.</p>
+</section>
+
+<!-- LEIS -->
+<div class="leis-bar">
+    <span>📜 Lei 13.019/2014 (MROSC)</span>
+    <span>📜 Decreto 8.726/2016</span>
+    <span>📜 Lei 8.313/1991 (Rouanet)</span>
+    <span>📜 IN MinC nº 29/2026</span>
+    <span>📜 Lei 13.204/2015</span>
+    <span>📜 Código Civil</span>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+    <!-- COMO FUNCIONA -->
+    <div class="steps">
+        <div class="step">
+            <div class="num">1</div>
+            <h3>Envie o estatuto</h3>
+            <p>Cole o texto do estatuto ou envie o PDF. Informe seus dados de contato.</p>
+        </div>
+        <div class="step">
+            <div class="num">2</div>
+            <h3>IA analisa em segundos</h3>
+            <p>Nossa inteligência artificial verifica cada cláusula contra a legislação vigente.</p>
+        </div>
+        <div class="step">
+            <div class="num">3</div>
+            <h3>Receba o diagnóstico</h3>
+            <p>Baixe o PDF completo com pontuação, itens críticos e recomendações personalizadas.</p>
+        </div>
+    </div>
+
+    <!-- ERRO -->
+    <div id="errorBox" class="error-box"></div>
+
+    <!-- FORMULÁRIO -->
+    <div class="form-section" id="formSection">
+        <h2>📋 Faça o diagnóstico gratuito</h2>
+        <p class="subtitle">Preencha os dados e cole o estatuto ou envie o PDF.</p>
+
+        <form id="estatutoForm" onsubmit="return enviarAnalise(event)">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="nome">Seu nome *</label>
+                    <input type="text" id="nome" name="nome" required placeholder="Ex: Maria Silva">
+                </div>
+                <div class="form-group">
+                    <label for="email">Seu e-mail *</label>
+                    <input type="email" id="email" name="email" required placeholder="Ex: maria@ong.org">
+                </div>
+                <div class="form-group">
+                    <label for="org">Nome da Organização *</label>
+                    <input type="text" id="org" name="org" required placeholder="Ex: Instituto Esperança">
+                </div>
+                <div class="form-group">
+                    <label for="cargo">Seu cargo</label>
+                    <input type="text" id="cargo" name="cargo" placeholder="Ex: Presidente, Coordenador">
+                </div>
+                <div class="form-group full">
+                    <label for="estatuto_texto">Cole o texto do estatuto *</label>
+                    <textarea id="estatuto_texto" name="estatuto_texto" placeholder="Copie e cole aqui o texto completo do estatuto social da sua organização..."></textarea>
+                    <div class="helper">⚠️ Quanto mais completo, mais preciso será o diagnóstico. Inclua todas as cláusulas.</div>
+                </div>
+                <div class="form-group full">
+                    <label for="estatuto_pdf">Ou envie o PDF do estatuto</label>
+                    <input type="file" id="estatuto_pdf" name="estatuto_pdf" accept=".pdf">
+                    <div class="helper">Formatos aceitos: PDF. Máximo: 10MB.</div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-submit" id="btnSubmit">
+                <span class="text">🔍 Analisar Estatuto Agora</span>
+                <span class="spinner">⏳ Analisando...</span>
+            </button>
+        </form>
+    </div>
+
+    <!-- CARREGANDO -->
+    <div class="loading-bar" id="loadingBar">
+        <div class="loader"></div>
+        <h3 style="color: var(--primary);">Analisando seu estatuto...</h3>
+        <p style="color: var(--text-light);">Nossa IA está verificando cada cláusula contra a legislação vigente.</p>
+    </div>
+
+    <!-- RESULTADOS -->
+    <div class="result-section" id="resultSection">
+        <div class="result-card" id="resultCard">
+            <!-- Preenchido por JS -->
+        </div>
+
+        <div class="cta-box">
+            <h3>🛠️ Seu estatuto <span>precisa de ajustes</span>?</h3>
+            <p>A COREGOV é especialista em regularização de OSCs. Podemos atualizar seu estatuto, criar o plano de negócio e preparar sua organização para captar recursos federais, estaduais e privados.</p>
+            <a href="https://coregov.com.br" class="btn-cta">📞 Quero contratar a atualização</a>
+            <div class="small">✅ Estatuto + Plano de Negócio + Adequação ao MROSC</div>
+        </div>
+    </div>
+
+</div>
+
+<footer class="footer">
+    COREGOV · coregov.com.br · @coregov · Diagnóstico automatizado — consulte um advogado para validação jurídica.
+</footer>
+
+<script>
+async function enviarAnalise(event) {
+    event.preventDefault();
+
+    const form = document.getElementById('estatutoForm');
+    const btn = document.getElementById('btnSubmit');
+    const loadingBar = document.getElementById('loadingBar');
+    const resultSection = document.getElementById('resultSection');
+    const errorBox = document.getElementById('errorBox');
+
+    // Validar
+    const texto = document.getElementById('estatuto_texto').value.trim();
+    const pdfFile = document.getElementById('estatuto_pdf').files[0];
+    if (!texto && !pdfFile) {
+        errorBox.textContent = '⚠️ Cole o texto do estatuto ou envie um arquivo PDF.';
+        errorBox.classList.add('show');
+        return false;
+    }
+    errorBox.classList.remove('show');
+
+    // UI loading
+    btn.classList.add('loading');
+    btn.disabled = true;
+    loadingBar.classList.add('show');
+    resultSection.classList.remove('show');
+
+    const formData = new FormData(form);
+
+    try {
+        const response = await fetch('/api/analisar-estatuto', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        btn.classList.remove('loading');
+        btn.disabled = false;
+        loadingBar.classList.remove('show');
+
+        if (!data.success) {
+            errorBox.textContent = '❌ ' + (data.erro || 'Erro ao analisar estatuto. Tente novamente.');
+            errorBox.classList.add('show');
+            return false;
+        }
+
+        // Renderizar resultado
+        renderResultado(data);
+        resultSection.classList.add('show');
+        resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    } catch (err) {
+        btn.classList.remove('loading');
+        btn.disabled = false;
+        loadingBar.classList.remove('show');
+        errorBox.textContent = '❌ Erro de conexão. Verifique sua internet e tente novamente.';
+        errorBox.classList.add('show');
+    }
+
+    return false;
+}
+
+function renderResultado(data) {
+    const analise = data.analise || {};
+    const card = document.getElementById('resultCard');
+
+    const status = analise.status_geral || 'parcial';
+    const score = analise.pontuacao || 0;
+    const podeCaptar = analise.pode_captar_recursos;
+
+    const statusClasses = {
+        'adequado': 'status-adequado',
+        'parcial': 'status-parcial',
+        'inadequado': 'status-inadequado'
+    };
+    const statusLabels = {
+        'adequado': '✅ Adequado para captação',
+        'parcial': '⚠️ Precisa de ajustes',
+        'inadequado': '❌ Precisa de reformulação'
+    };
+
+    // Cor do círculo
+    let corCirculo = '#2ecc71';
+    if (score < 40) corCirculo = '#e94560';
+    else if (score < 70) corCirculo = '#f5c518';
+
+    // Itens
+    let itensHtml = '';
+    const itens = analise.itens_analisados || [];
+    for (const item of itens) {
+        const icone = item.status === 'ok' ? '✅' : (item.status === 'atencao' ? '⚠️' : '❌');
+        itensHtml += `
+            <div class="item-row">
+                <div class="item-icon">${icone}</div>
+                <div class="item-content">
+                    <div class="item-title">${item.item || 'Item'}</div>
+                    ${item.descricao ? `<div class="item-desc">${item.descricao}</div>` : ''}
+                    ${item.base_legal ? `<div class="item-legal">📖 ${item.base_legal}</div>` : ''}
+                    ${item.recomendacao ? `<div class="item-desc" style="color:#e94560;">🔧 ${item.recomendacao}</div>` : ''}
+                </div>
+            </div>
+        `;
+    }
+
+    // Pontos
+    const fortes = analise.pontos_fortes || [];
+    const criticos = analise.pontos_criticos || [];
+
+    card.innerHTML = `
+        <div class="result-header">
+            <div class="score-circle" style="background: ${corCirculo};">${score}</div>
+            <div class="result-info">
+                <h3>Diagnóstico do Estatuto</h3>
+                <div>
+                    <span class="status-label ${statusClasses[status] || 'status-parcial'}">
+                        ${statusLabels[status] || 'Pendente'}
+                    </span>
+                </div>
+                <p style="color: var(--text-light); margin-top: 8px;">
+                    <strong>Organização:</strong> ${analise.orgao || '—'} &nbsp;|&nbsp;
+                    <strong>Data:</strong> ${analise.data_analise || '—'}
+                </p>
+                <p style="margin-top: 4px;">
+                    ${podeCaptar
+                        ? '<span style="color: #2ecc71; font-weight: 600;">✅ Pode captar recursos</span>'
+                        : '<span style="color: #e94560; font-weight: 600;">❌ Não pode captar recursos — estatuto precisa ser atualizado!</span>'
+                    }
+                </p>
+                ${analise.resumo_curto ? `<p style="color: var(--text); margin-top: 10px; font-size: 0.95rem;">${analise.resumo_curto}</p>` : ''}
+                ${data.pdf_url ? `<a href="${data.pdf_url}" class="btn-download" download>📥 Baixar relatório completo em PDF</a>` : ''}
+            </div>
+        </div>
+
+        ${criticos.length > 0 ? `
+            <div style="background: #fef2f2; border-radius: 12px; padding: 16px; margin: 16px 0;">
+                <h4 style="color: #dc2626; margin-bottom: 8px;">❌ Pontos Críticos</h4>
+                ${criticos.map(c => `<div style="font-size: 0.9rem; color: #991b1b; padding: 2px 0;">• ${c}</div>`).join('')}
+            </div>
+        ` : ''}
+
+        ${fortes.length > 0 ? `
+            <div style="background: #f0fdf4; border-radius: 12px; padding: 16px; margin: 16px 0;">
+                <h4 style="color: #15803d; margin-bottom: 8px;">✅ Pontos Fortes</h4>
+                ${fortes.map(f => `<div style="font-size: 0.9rem; color: #166534; padding: 2px 0;">• ${f}</div>`).join('')}
+            </div>
+        ` : ''}
+
+        ${analise.recomendacoes_gerais ? `
+            <div style="background: #f0f7ff; border-radius: 12px; padding: 16px; margin: 16px 0;">
+                <h4 style="color: var(--primary); margin-bottom: 8px;">💡 Recomendações Gerais</h4>
+                <div style="font-size: 0.9rem; color: var(--text);">${analise.recomendacoes_gerais}</div>
+            </div>
+        ` : ''}
+
+        ${itensHtml ? `
+            <div style="margin-top: 20px; border-top: 1px solid var(--border); padding-top: 16px;">
+                <h4 style="color: var(--primary); margin-bottom: 8px;">📋 Detalhamento por Item</h4>
+                <div class="item-list">${itensHtml}</div>
+            </div>
+        ` : ''}
+    `;
+}
+</script>
+
+</body>
+</html>
