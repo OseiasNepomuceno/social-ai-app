@@ -477,7 +477,11 @@ function renderResultado(data) {
 
     card.innerHTML = `
         <div class="result-header">
-            <div class="score-circle" style="background: ${corCirculo};">${score}</div>
+            <div class="score-circle" style="background: ${corCirculo}; font-size: 1rem; line-height: 1.4; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <span style="font-size: 0.7rem; font-weight: 600; opacity: 0.9;">NOTA</span>
+                <span style="font-size: 1.8rem; font-weight: 800;">${score}</span>
+                <span style="font-size: 0.85rem; font-weight: 600; opacity: 0.9;">/ 100</span>
+            </div>
             <div class="result-info">
                 <h3>Diagnóstico do Estatuto</h3>
                 <div>
