@@ -15,6 +15,7 @@ import re
 import tempfile
 from datetime import datetime
 from fpdf import FPDF
+import requests  # <-- adicionado para API direta
 
 # Tenta importar PyMuPDF para extrair texto de PDF
 try:
@@ -178,7 +179,7 @@ CRITÉRIOS PARA ANALISAR (verifique cada um):
 11. Vedações a Dirigentes — Impedimentos previstos?
 12. Assembleia Geral — Convocação, quórum?
 
-Responda APENAS em JSON puro, sem formatação markdown:
+IMPORTANTE: Responda APENAS com o JSON abaixo. NÃO adicione texto antes ou depois do JSON. NÃO use markdown. Apenas o JSON bruto.
 
 {{
   "orgao": "{nome_org}",
@@ -212,13 +213,30 @@ ESTATUTO:
             return None, resultado.get("erro", "Falha na análise da IA")
 
         conteudo = resultado.get("conteudo", "")
-        # Tentar extrair JSON da resposta
-        json_match = re.search(r'\{.*\}', conteudo, re.DOTALL)
-        if json_match:
-            dados = json.loads(json_match.group())
+
+        # Usar raw_decode para extrair o primeiro JSON válido,
+        # ignorando qualquer texto extra antes ou depois
+        decoder = json.JSONDecoder()
+        idx = 0
+        # Pular texto antes do primeiro {
+        primeiro_brace = conteudo.find('{')
+        if primeiro_brace >= 0:
+            idx = primeiro_brace
+
+        try:
+            dados, idx_lido = decoder.raw_decode(conteudo, idx)
             return dados, None
-        else:
-            # Parser de fallback
+        except json.JSONDecodeError:
+            # Fallback: tentar achar bloco JSON entre chaves
+            json_match = re.search(r'\{.*\}', conteudo, re.DOTALL)
+            if json_match:
+                try:
+                    dados = json.loads(json_match.group())
+                    return dados, None
+                except json.JSONDecodeError:
+                    pass
+
+            # Fallback final: retornar dict parcial com o que temos
             return {
                 "orgao": nome_org,
                 "status_geral": "parcial",
