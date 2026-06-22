@@ -1590,13 +1590,17 @@ from dashboard.analisador_estatuto import (
 
 @app.route("/analisar-estatuto")
 def pagina_analisar_estatuto():
-    """Pagina publica de analise de estatuto (lead magnet)"""
+    """Pagina de analise de estatuto (requer login)"""
+    if "user_id" not in session:
+        return redirect("/login")
     return render_template("analisar_estatuto.html")
 
 
 @app.route("/api/analisar-estatuto", methods=["POST"])
 def api_analisar_estatuto():
-    """API para analisar estatuto via PicoClaw e gerar PDF"""
+    """API para analisar estatuto via PicoClaw (requer login)"""
+    if "user_id" not in session:
+        return jsonify({"success": False, "erro": "Faça login para usar esta ferramenta."}), 401
     try:
         nome = request.form.get("nome", "").strip()
         email = request.form.get("email", "").strip()
