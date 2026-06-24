@@ -381,6 +381,59 @@ Acesse o painel para revisar todas as oportunidades.
         salvo = salvar_conteudo(supabase, tema, "template", resultado["conteudo"])
         return jsonify({"status": "ok", "nicho": nicho, "conteudo": resultado["conteudo"], "salvo": salvo})
 
+    # ─────────────────────────────────────────────
+    # WEBHOOK WHATSAPP - Health IA Agent
+    # ─────────────────────────────────────────────
+    @app.route("/webhook/whatsapp", methods=["GET"])
+    def whatsapp_webhook_verificar():
+        """
+        Meta envia GET para verificar o webhook.
+        Parâmetros: hub.mode, hub.verify_token, hub.challenge
+        """
+        from dashboard.whatsapp_webhook import verificar_webhook
+
+        modo    = request.args.get("hub.mode", "")
+        token   = request.args.get("hub.verify_token", "")
+        desafio = request.args.get("hub.challenge", "")
+
+        resultado = verificar_webhook(modo, token, desafio)
+        if resultado:
+            return resultado, 200, {"Content-Type": "text/plain"}
+
+        return jsonify({"erro": "Token de verificação inválido"}), 403
+
+    @app.route("/webhook/whatsapp", methods=["POST"])
+    def whatsapp_webhook_receber():
+        """
+        Meta envia POST com as mensagens recebidas.
+        Processa em background para não travar o webhook.
+        """
+        from dashboard.whatsapp_webhook import processar_payload
+
+        payload = request.get_json(force=True, silent=True)
+        if not payload:
+            return jsonify({"status": "erro", "mensagem": "Payload inválido"}), 400
+
+        # Processa em background
+        threading.Thread(
+            target=lambda: processar_payload(payload),
+            daemon=True
+        ).start()
+
+        return jsonify({"status": "ok"}), 200
+
+    @app.route("/webhook/whatsapp/status")
+    def whatsapp_status():
+        """Status da integração WhatsApp."""
+        token_ok = bool(os.getenv("WHATSAPP_TOKEN", ""))
+        phone_ok = bool(os.getenv("WHATSAPP_PHONE_ID", ""))
+        return jsonify({
+            "whatsapp_api": "configurado" if (token_ok and phone_ok) else "pendente",
+            "token": "✅" if token_ok else "❌",
+            "phone_id": "✅" if phone_ok else "❌",
+            "verify_token": os.getenv("WHATSAPP_VERIFY_TOKEN", "COREGOV_HEALTH_2026"),
+        })
+
 
 async def _processar_conteudo_background(supabase, nichos):
     temas = await sugerir_temas_automaticos(nichos)
