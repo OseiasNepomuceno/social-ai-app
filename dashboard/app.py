@@ -1643,29 +1643,6 @@ def servir_storage_local(subpath):
     )
 
 
-# =========================
-# STORAGE LOCAL (SQLite mode)
-# =========================
-
-@app.route('/storage/<path:subpath>')
-def servir_storage_local(subpath):
-    """Serve arquivos de storage local quando usando SQLite"""
-    storage_base = os.environ.get("STORAGE_DIR", "/data/storage")
-    filepath = os.path.join(storage_base, subpath)
-    
-    # Segurança: não permitir path traversal
-    abs_base = os.path.abspath(storage_base)
-    abs_path = os.path.abspath(filepath)
-    if not abs_path.startswith(abs_base):
-        return "Acesso negado", 403
-    
-    if not os.path.exists(abs_path):
-        return "Arquivo não encontrado", 404
-    
-    return send_from_directory(
-        os.path.dirname(abs_path),
-        os.path.basename(abs_path)
-    )
 
 
 # =========================
@@ -1762,6 +1739,7 @@ def api_analisar_estatuto():
             analise["pontos_criticos"] = []
 
         # ===== GERAR ID UNICO E SALVAR ANALISE NO SUPABASE =====
+        import json as _json  # fallback local garantido
         analise_id = str(uuid.uuid4())
         try:
             supabase.table("analises_estatuto").insert({
@@ -1772,7 +1750,7 @@ def api_analisar_estatuto():
                 "pontuacao": analise.get("pontuacao", 0),
                 "status_geral": analise.get("status_geral", "parcial"),
                 "pode_captar": analise.get("pode_captar_recursos", False),
-                "analise_json": json.dumps(analise, ensure_ascii=False),
+                "analise_json": _json.dumps(analise, ensure_ascii=False),
                 "ip_cliente": ip_cliente,
                 "cidade": geo.get("cidade", ""),
                 "estado": geo.get("estado", ""),
