@@ -1,11 +1,10 @@
+# Requirements para Hugging Face Spaces (sem Supabase)
+# A partir de agora usa SQLite local
 flask
 gunicorn
 werkzeug
-supabase
 mercadopago
-openai
 apscheduler>=3.10.4
-fal-client
 Pillow>=10.0.0
 Flask-Limiter==3.5.0
 requests

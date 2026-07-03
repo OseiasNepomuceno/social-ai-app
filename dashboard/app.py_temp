@@ -224,8 +224,7 @@ print("🧹 Thread de limpeza de cache iniciada")
 # ===== ADICIONAR ESSAS ROTAS NO APP.PY TRANSFEREGOV =====
 
 
-@app.route('/gerar/monitorar-editais',
-    '/login/google', '/debug/google-oauth', methods=['POST'])
+@app.route('/gerar/monitorar-editais', methods=['POST'])
 def iniciar_monitoramento():
     # 1. Captura o nicho enviado pelo JavaScript (do input-nicho)
     # Se o cliente deixar vazio, definimos como 'Geral' para a IA não se perder
@@ -346,10 +345,13 @@ def fundo_video():
     return render_template("fundo-video.html")
 
 # =========================
-# BANCO DE DADOS
+# SUPABASE
 # =========================
 
-supabase = create_client()
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 registrar_rotas_picoclaw(
     app,
@@ -642,7 +644,7 @@ ROTAS_PUBLICAS = {
     '/fundo', '/webhook/whatsapp', '/interno/seed-ebooks',
     '/interno/gerar-automatico', '/status',
     '/gerar/monitorar-editais',
-    }
+}
 
 def get_client_ip():
     """Captura o IP real do cliente considerando proxies."""
@@ -1154,9 +1156,15 @@ def login():
 
 @app.route("/login/google")
 def login_google():
-    """Desabilitado — use login com email e senha."""
-    flash("Login com Google foi desabilitado. Use email e senha.", "warning")
-    return redirect("/login")
+    try:
+        dados_auth = supabase.auth.sign_in_with_oauth({
+            "provider": "google",
+            "options": {"redirect_to": "https://app.coregov.com.br/auth/callback"}
+        })
+        return redirect(dados_auth.url)
+    except Exception as e:
+        print(f"❌ ERRO AO INICIAR FLUXO GOOGLE OAUTH: {str(e)}")
+        return redirect("/login")
 
 @app.route("/auth/callback")
 def auth_callback():
@@ -1614,33 +1622,6 @@ def cron_verificar_vagas():
 
 
 # =========================
-# STORAGE LOCAL (SQLite mode)
-# =========================
-
-@app.route('/storage/<path:subpath>')
-def servir_storage_local(subpath):
-    """Serve arquivos de storage local quando usando SQLite"""
-    storage_base = os.environ.get("STORAGE_DIR", "/data/storage")
-    filepath = os.path.join(storage_base, subpath)
-    
-    # Segurança: não permitir path traversal
-    abs_base = os.path.abspath(storage_base)
-    abs_path = os.path.abspath(filepath)
-    if not abs_path.startswith(abs_base):
-        return "Acesso negado", 403
-    
-    if not os.path.exists(abs_path):
-        return "Arquivo não encontrado", 404
-    
-    return send_from_directory(
-        os.path.dirname(abs_path),
-        os.path.basename(abs_path)
-    )
-
-
-
-
-# =========================
 # VAGAS
 # =========================
 
@@ -1733,19 +1714,17 @@ def api_analisar_estatuto():
         if "pontos_criticos" not in analise:
             analise["pontos_criticos"] = []
 
-        # ===== GERAR ID UNICO E SALVAR ANALISE NO SUPABASE =====
-        import json as _json  # fallback local garantido
-        analise_id = str(uuid.uuid4())
+        # ===== SALVAR ANALISE COMPLETA NO SUPPABASE (USO INTERNO) =====
+        # Antes de sanitizar, salva tudo para quando o cliente contratar
         try:
             supabase.table("analises_estatuto").insert({
-                "id": analise_id,
                 "nome": nome,
                 "email": email,
                 "organizacao": org,
                 "pontuacao": analise.get("pontuacao", 0),
                 "status_geral": analise.get("status_geral", "parcial"),
                 "pode_captar": analise.get("pode_captar_recursos", False),
-                "analise_json": _json.dumps(analise, ensure_ascii=False),
+                "analise_json": json.dumps(analise, ensure_ascii=False),
                 "ip_cliente": ip_cliente,
                 "cidade": geo.get("cidade", ""),
                 "estado": geo.get("estado", ""),
@@ -1753,7 +1732,6 @@ def api_analisar_estatuto():
                 "provedor": geo.get("provedor", ""),
                 "created_at": datetime.utcnow().isoformat()
             }).execute()
-            print(f"Analise salva no Supabase: {analise_id} - {email} - {org}")
         except Exception as e_save:
             print(f"Aviso: Erro ao salvar analise: {e_save}")
 
@@ -1809,12 +1787,12 @@ def api_analisar_estatuto():
             except Exception as e_pdf:
                 print(f"Aviso: Erro ao processar PDF: {e_pdf}")
 
-        # Atualizar registro com URL do PDF usando o ID unico
-        if pdf_url and analise_id:
+        # Atualizar registro com URL do PDF
+        if pdf_url:
             try:
                 supabase.table("analises_estatuto").update({
                     "pdf_url": pdf_url
-                }).eq("id", analise_id).execute()
+                }).eq("email", email).eq("created_at", datetime.utcnow().isoformat()).execute()
             except:
                 pass
 
@@ -1830,11 +1808,3 @@ def api_analisar_estatuto():
         return jsonify({"success": False, "erro": f"Erro interno: {str(e)}"}), 500
 
 
-
-
-
-# ===== DEBUG OAUTH GOOGLE =====
-@app.route("/debug/google-oauth")
-def debug_google_oauth():
-    """Rota de debug desabilitada."""
-    return redirect("/login")

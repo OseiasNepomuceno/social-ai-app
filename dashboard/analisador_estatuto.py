@@ -445,7 +445,12 @@ def gerar_pdf_diagnostico(analise, nome_cliente="", email_cliente=""):
     pdf.cell(0, 5, "Este documento e uma analise automatizada e nao substitui consultoria juridica especializada.", ln=True, align="C")
 
     # Salvar em memória
-    pdf_bytes = pdf.output(dest='S').encode('utf-8')
+    # FPDF retorna bytearray em versões recentes
+    pdf_bytes = pdf.output(dest='S')
+    if isinstance(pdf_bytes, str):
+        pdf_bytes = pdf_bytes.encode('utf-8')
+    elif isinstance(pdf_bytes, bytearray):
+        pdf_bytes = bytes(pdf_bytes)
     return pdf_bytes
 
 

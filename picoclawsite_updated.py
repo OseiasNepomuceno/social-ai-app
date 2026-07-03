@@ -2,6 +2,7 @@ import os
 import secrets
 import random
 import asyncio
+import logging
 
 from fastapi import FastAPI, Request, HTTPException, BackgroundTasks
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -19,6 +20,14 @@ from picoclaw_agent import (
     inferir_nicho,
     chamar_picoclaw,
 )
+from whatsapp_webhook import (
+    verificar_webhook,
+    processar_payload,
+    enviar_mensagem,
+)
+
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger("picoclawsite")
 
 
 # ─────────────────────────────────────────────
@@ -406,6 +415,50 @@ async def gerar_conteudo_automatico(request: Request, background_tasks: Backgrou
         "status":   "aceito",
         "mensagem": "Geração iniciada em background",
         "nichos":   len(nichos),
+    }
+
+
+# ─────────────────────────────────────────────
+# WEBHOOK WHATSAPP — Health IA Agent
+# ─────────────────────────────────────────────
+@app.get("/webhook/whatsapp")
+def whatsapp_webhook_verificar(request: Request):
+    """
+    Meta envia GET para verificar o webhook.
+    Parâmetros: hub.mode, hub.verify_token, hub.challenge
+    """
+    modo     = request.query_params.get("hub.mode", "")
+    token    = request.query_params.get("hub.verify_token", "")
+    desafio  = request.query_params.get("hub.challenge", "")
+
+    resultado = verificar_webhook(modo, token, desafio)
+    if resultado:
+        return int(resultado)  # Meta espera o challenge como texto puro
+
+    raise HTTPException(status_code=403, detail="Token de verificação inválido")
+
+
+@app.post("/webhook/whatsapp")
+async def whatsapp_webhook_receber(payload: dict, background_tasks: BackgroundTasks):
+    """
+    Meta envia POST com as mensagens recebidas.
+    Processa em background para não travar o webhook.
+    """
+    log.info("📩 Webhook WhatsApp acionado")
+    background_tasks.add_task(processar_payload, payload)
+    return {"status": "ok"}
+
+
+@app.get("/webhook/whatsapp/status")
+def whatsapp_status():
+    """Status da integração WhatsApp."""
+    token_configurado = bool(os.getenv("WHATSAPP_TOKEN", ""))
+    phone_configurado = bool(os.getenv("WHATSAPP_PHONE_ID", ""))
+    return {
+        "whatsapp_api": "configurado" if (token_configurado and phone_configurado) else "pendente",
+        "token": "✅" if token_configurado else "❌",
+        "phone_id": "✅" if phone_configurado else "❌",
+        "verify_token": os.getenv("WHATSAPP_VERIFY_TOKEN", "COREGOV_HEALTH_2026"),
     }
 
 

@@ -1,0 +1,11 @@
+
+ROTAS_PUBLICAS = {
+    '/login', '/login/', '/register', '/auth/callback',
+    '/login/google', '/debug/google-oauth',
+    '/favicon.ico', '/robots.txt', '/static',
+    '/api/mercadopago/ipn', '/api/vagas/verificar-acesso',
+    '/api/vagas/capturar-email', '/api/vagas/cron-verificar',
+    '/fundo', '/webhook/whatsapp', '/interno/seed-ebooks',
+    '/interno/gerar-automatico', '/status',
+    '/gerar/monitorar-editais',
+}
