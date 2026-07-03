@@ -6,6 +6,7 @@ import mercadopago
 import urllib.parse
 import unicodedata
 import sys
+import hashlib
 
 # ===== ADICIONAR ISSO NO TOPO DO SEU app.py =====
 
@@ -1709,11 +1710,31 @@ def api_analisar_estatuto():
         if not texto_estatuto or len(texto_estatuto) < 100:
             return jsonify({"success": False, "erro": "Texto do estatuto muito curto. Cole o estatuto completo (minimo 100 caracteres)."}), 400
 
-        # Analisar com PicoClaw
-        analise, erro = analisar_estatuto_picoclaw(texto_estatuto, org)
+        # Calcular hash SHA-256 para cache (mesmo estatuto → mesma análise SEMPRE)
+        texto_hash = hashlib.sha256(texto_estatuto.encode('utf-8')).hexdigest()
 
-        if erro or not analise:
-            return jsonify({"success": False, "erro": erro or "Falha na analise. Tente novamente."}), 500
+        # Verificar se já temos análise para este estatuto (cache no Supabase)
+        analise = None
+        erro = None
+        try:
+            cache = supabase.table("analises_estatuto")\
+                .select("analise_json")\
+                .eq("texto_hash", texto_hash)\
+                .execute()
+            if cache.data and len(cache.data) > 0:
+                # Cache encontrado — retornar resultado IDÊNTICO ao anterior
+                analise = json.loads(cache.data[0]["analise_json"])
+                print(f"✅ CACHE encontrado para hash {texto_hash[:12]}... — mesma análise reutilizada")
+        except Exception as e_cache:
+            print(f"⚠️ Erro ao consultar cache no Supabase: {e_cache}")
+            # Se falhou, segue para análise normal
+
+        if analise is None:
+            # Analisar com PicoClaw apenas se NÃO houver cache
+            analise, erro = analisar_estatuto_picoclaw(texto_estatuto, org)
+
+            if erro or not analise:
+                return jsonify({"success": False, "erro": erro or "Falha na analise. Tente novamente."}), 500
 
         # Garantir campos padrao — usar valores REAIS do formulário (não confiar na IA)
         # datetime já importado no topo do arquivo
@@ -1738,6 +1759,7 @@ def api_analisar_estatuto():
         try:
             supabase.table("analises_estatuto").insert({
                 "id": analise_id,
+                "texto_hash": texto_hash,
                 "nome": nome,
                 "email": email,
                 "organizacao": org,
