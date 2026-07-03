@@ -28,7 +28,7 @@ from flask import (
     url_for,
     render_template_string
 )
-from supabase import create_client
+from .db_adapter import criar_cliente as create_client
 from apscheduler.schedulers.background import BackgroundScheduler
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -59,6 +59,28 @@ from dashboard.telegram_alerts import (
     alerta_pagamento_aprovado,
     alerta_erro_critico
 )
+
+# ===== GEOLOCALIZAÇÃO =====
+import json
+
+def get_geo_from_ip(ip):
+    """Obtém cidade, estado e país a partir do IP usando ip-api.com (gratuito, sem chave)."""
+    if not ip or ip.startswith(("127.", "10.", "172.16.", "192.168.")) or ip == "::1" or ip == "localhost":
+        return {"ip": ip, "cidade": "Local", "estado": "Local", "pais": "Local", "provedor": ""}
+    try:
+        resp = requests.get(f"http://ip-api.com/json/{ip}?fields=status,country,regionName,city,isp,query", timeout=5)
+        dados = resp.json()
+        if dados.get("status") == "success":
+            return {
+                "ip": dados.get("query", ip),
+                "cidade": dados.get("city", ""),
+                "estado": dados.get("regionName", ""),
+                "pais": dados.get("country", ""),
+                "provedor": dados.get("isp", "")
+            }
+    except Exception as e:
+        print(f"⚠️ Erro geolocalização IP {ip}: {e}")
+    return {"ip": ip, "cidade": "Desconhecida", "estado": "Desconhecido", "pais": "Desconhecido", "provedor": ""}
 
 
 
@@ -323,13 +345,10 @@ def fundo_video():
     return render_template("fundo-video.html")
 
 # =========================
-# SUPABASE
+# BANCO DE DADOS
 # =========================
 
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+supabase = create_client()
 
 registrar_rotas_picoclaw(
     app,
@@ -610,13 +629,47 @@ def bloquear_scan():
     return "Not Found", 404
 
 # =========================
-# MIDDLEWARE: MONITORAMENTO DE TRÁFEGO
+# MIDDLEWARE: MONITORAMENTO DE TRÁFEGO + BLOQUEIO DE ACESSO
 # =========================
+
+# Rotas que não precisam de autenticação
+ROTAS_PUBLICAS = {
+    '/login', '/login/', '/register', '/auth/callback',
+    '/favicon.ico', '/robots.txt', '/static',
+    '/api/mercadopago/ipn', '/api/vagas/verificar-acesso',
+    '/api/vagas/capturar-email', '/api/vagas/cron-verificar',
+    '/fundo', '/webhook/whatsapp', '/interno/seed-ebooks',
+    '/interno/gerar-automatico', '/status',
+    '/gerar/monitorar-editais',
+}
+
+def get_client_ip():
+    """Captura o IP real do cliente considerando proxies."""
+    ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+    if ip and ',' in ip:
+        ip = ip.split(',')[0].strip()
+    return ip or request.remote_addr or ''
 
 @app.before_request
 def rastrear_atividade_usuario():
+    # Ignorar requests de arquivos estáticos
     if request.path.startswith('/static') or request.path == '/favicon.ico':
         return
+
+    # Verificar se a rota é pública
+    path_sem_barra = request.path.rstrip('/')
+    if path_sem_barra in ROTAS_PUBLICAS or request.path in ROTAS_PUBLICAS:
+        return
+
+    # Se não estiver logado, bloquear acesso
+    if "user_id" not in session:
+        # Se for API, retornar 401
+        if request.path.startswith('/api/'):
+            return jsonify({"success": False, "erro": "Faça login para acessar este recurso."}), 401
+        # Se for página, redirecionar para login
+        return redirect("/login")
+
+    # Se está logado, registrar atividade (tracking existente)
     if "user_id" in session:
         user_id = session["user_id"]
         agora_iso = datetime.utcnow().isoformat()
@@ -1566,6 +1619,56 @@ def cron_verificar_vagas():
 
 
 # =========================
+# STORAGE LOCAL (SQLite mode)
+# =========================
+
+@app.route('/storage/<path:subpath>')
+def servir_storage_local(subpath):
+    """Serve arquivos de storage local quando usando SQLite"""
+    storage_base = os.environ.get("STORAGE_DIR", "/data/storage")
+    filepath = os.path.join(storage_base, subpath)
+    
+    # Segurança: não permitir path traversal
+    abs_base = os.path.abspath(storage_base)
+    abs_path = os.path.abspath(filepath)
+    if not abs_path.startswith(abs_base):
+        return "Acesso negado", 403
+    
+    if not os.path.exists(abs_path):
+        return "Arquivo não encontrado", 404
+    
+    return send_from_directory(
+        os.path.dirname(abs_path),
+        os.path.basename(abs_path)
+    )
+
+
+# =========================
+# STORAGE LOCAL (SQLite mode)
+# =========================
+
+@app.route('/storage/<path:subpath>')
+def servir_storage_local(subpath):
+    """Serve arquivos de storage local quando usando SQLite"""
+    storage_base = os.environ.get("STORAGE_DIR", "/data/storage")
+    filepath = os.path.join(storage_base, subpath)
+    
+    # Segurança: não permitir path traversal
+    abs_base = os.path.abspath(storage_base)
+    abs_path = os.path.abspath(filepath)
+    if not abs_path.startswith(abs_base):
+        return "Acesso negado", 403
+    
+    if not os.path.exists(abs_path):
+        return "Arquivo não encontrado", 404
+    
+    return send_from_directory(
+        os.path.dirname(abs_path),
+        os.path.basename(abs_path)
+    )
+
+
+# =========================
 # VAGAS
 # =========================
 
@@ -1607,6 +1710,13 @@ def api_analisar_estatuto():
         org = request.form.get("org", "").strip()
         texto_estatuto = request.form.get("estatuto_texto", "").strip()
         pdf_file = request.files.get("estatuto_pdf")
+
+        # ===== CAPTURAR IP E GEOLOCALIZACAO =====
+        ip_cliente = get_client_ip()
+        geo = get_geo_from_ip(ip_cliente)
+        # ===== CAPTURAR IP E GEOLOCALIZAÇÃO =====
+        ip_cliente = get_client_ip()
+        geo = get_geo_from_ip(ip_cliente)
 
         if not texto_estatuto and (not pdf_file or pdf_file.filename == ""):
             return jsonify({"success": False, "erro": "Envie o texto do estatuto ou um arquivo PDF."}), 400
@@ -1651,10 +1761,11 @@ def api_analisar_estatuto():
         if "pontos_criticos" not in analise:
             analise["pontos_criticos"] = []
 
-        # ===== SALVAR ANALISE COMPLETA NO SUPPABASE (USO INTERNO) =====
-        # Antes de sanitizar, salva tudo para quando o cliente contratar
+        # ===== GERAR ID UNICO E SALVAR ANALISE NO SUPABASE =====
+        analise_id = str(uuid.uuid4())
         try:
             supabase.table("analises_estatuto").insert({
+                "id": analise_id,
                 "nome": nome,
                 "email": email,
                 "organizacao": org,
@@ -1662,8 +1773,14 @@ def api_analisar_estatuto():
                 "status_geral": analise.get("status_geral", "parcial"),
                 "pode_captar": analise.get("pode_captar_recursos", False),
                 "analise_json": json.dumps(analise, ensure_ascii=False),
+                "ip_cliente": ip_cliente,
+                "cidade": geo.get("cidade", ""),
+                "estado": geo.get("estado", ""),
+                "pais": geo.get("pais", ""),
+                "provedor": geo.get("provedor", ""),
                 "created_at": datetime.utcnow().isoformat()
             }).execute()
+            print(f"Analise salva no Supabase: {analise_id} - {email} - {org}")
         except Exception as e_save:
             print(f"Aviso: Erro ao salvar analise: {e_save}")
 
@@ -1719,12 +1836,12 @@ def api_analisar_estatuto():
             except Exception as e_pdf:
                 print(f"Aviso: Erro ao processar PDF: {e_pdf}")
 
-        # Atualizar registro com URL do PDF
-        if pdf_url:
+        # Atualizar registro com URL do PDF usando o ID unico
+        if pdf_url and analise_id:
             try:
                 supabase.table("analises_estatuto").update({
                     "pdf_url": pdf_url
-                }).eq("email", email).eq("created_at", datetime.utcnow().isoformat()).execute()
+                }).eq("id", analise_id).execute()
             except:
                 pass
 
@@ -1738,5 +1855,6 @@ def api_analisar_estatuto():
     except Exception as e:
         print(f"ERRO ANALISAR ESTATUTO: {str(e)}")
         return jsonify({"success": False, "erro": f"Erro interno: {str(e)}"}), 500
+
 
 
