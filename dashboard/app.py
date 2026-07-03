@@ -224,8 +224,7 @@ print("🧹 Thread de limpeza de cache iniciada")
 # ===== ADICIONAR ESSAS ROTAS NO APP.PY TRANSFEREGOV =====
 
 
-@app.route('/gerar/monitorar-editais',
-    '/login/google', '/debug/google-oauth', methods=['POST'])
+@app.route('/gerar/monitorar-editais', methods=['POST'])
 def iniciar_monitoramento():
     # 1. Captura o nicho enviado pelo JavaScript (do input-nicho)
     # Se o cliente deixar vazio, definimos como 'Geral' para a IA não se perder
